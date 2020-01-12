@@ -7,6 +7,7 @@ from functools import partial
 
 from common.bluetooth_koleso import  TBluetoohKolesoThread
 MAIN_APPLICATION = None
+BLUETOOTH_KOLESO = None
 TK_ROOT = tk.Tk()
 
 def setup_logging():
@@ -27,10 +28,12 @@ def setup_logging():
 
 
 def myquit():
-    READ_KOLESO_THREAD.killed = True
+    global BLUETOOTH_KOLESO
+    BLUETOOTH_KOLESO.killed = True
     TK_ROOT.destroy()
     os.system("pkill ffplay")
     sys.exit(0)
+
 
 class Application(tk.Frame):
     def __init__(self, master=None):
@@ -148,11 +151,11 @@ def switch_song_action(is_forward):
 
 if __name__ == "__main__":
     setup_logging()
-    READ_KOLESO_THREAD = TBluetoohKolesoThread(switch_song_action)
+    BLUETOOTH_KOLESO = TBluetoohKolesoThread(switch_song_action)
     MAIN_APPLICATION = Application(master=TK_ROOT)
     TK_ROOT.wm_protocol("WM_DELETE_WINDOW", myquit)
     MAIN_APPLICATION.play_file("intro.mp3")
-    READ_KOLESO_THREAD.start()
+    BLUETOOTH_KOLESO.start()
 
     try:
         MAIN_APPLICATION.mainloop()
