@@ -7,7 +7,7 @@ from pygame import mixer
 import logging
 import sys
 
-sys.path.append('../common')
+sys.path.append('..')
 from common.movements import detect_movements
 from common.bluetooth_koleso import  TBluetoohKolesoThread
 
