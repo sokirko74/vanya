@@ -211,8 +211,12 @@ class Application(tk.Frame):
         cmd += "  >binary_spawn_log.txt 2>&1 &"
         os.system(cmd)
         if self.args.piano_keyboard != "none":
-            time.sleep(0.5)
-            os.system("aconnect {} ZynAddSubFX >binary_spawn_log.txt 2>&1".format(self.args.piano_keyboard))
+            time.sleep(3.0)
+            os.system('aconnect -l')
+            cmd = "aconnect {} ZynAddSubFX".format(self.args.piano_keyboard)
+            logging.debug(cmd)
+            os.system(cmd)
+
         logging.debug('use instrument {}'.format(instrument))
 
 
