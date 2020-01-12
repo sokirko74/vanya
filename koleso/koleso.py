@@ -1,74 +1,30 @@
 # -*- coding: utf-8 -*-
 import os
 import sys
-
-#import pyglet
-#pyglet.options['audio'] = ('pulse')
-#pyglet.options['audio'] = ('openal', 'pulse', 'directsound', 'silent')
-#pyglet.options['audio'] = ('openal', 'pulse')
-#pyglet.options['audio'] = ('silent')
-#pyglet.lib.load_library('avbin')
-#from pyglet import media as pyglet_media
-#from pygame import mixer
-#import vlc
-
-import socket
-
+import logging
 import tkinter as tk
 from functools import partial
-import bluetooth
-from threading import Thread
-full_path = os.path.realpath(__file__)
-FILEPATH, _ = os.path.split(full_path)
 
-serverMACAddress = '20:16:05:23:17:28'
-PORT = 1
-LAST_SWITCH = 3
+from common.bluetooth_koleso import  TBluetoohKolesoThread
 MAIN_APPLICATION = None
-READ_KOLESO_THREAD = None
 TK_ROOT = tk.Tk()
 
+def setup_logging():
+    root = logging.getLogger()
+    root.setLevel(logging.DEBUG)
 
-#pygame
+    # create formatter and add it to the handlers
+    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    fh = logging.FileHandler("koleso.log",  mode='a')
+    fh.setLevel(logging.DEBUG)
+    fh.setFormatter(formatter)
+    root.addHandler(fh)
 
-# pyglet
-#def play_file(filename):
-    # self.shutup_command()
-    # self.Player = pyglet.media.Player()
-    # song = pyglet.media.load(filename)
-    # self.Player.queue(song)
-    # self.Player.play()
+    # create console handler with a higher log level
+    ch = logging.StreamHandler()
+    ch.setLevel(logging.DEBUG)
+    root.addHandler(ch)
 
-
-class TReadKolesoThread(Thread):
-    def __init__(self):
-        Thread.__init__(self)
-        self.killed = False
-        self.socket = None
-        self.connect_bluetooth()
-    def connect_bluetooth(self):
-        self.socket = bluetooth.BluetoothSocket(bluetooth.RFCOMM)
-        self.socket.connect((serverMACAddress, PORT))
-
-
-    def run(self):
-        command = ''
-        self.socket.settimeout(1)
-        while not self.killed:
-            try:
-                command += self.socket.recv(1024).decode('ascii').strip("'")
-                if command.endswith('\n'):
-                    print ("command=" + command)
-                    command  = command.strip()
-                    newSwitch = int(command[len('switch'):])
-                    print ("newSwitch=" + str(newSwitch))
-                    MAIN_APPLICATION.SwitchSong(newSwitch)
-                    command =  ''
-            except OSError as e:
-                pass # timeout
-            except ValueError:
-                print ("unparsable command  from arduino: {}".format(command))
-            
 
 def myquit():
     READ_KOLESO_THREAD.killed = True
@@ -83,18 +39,15 @@ class Application(tk.Frame):
         self.pack()
         self.Folders = [x for x in os.listdir() if os.path.isdir(x)]
         self.Songs = []
-        print (self.Folders)
-        self.CurrentSwitch = None
-        self.CurrentSong = -1
+        logging.debug (self.Folders)
         self.create_widgets(self.Folders)
-        if len(self.Folders) > 0:
-            self.SwitchFolderInner(0)
-        #self.Player = None
 
+        if len(self.Folders) > 0:
+            self.switch_folder_inner(0)
+        self.set_to_last_song()
+        self.current_folder_no
 
     def shutup_command(self):
-        #if self.Player is not None:
-        #    self.Player.pause()
         os.system("pkill ffplay")
         
     def create_widgets(self, folders):
@@ -114,110 +67,91 @@ class Application(tk.Frame):
         self.listbox.pack()
         for folder in folders:
             self.listbox.insert(tk.END, folder)
-        self.listbox.bind("<Double-Button-1>", self.SwitchFolder)
-        self.listbox.bind('<<ListboxSelect>>', self.SwitchFolder)
+        self.listbox.bind("<Double-Button-1>", self.switch_folder)
+        self.listbox.bind('<<ListboxSelect>>', self.switch_folder)
 
-    def PlayFilePyglet(self, filename):
-        self.shutup_command()
-        self.Player = pyglet_media.Player()
-        song = pyglet_media.load(filename)
-        self.Player.queue(song)
-        self.Player.play()
 
-    def PlayFilePygame(self, filename):
-        print("Play " + filename)
-        mixer.init()
-        mixer.music.load(filename)
-        mixer.music.play()
-
-    def Play_ffplay(self, filename):
+    def play_file(self, filename):
         os.system("pkill ffplay")
         os.system('ffplay -hide_banner -loglevel panic -autoexit -nodisp {} &'.format(filename))
 
-    def PlayFile(self, filename):
-        #self.PlayFilePyglet(filename)
-        #self.PlayFilePygame(filename)
-        self.Play_ffplay(filename)
+    def set_to_first_song(self):
+        if len(self.Songs) == 0:
+            self.CurrentSong = -1
+        else:        
+             self.CurrentSong = 0
 
-    def IsForward (self, newSwitch):
-        if self.CurrentSwitch == None:
-            return True
-        return newSwitch > self.CurrentSwitch  or (newSwitch == 0  and self.CurrentSwitch == LAST_SWITCH)
+    def set_to_last_song(self):
+        if len(self.Songs) == 0:
+            self.CurrentSong = -1
+        else:        
+            self.CurrentSong = len(self.Songs) - 1
 
-
-    def SwitchSong (self, newSwitch):
-        if self.CurrentSwitch == -1:
-            self.CurrentSong = 0
-        elif self.IsForward(newSwitch):
-            print ("forward")
+    def switch_song (self, is_forward):
+        if is_forward:
+            logging.debug ("forward")
             self.CurrentSong += 1
             if self.CurrentSong >= len(self.Songs):
-                self.CurrentSong = 0
-                print ("self.RollOverFolders=" + str(self.RollOverFolders))
+                logging.debug("self.RollOverFolders=" + str(self.RollOverFolders))
                 if self.RollOverFolders != 0: 
-                    if self.CurrentFolderNo + 1  < len(self.Folders):
-                        self.SwitchFolderInner(self.CurrentFolderNo  + 1)
+                    if self.current_folder_no + 1 < len(self.Folders):
+                        self.switch_folder_inner(self.current_folder_no + 1)
                     else:
-                        self.SwitchFolderInner(0)
-                    
+                        self.switch_folder_inner(0)
+                self.set_to_first_song()
+
         else:
-            print ("backward")
+            logging.debug("backward")
             self.CurrentSong -= 1
             if self.CurrentSong < 0:
                 if self.RollOverFolders != 0:
-                    if self.CurrentFolderNo  > 0:
-                        self.SwitchFolderInner(self.CurrentFolderNo  - 1)
+                    if self.current_folder_no > 0:
+                        self.switch_folder_inner(self.current_folder_no - 1)
                     else:
-                        self.SwitchFolderInner(len(self.Folders)  - 1)
-                self.CurrentSong = len(self.Songs)  - 1 
+                        self.switch_folder_inner(len(self.Folders) - 1)
+                self.set_to_last_song()
 
-        self.CurrentSwitch = newSwitch
-        print  ("Get reed N " + str(newSwitch) + "  set audio N "+ str(self.CurrentSong));
-        if  self.CurrentSong < len(self.Songs) and self.CurrentSong >= 0:
-            self.PlayFile(self.Songs[self.CurrentSong])
+        
+        logging.debug("set audio N {}".format(self.CurrentSong))
+        if  self.CurrentSong != -1:
+            self.play_file(self.Songs[self.CurrentSong])
         else:
-            print ("no songs in folder " + self.Folders[self.CurrentFolderNo])
+            logging.debug("no songs in folder " + self.Folders[self.current_folder_no])
 
-    def SwitchFolderInner(self, folderNo):
-        print("switch to folder no " +  str(folderNo))
-        self.CurrentFolderNo = folderNo
+    def switch_folder_inner(self, folderNo):
+        logging.debug("switch to folder no {}".format(folderNo))
+        self.current_folder_no = folderNo
         folder = self.Folders[folderNo]
-        print("read files from " +  folder)
-        print (os.listdir(folder))
+        logging.debug("read files from " +  folder)
+        logging.debug(os.listdir(folder))
         self.Songs = []
         for x in os.listdir(folder):
             f = os.path.join(folder, x)
             if f.endswith('mp3'):
                 self.Songs.append(f)
-        print(self.Songs)
-        print ("Number of Songs: " + str(len(self.Songs)))
-        if len(self.Songs) == 0:
-            self.CurrentSong  = -1
-        #self.listbox.selection_clear(first=None)
-        #self.listbox.selection_set(first=folderNo)
-
-    def SwitchFolder(self, dummy):
+        logging.debug(self.Songs)
+        logging.debug("Number of Songs: " + str(len(self.Songs)))
+        self.listbox.selection_clear(0, tk.END)
+        self.listbox.select_set(self.current_folder_no)
+        
+    def switch_folder(self, dummy):
         items = self.listbox.curselection()
         if len(items) == 0:
             return
-        self.SwitchFolderInner(items[0])
+        self.switch_folder_inner(items[0])
 
 
+def switch_song_action(is_forward):
+    global MAIN_APPLICATION
+    MAIN_APPLICATION.switch_song(is_forward)
 
- 
+
 if __name__ == "__main__":
-
-    READ_KOLESO_THREAD = TReadKolesoThread()
-
+    setup_logging()
+    READ_KOLESO_THREAD = TBluetoohKolesoThread(switch_song_action)
     MAIN_APPLICATION = Application(master=TK_ROOT)
     TK_ROOT.wm_protocol("WM_DELETE_WINDOW", myquit)
-
-
-
-    #READ_KOLESO_THREAD.connect_bluetooth()
-
-    MAIN_APPLICATION.PlayFile("intro.mp3")
-
+    MAIN_APPLICATION.play_file("intro.mp3")
     READ_KOLESO_THREAD.start()
 
     try:
