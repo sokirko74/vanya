@@ -3,10 +3,12 @@ import os
 from pathlib import Path
 import time
 import argparse
-from common.movements import detect_movements
 from pygame import mixer
 import logging
 import sys
+
+sys.path.append('../common')
+from common.movements import detect_movements
 from common.bluetooth_koleso import  TBluetoohKolesoThread
 
 TK_APPLICATION = None
