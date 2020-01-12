@@ -1,11 +1,23 @@
 import tkinter as tk
 import os
-import glob
+from pathlib import Path
 import time
-import statistics
+import argparse
 from movements import detect_movements
-
+from pygame import mixer
+import logging
 APPLICATION = None
+full_path = os.path.realpath(__file__)
+FILEPATH, _ = os.path.split(full_path)
+SLIDE_SWITCH = os.path.join(FILEPATH, "sound/slide_switch.wav")
+
+logging.basicConfig(
+    filename='vanya_syn.log',
+    level=logging.DEBUG,
+    format='%(asctime)s.%(msecs)03d %(levelname)s %(module)s - %(funcName)s: %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S',
+)
+logging.debug('start session')
 
 def current_iso8601():
     """Get current date and time in ISO8601"""
@@ -17,6 +29,10 @@ def motion_handler_wrapper(event):
     global APPLICATION
     APPLICATION.motion_handler(event)
 
+def play_file(filename):
+    mixer.init()
+    mixer.music.load(filename)
+    mixer.music.play()
 
 class Text2(tk.Frame):
     def __init__(self, master, width=0, height=0, **kwargs):
@@ -37,12 +53,17 @@ class Text2(tk.Frame):
 
 
 class Application(tk.Frame):
-    def __init__(self, master=None):
-
+    def __init__(self, args, master=None):
+        self.args = args
         self.Master = master
-        master.geometry("900x600")
+        self.Master.bind('<Shift-n>', self.NextInstrument)
+        self.Master.bind('<Shift-N>', self.NextInstrument)
+        self.Master.bind("<Return>", self.EnterKey)
 
-        self.Instruments = [f for f in glob.glob("/usr/share/zynaddsubfx/banks/Collection/*.xiz")]
+        master.geometry("900x600")
+        root.geometry("+400+600")
+
+        self.Instruments = [f for f in Path(args.instruments_folder).rglob('*.xiz')]
         print("use {} instruments\n".format(len(self.Instruments)))
         if len(self.Instruments) == 0:
             print("no instruments found, exit")
@@ -103,6 +124,20 @@ class Application(tk.Frame):
     def unbind_moise_move(self):
         self.Master.unbind('<Motion>')
 
+    def NextInstrument(self, event):
+        self.increment_instrument_index(1)
+        self.clear()
+        self.run_zynadd()
+
+    def EnterKey(self, event):
+        newIndex = int(self.InstrumentIndexWidget.get("1.0", tk.END).strip())
+        if newIndex != self.InstrumentIndex:
+            self.InstrumentIndex = newIndex
+        self.clear()
+        self.run_zynadd()
+
+
+
     def try_to_detect_movement(self):
         points = [(x,y) for (_, x, y) in self.Points]
         movements = detect_movements(points)
@@ -141,13 +176,21 @@ class Application(tk.Frame):
         instrument = self.Instruments[self.InstrumentIndex]
         self.print_log(self.InstrumentWidget, "{}".format(instrument))
         self.print_log(self.InstrumentIndexWidget, "{}".format(self.InstrumentIndex))
-        os.system ("pkill zynaddsubfx")
-        #os.system("zynaddsubfx --no-gui --auto-connect --output jack --load-instrument '{}' &".format(instrument))
-        #os.system("zynaddsubfx --no-gui --auto-connect --output alsa --load-instrument '{}' &".format(instrument))
-        os.system("zynaddsubfx  --no-gui --auto-connect --output alsa --load-instrument='{}' &".format(instrument))
-        time.sleep(0.5)
 
-        os.system("aconnect microKEY-25 ZynAddSubFX")
+        binary = "zynaddsubfx"
+
+        os.system ("pkill {0}".format(binary))
+        play_file(SLIDE_SWITCH)
+
+        cmd = "{} --auto-connect --output {} --load-instrument='{}' ".format(binary, self.args.sound_server, instrument)
+        if not self.args.use_gui:
+            cmd += " --no-gui "
+        cmd += "&"
+        os.system(cmd)
+        if self.args.piano_keyboard != "none":
+            time.sleep(0.5)
+            os.system("aconnect {} ZynAddSubFX".format(self.args.piano_keyboard))
+        logging.debug('use instrument {}'.format(instrument))
 
     def increment_instrument_index(self, delta):
         self.InstrumentIndex += delta
@@ -155,6 +198,7 @@ class Application(tk.Frame):
             self.InstrumentIndex = 0
         if self.InstrumentIndex < 0:
             self.InstrumentIndex = len(self.Instruments) - 1
+
 
     def motion_handler(self, event):
         cur_x = event.x
@@ -168,9 +212,24 @@ class Application(tk.Frame):
         self.draw_points()
         self.print_log(self.CoordWidget, '{}'.format(str([(x,y) for (_, x, y) in self.Points])))
 
+
+def parse_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--use-gui", dest='use_gui', default=False, action="store_true")
+    parser.add_argument("--not-fullscreen", dest='fullscreen', default=True, action="store_false")
+    parser.add_argument("--sound-server", dest='sound_server', default="jack", help="jack or alsa (default)")
+    parser.add_argument("--piano-keyboard", dest='piano_keyboard', default="microKEY-25", help="can be none or microKEY-25")
+    parser.add_argument("--instruments", dest='instruments_folder',
+                        default="/usr/share/zynaddsubfx/banks/Collection", help="instrument folder")
+    return parser.parse_args()
+
+
 if __name__ == '__main__':
+    play_file("sound/slide_switch.wav")
+    args = parse_args()
     root = tk.Tk()
-    root.attributes('-fullscreen', True)
-    APPLICATION = Application(master=root)
+    if args.fullscreen:
+        root.attributes('-fullscreen', True)
+    APPLICATION = Application(args, master=root)
     root.mainloop()
 
