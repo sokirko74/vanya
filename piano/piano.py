@@ -174,7 +174,8 @@ class Application(tk.Frame):
         points = [(x,y) for (_, x, y) in self.Points]
         movements = detect_movements(points)
         if len(movements) != 1:
-            logging.debug('ignore multiple movements')
+            #logging.debug('ignore multiple movements')
+            pass
         else:
             movement = list(movements.items())[0][0]
             self.switch_instrument(movement)
@@ -202,20 +203,14 @@ class Application(tk.Frame):
         self.print_log(self.InstrumentWidget, "{}".format(instrument))
         self.print_log(self.InstrumentIndexWidget, "{}".format(self.InstrumentIndex))
 
-        os.system ("nohup pkill {0} >binary_spawn_log.txt 2>&1 ".format(ZYNADDSUBFX_BINARY))
+        os.system ("nohup pkill {0} >>binary_spawn_log.txt 2>&1 ".format(ZYNADDSUBFX_BINARY))
         play_file(SLIDE_SWITCH)
 
         cmd = "{} --auto-connect --output {} --load-instrument='{}' ".format(ZYNADDSUBFX_BINARY, self.args.sound_server, instrument)
         if not self.args.use_gui:
             cmd += " --no-gui "
-        cmd += "  >binary_spawn_log.txt 2>&1 &"
+        cmd += "  >>binary_spawn_log.txt 2>&1 &"
         os.system(cmd)
-        if self.args.piano_keyboard != "none":
-            time.sleep(3.0)
-            os.system('aconnect -l')
-            cmd = "aconnect {} ZynAddSubFX".format(self.args.piano_keyboard)
-            logging.debug(cmd)
-            os.system(cmd)
 
         logging.debug('use instrument {}'.format(instrument))
 
@@ -238,7 +233,6 @@ def parse_args():
     parser.add_argument("--use-gui", dest='use_gui', default=False, action="store_true")
     parser.add_argument("--not-fullscreen", dest='fullscreen', default=True, action="store_false")
     parser.add_argument("--sound-server", dest='sound_server', default="jack", help="jack or alsa (default)")
-    parser.add_argument("--piano-keyboard", dest='piano_keyboard', default="microKEY-25", help="can be none or microKEY-25")
     parser.add_argument("--instruments", dest='instruments_folder',
                         default="/usr/share/zynaddsubfx/banks/Collection", help="instrument folder")
     return parser.parse_args()
