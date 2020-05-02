@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">Ванино Колесо</string>
+    <string name="action_settings">Settings</string>
+    <string name="title_activity_main">Тест bluetooth</string>
+    <string name="title_discover_devices">Найти устройства</string>
+    <string name="title_tap_to_connect">Устройства найдены. Выберите устройство для подключения.</string>
+</resources>
