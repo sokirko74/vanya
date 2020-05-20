@@ -1,6 +1,7 @@
 1. connect bluetooth
 sudo apt-get install bluetooth libbluetooth-dev
-pip3 install pybluez
+pip3 install -r requirements.txt
+
 
 2. Play mp3
 sudo apt install ffmpeg
