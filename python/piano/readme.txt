@@ -1,6 +1,9 @@
+0. sudo apt-get install python3-tk
+
 1. connect bluetooth
 sudo apt-get install bluetooth libbluetooth-dev
-pip3 install -r requirements.txt
+pip3 install -r ../requirements.txt
+
 
 
 2. Play mp3
@@ -31,6 +34,6 @@ read https://www.rncbc.org/drupal/node/7 to setup patchbay
 
 
 5. Zyaddsubfx
-sudo apt install zyaddsubfx
+sudo apt install zynaddsubfx
 zynaddsubfx -a 
 

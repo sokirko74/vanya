@@ -88,7 +88,7 @@ class Application(tk.Frame):
         self.Instruments = None
         self.all_collections = os.listdir(args.collection_folder)
         self.collection_id = self.all_collections.index(args.collection)
-        self.load_collection(args.collection)
+        self.load_collection()
 
         self.InstrumentIndex = 0
         #self.CoordWidget = None
