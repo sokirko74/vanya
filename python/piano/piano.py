@@ -69,6 +69,12 @@ class Text2(tk.Frame):
 
 
 class Application(tk.Frame):
+    def load_collection(self):
+        collection = self.all_collections[self.collection_id]
+        folder = os.path.join(args.collection_folder, collection)
+        self.Instruments = [f for f in Path(folder).rglob('*.xiz')]
+        print("use {} instruments\n".format(len(self.Instruments)))
+
     def __init__(self, args, master=None):
         self.args = args
         self.Master = master
@@ -79,11 +85,10 @@ class Application(tk.Frame):
         master.geometry("900x600")
         root.geometry("+400+600")
 
-        self.Instruments = [f for f in Path(args.instruments_folder).rglob('*.xiz')]
-        print("use {} instruments\n".format(len(self.Instruments)))
-        if len(self.Instruments) == 0:
-            print("no instruments found, exit")
-            exit(1)
+        self.Instruments = None
+        self.all_collections = os.listdir(args.collection_folder)
+        self.collection_id = self.all_collections.index(args.collection)
+        self.load_collection(args.collection)
 
         self.InstrumentIndex = 0
         #self.CoordWidget = None
@@ -135,10 +140,12 @@ class Application(tk.Frame):
             self.Canvas.create_line(self.Points[i-1][1], self.Points[i-1][2], self.Points[i][1], self.Points[i][2])
 
     def bind_moise_move(self):
-        self.Master.bind('<Motion>', motion_handler_wrapper)
+        if args.enable_mouse_instrument_switch:
+            self.Master.bind('<Motion>', motion_handler_wrapper)
 
     def unbind_moise_move(self):
-        self.Master.unbind('<Motion>')
+        if args.enable_mouse_instrument_switch:
+            self.Master.unbind('<Motion>')
 
     def on_enter_key(self, event):
         newIndex = int(self.InstrumentIndexWidget.get("1.0", tk.END).strip())
@@ -151,7 +158,17 @@ class Application(tk.Frame):
         self.InstrumentIndex += delta
         if self.InstrumentIndex >= len(self.Instruments):
             self.InstrumentIndex = 0
+            if self.collection_id + 1 == len(self.all_collections):
+                self.collection_id = 0
+            else:
+                self.collection_id += 1
+            self.load_collection()
         if self.InstrumentIndex < 0:
+            if self.collection_id  == 0:
+                self.collection_id = len(self.all_collections) - 1
+            else:
+                self.collection_id -= 1
+            self.load_collection()
             self.InstrumentIndex = len(self.Instruments) - 1
 
     def switch_instrument(self, movement):
@@ -185,14 +202,15 @@ class Application(tk.Frame):
         # update displayed time
         self.now.set(current_iso8601())
         curtime = time.time()
-        if self.focus_get() != None and len(self.Points) > 0:
-            last_move_time = self.Points[-1][0]
-            if curtime - last_move_time > 0.5:
-                self.try_to_detect_movement()
-                self.unbind_moise_move()
-                self.event_generate('<Motion>', warp=True, x=400, y=400)
-                self.clear_canvas()
-                self.bind_moise_move()
+        if args.enable_mouse_instrument_switch:
+            if self.focus_get() != None and len(self.Points) > 0:
+                last_move_time = self.Points[-1][0]
+                if curtime - last_move_time > 0.5:
+                    self.try_to_detect_movement()
+                    self.unbind_moise_move()
+                    self.event_generate('<Motion>', warp=True, x=400, y=400)
+                    self.clear_canvas()
+                    self.bind_moise_move()
 
         # schedule timer to call myself after 1 second
         self.after(200, self.onUpdate)
@@ -233,9 +251,13 @@ def parse_args():
     parser.add_argument("--use-gui", dest='use_gui', default=False, action="store_true")
     parser.add_argument("--not-fullscreen", dest='fullscreen', default=True, action="store_false")
     parser.add_argument("--sound-server", dest='sound_server', default="jack", help="jack or alsa (default)")
-    parser.add_argument("--instruments", dest='instruments_folder',
-                        default="/usr/share/zynaddsubfx/banks/Collection", help="instrument folder")
+    parser.add_argument("--enable-mouse-instrument-switch", dest='enable_mouse_instrument_switch', default=False, required=False)
+    parser.add_argument("--collection-folder", dest='collection_folder',
+                        default="/usr/share/zynaddsubfx/banks")
+    parser.add_argument("--collection", dest='collection',
+                        default="Collection")
     return parser.parse_args()
+
 
 def bluetooth_koleso_action(is_forward):
     global TK_APPLICATION
