@@ -90,17 +90,18 @@ class TApplication(tk.Frame):
             self.logger.info(
                 "cannot find bluetooth koleso, ignore it: {}, try to run 'sudo /etc/init.d/bluetooth restart' ".format(
                     e))
+            del self.collection_switcher_thread
             self.collection_switcher_thread = None
 
     def start_collection_switcher(self):
         if self.collection_switcher_thread is not None:
+            self.logger.info("start bluetooth thread")
             self.collection_switcher_thread.start()
 
     def stop_collection_switcher(self):
         if self.collection_switcher_thread is not None:
-            self.collection_switcher_thread.killed = True
-            time.sleep(1)
-            self.collection_switcher_thread.join(1)
+            self.logger.info("stop bluetooth thread")
+            self.collection_switcher_thread.stop_thread()
             del self.collection_switcher_thread
             self.collection_switcher_thread = None
 
@@ -257,9 +258,11 @@ class TApplication(tk.Frame):
         self.stop_collection_switcher()
         os.system("pkill ffplay")
         os.system("pkill {0}".format(ZYNADDSUBFX_BINARY))
+        self.logger.info("destroy tk root and exit mainloop")
         self.master.destroy()
-        self.logger.error("exit")
-        sys.exit(0)
+        self.master.quit()
+
+
 
 
 def parse_args():
@@ -275,9 +278,8 @@ def parse_args():
     return parser.parse_args()
 
 
-def main():
+def main(logger):
     args = parse_args()
-    logger = setup_logging()
     tk_root = tk.Tk()
     if args.fullscreen:
         tk_root.attributes('-fullscreen', True)
@@ -292,6 +294,8 @@ def main():
         logger.error("KeyboardInterrupt")
         tk_app.quit()
 
-
 if __name__ == '__main__':
-    main()
+    logger = setup_logging()
+    main(logger)
+    logger.info("exit from main")
+

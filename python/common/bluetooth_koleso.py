@@ -2,6 +2,7 @@ import socket
 import bluetooth
 from threading import Thread
 import logging
+import time
 
 serverMACAddress = '20:16:05:23:17:28'
 PORT = 1
@@ -29,8 +30,23 @@ class TBluetoohKolesoThread(Thread):
         self.logger = logger
 
     def connect_bluetooth(self):
-        self.socket = bluetooth.BluetoothSocket(bluetooth.RFCOMM)
-        self.socket.connect((serverMACAddress, PORT))
+        try:
+            self.socket = bluetooth.BluetoothSocket(bluetooth.RFCOMM)
+            self.socket.connect((serverMACAddress, PORT))
+        except Exception as exp:
+            self.logger.info(exp)
+            if self.socket is not None:
+                self.socket.close()
+            self.socket = None
+            raise
+
+    def stop_thread(self):
+        self.killed = True
+        time.sleep(1)
+        self.join(1)
+        if self.socket is not None:
+            self.socket.close()
+        self.socket = None
 
     def run(self):
         commands = ''
