@@ -258,7 +258,7 @@ class TApplication(tk.Frame):
         os.system("pkill ffplay")
         os.system("pkill {0}".format(ZYNADDSUBFX_BINARY))
         self.master.destroy()
-        logger.error("exit")
+        self.logger.error("exit")
         sys.exit(0)
 
 
