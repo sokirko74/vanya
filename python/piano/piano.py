@@ -85,10 +85,12 @@ class TApplication(tk.Frame):
         self.collection_switcher_thread = None
         try:
             self.collection_switcher_thread = TBluetoohKolesoThread(self.logger, self.switch_instrument)
+            self.collection_switcher_thread.connect_bluetooth()
         except Exception as e:
             self.logger.info(
                 "cannot find bluetooth koleso, ignore it: {}, try to run 'sudo /etc/init.d/bluetooth restart' ".format(
                     e))
+            self.collection_switcher_thread = None
 
     def start_collection_switcher(self):
         if self.collection_switcher_thread is not None:
@@ -256,6 +258,7 @@ class TApplication(tk.Frame):
         os.system("pkill ffplay")
         os.system("pkill {0}".format(ZYNADDSUBFX_BINARY))
         self.master.destroy()
+        logger.error("exit")
         sys.exit(0)
 
 
@@ -272,8 +275,6 @@ def parse_args():
     return parser.parse_args()
 
 
-
-
 def main():
     args = parse_args()
     logger = setup_logging()
@@ -287,8 +288,9 @@ def main():
 
     try:
         tk_app.mainloop()
-    finally:
-        tk_app.stop_collection_switcher()
+    except KeyboardInterrupt:
+        logger.error("KeyboardInterrupt")
+        tk_app.quit()
 
 
 if __name__ == '__main__':

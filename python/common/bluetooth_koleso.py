@@ -24,7 +24,6 @@ class TBluetoohKolesoThread(Thread):
         Thread.__init__(self)
         self.killed = False
         self.socket = None
-        self.connect_bluetooth()
         self.current_switch = None
         self.switch_song_action = switch_song_action
         self.logger = logger
