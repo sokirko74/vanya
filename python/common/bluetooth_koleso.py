@@ -10,7 +10,7 @@ LAST_SWITCH = 3
 
 
 def is_forward_movement(old_switch, new_switch):
-    if old_switch == None:
+    if old_switch is None:
         return True
     if old_switch == LAST_SWITCH and new_switch == FIRST_SWITCH:
         return True
@@ -19,20 +19,19 @@ def is_forward_movement(old_switch, new_switch):
     return old_switch < new_switch
 
 
-
 class TBluetoohKolesoThread(Thread):
-    def __init__(self, switch_song_action):
+    def __init__(self, logger, switch_song_action):
         Thread.__init__(self)
         self.killed = False
         self.socket = None
         self.connect_bluetooth()
         self.current_switch = None
         self.switch_song_action = switch_song_action
+        self.logger = logger
 
     def connect_bluetooth(self):
         self.socket = bluetooth.BluetoothSocket(bluetooth.RFCOMM)
         self.socket.connect((serverMACAddress, PORT))
-
 
     def run(self):
         commands = ''
@@ -50,11 +49,12 @@ class TBluetoohKolesoThread(Thread):
                         new_switch = int(command[len('switch'):])
                         is_forward = is_forward_movement(self.current_switch, new_switch)
                         self.current_switch = new_switch
-                        self.switch_song_action(is_forward)
+                        self.switch_song_action("up" if is_forward else "down")
                     commands = ''
             except OSError as e:
                 pass # timeout
             except ValueError:
-                logging.debug ("unparsable command  from arduino: {}".format(commands))
+                self.logger.debug("unparsable command  from arduino: {}".format(commands))
                 commands = ''
+        self.logger.debug("exit from TBluetoohKolesoThread")
         self.socket.close()

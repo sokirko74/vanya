@@ -223,7 +223,7 @@ class TApplication(tk.Frame):
     def run_zynadd(self):
         instrument = self.Instruments[self.InstrumentIndex]
         self.print_to_widget(self.CollectionWidget, "{}".format(self.all_collections[self.collection_id]))
-        self.print_to_widget(self.InstrumentWidget, "{}".format(os.path.basename(instrument)))
+        self.print_to_widget(self.InstrumentWidget, "{}".format(os.path.basename(str(instrument)))
         self.print_to_widget(self.InstrumentIndexWidget, "{}".format(self.InstrumentIndex))
 
         os.system ("nohup pkill {0} >>binary_spawn_log.txt 2>&1 ".format(ZYNADDSUBFX_BINARY))
