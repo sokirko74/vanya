@@ -2,3 +2,5 @@
 pyglet
 pillow
 pygame
+evdev
+python-vlc

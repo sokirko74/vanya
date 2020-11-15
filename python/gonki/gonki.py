@@ -1,7 +1,9 @@
 import pygame
 import time
 import random
+import argparse
 from pygame.locals import *
+from evdev import list_devices, InputDevice, categorize, ecodes
 
 
 class TColors:
@@ -40,7 +42,10 @@ class TSprite:
 
 
 class TRacesGame:
-    def __init__(self):
+    def __init__(self, args):
+        self.args = args
+        self.enable_sounds = not args.silent
+        self.wheel_center = args.wheel_center
         self.width = 800
         self.height = 1000
         self.roadside_width = 100
@@ -49,16 +54,27 @@ class TRacesGame:
         self.other_car = TSprite(self.gd, 'other_car.png', 0, 0, 80, 100)
         self.game_over = False
         self.finish_top = 250
-        pygame.mixer.init()
-        self.roadside_sound = pygame.mixer.Sound("roadside.wav")
-        self.roadside_sound.set_volume(0.5)
+        self.start_time_on_the_road_side = None
 
-        self.normal_driving = pygame.mixer.Sound("normal_driving.wav")
-        self.normal_driving.set_volume(0.3)
+        if self.enable_sounds:
+            pygame.mixer.init()
+            self.roadside_sound = pygame.mixer.Sound("roadside.wav")
+            self.roadside_sound.set_volume(0.5)
 
-        self.accident = pygame.mixer.Sound("accident.wav")
-        self.accident.set_volume(1.0)
+            self.normal_driving = pygame.mixer.Sound("normal_driving.wav")
+            self.normal_driving.set_volume(0.3)
+
+            self.accident = pygame.mixer.Sound("accident.wav")
+            self.accident.set_volume(1.0)
         self.speed = 10
+        joysticks = list_devices()
+        self.last_wheel_value = None
+        if len(joysticks) > 0:
+            self.racing_wheel = InputDevice(joysticks[0])
+            self.read_last_wheel_value()
+        else:
+            print ("no racing wheel found")
+            self.racing_wheel = None
 
     def message(self, mess, colour, size, x, y):
         font = pygame.font.SysFont(None, size)
@@ -113,7 +129,8 @@ class TRacesGame:
 
     def car_crash(self):
         if self.my_car.intersect(self.other_car):
-            self.accident.play(loops=0)
+            if self.enable_sounds:
+                self.accident.play(loops=0)
             self.message('CRASHED!', TColors.red, 100, 250, 280)
             time.sleep(3)
             self.my_car.top += 20
@@ -136,11 +153,15 @@ class TRacesGame:
         pygame.display.update()
         game_intro = False
         while not game_intro:
+            self.read_last_wheel_value()
 
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     game_intro = True
                     self.game_over = True
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_F1:
+                        self.save_wheel_center()
 
             self.message('MAIN MENU', TColors.green, 100, (self.width / 2 - 220), 100)
             self.button(100, 400, 70, 30, 'GO!', TColors.white, TColors.bright_red, TColors.red, 25, 106, 406, self.game_loop)
@@ -155,16 +176,48 @@ class TRacesGame:
         self.other_car.top = 0
 
     def stop_sounds(self):
-        self.normal_driving.stop()
-        self.roadside_sound.stop()
-        self.accident.stop()
+        if self.enable_sounds:
+            self.normal_driving.stop()
+            self.roadside_sound.stop()
+            self.accident.stop()
 
     def switch_music(self):
-        self.stop_sounds()
+        if self.enable_sounds:
+            self.stop_sounds()
+            if self.is_on_the_roadside():
+                self.roadside_sound.play(loops=1000)
+            else:
+                self.normal_driving.play(loops=1000)
+
+    def read_last_wheel_value(self):
+        if self.racing_wheel is None:
+            return
+        wheel_event = self.racing_wheel.read_one()
+        while wheel_event is not None:
+            if wheel_event.code == ecodes.ABS_WHEEL:
+                self.last_wheel_value = wheel_event.value
+                print("abs_wheel value={}, center={}".format(self.last_wheel_value, self.wheel_center))
+            wheel_event = self.racing_wheel.read_one()
+        return self.last_wheel_value
+
+    def save_wheel_center(self):
+        if self.last_wheel_value is not None:
+            print("set wheel center to {}".format(self.last_wheel_value))
+            self.wheel_center = self.last_wheel_value
+
+    def get_speed(self):
         if self.is_on_the_roadside():
-            self.roadside_sound.play(loops=1000)
+            if self.start_time_on_the_road_side is None:
+                self.start_time_on_the_road_side = time.time()
+            time_on_the_road_side = time.time() - self.start_time_on_the_road_side
+            if time_on_the_road_side < 3:
+                return max(int(self.speed / 2), 1)
+            elif time_on_the_road_side < 5:
+                return 1
+            else:
+                return 0
         else:
-            self.normal_driving.play(loops=1000)
+            return self.speed
 
     def game_loop(self):
         self.my_car.left = self.width / 2
@@ -176,6 +229,10 @@ class TRacesGame:
         x_change = 0
         self.switch_music()
         while not self.game_over:
+            wheel_value = self.read_last_wheel_value()
+            if wheel_value is not None:
+                x_change = int( (wheel_value - self.wheel_center) / 50)
+
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     self.game_over = True
@@ -188,12 +245,20 @@ class TRacesGame:
                         self.speed += 1
                     elif event.key == pygame.K_DOWN:
                         self.speed = max(self.speed - 1, 1)
+                    elif event.key == pygame.K_ESCAPE:
+                        self.game_intro()
+                    elif event.key == pygame.K_F1:
+                        self.save_wheel_center()
 
                 if event.type == pygame.KEYUP:
                     if event.key == pygame.K_LEFT or event.key == pygame.K_RIGHT:
                         x_change = 0
 
             self.my_car.left += x_change
+            if self.my_car.left < 0:
+                self.my_car.left = 0
+            if self.my_car.left > self.width - 50:
+                self.my_car.left = self.width - 50
             self.gd.fill(TColors.gray)
             self.draw_background()
 
@@ -204,7 +269,7 @@ class TRacesGame:
                     success_count += 1
                 self.my_car.top -= 20
             else:
-                self.other_car.top += max(int(self.speed/2), 1) if self.is_on_the_roadside() else self.speed
+                self.other_car.top += self.get_speed()
 
             self.other_car.draw()
             self.check_finish()
@@ -212,15 +277,28 @@ class TRacesGame:
             self.score(success_count)
             if save_is_on_road_side != self.is_on_the_roadside():
                 save_is_on_road_side = self.is_on_the_roadside()
+                if self.is_on_the_roadside():
+                    self.start_time_on_the_road_side = time.time()
+                else:
+                    self.start_time_on_the_road_side = None
                 self.switch_music()
 
             clock.tick(30)
             pygame.display.update()
 
 
+def parse_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--silent", dest='silent', default=False, action="store_true")
+    parser.add_argument("--wheel-center", dest='wheel_center', default=300, type=int)
+    return parser.parse_args()
+
+
 if __name__ == "__main__":
-    pygame.init()
+    pygame.display.init()
+    pygame.font.init()
     clock = pygame.time.Clock()
-    game = TRacesGame()
+    args = parse_args()
+    game = TRacesGame(args)
     game.game_intro()
     game.quit()
