@@ -2,7 +2,6 @@ import pygame
 import time
 import random
 import argparse
-from pygame.locals import *
 from evdev import list_devices, InputDevice, categorize, ecodes
 
 
@@ -41,40 +40,134 @@ class TSprite:
           other.top + possible_collision <= self.bottom()
 
 
+class TRacingWheel:
+    left_button = 295
+    right_button = 294
+    def __init__(self, center):
+        self.raw_angle = None
+        self.center = center
+        self.pressed_buttons = set()
+        joysticks = list_devices()
+        if len(joysticks) > 0:
+            self.device = InputDevice(joysticks[0])
+            self.read_events()
+        else:
+            print ("no racing wheel found")
+            self.device = None
+
+    def save_wheel_center(self):
+        if self.raw_angle is not None:
+            print("set wheel center to {}".format(self.raw_angle))
+            self.center = self.raw_angle
+
+    def forget_buttons(self):
+        self.pressed_buttons.clear()
+
+    def read_events(self):
+        if self.device is None:
+            return
+        event = self.device.read_one()
+        while event is not None:
+            if event.code == ecodes.ABS_WHEEL:
+                self.raw_angle = event.value
+                print("abs_wheel value={}, center={}".format(self.raw_angle, self.center))
+            if event.code == TRacingWheel.left_button:
+                print ("left_button")
+                self.pressed_buttons.add(TRacingWheel.left_button)
+            elif event.code == TRacingWheel.right_button:
+                print ("right_button")
+                self.pressed_buttons.add(TRacingWheel.right_button)
+            event = self.device.read_one()
+
+    def get_angle(self):
+        self.read_events()
+        if self.raw_angle is not None:
+            return int((self.raw_angle - self.center) / 50)
+
+
+def load_sound(file_path, volume):
+    sound = pygame.mixer.Sound(file_path)
+    sound.set_volume(volume)
+    return sound
+
+
+class TCar:
+    def __init__(self, gd, image_path, width, height, sound_path, sound_volume):
+        self.image = image_path
+        self.image = TSprite(gd, image_path, 0, 0, width, height)
+        self.sound = pygame.mixer.Sound(sound_path)
+        self.sound.set_volume(sound_volume)
+
+
+class TCarType:
+    my_car = 0
+    passenger_car = 1
+    truck = 2
+
+
+class TSounds:
+    roadside = 1
+    normal_driving = 2
+    accident = 3
+    victory = 4
+    truck = 5
+
+    def __init__(self, enable_sounds):
+        self.enable_sounds = enable_sounds
+        self.sounds  = dict()
+        if self.enable_sounds:
+            pygame.mixer.init()
+            self.sounds = {
+                self.roadside: load_sound("roadside.wav", 0.4),
+                self.normal_driving: load_sound("normal_driving.wav", 0.3),
+                self.accident: load_sound("accident.wav", 1),
+                self.victory: load_sound("victory.wav", 1),
+                self.truck: load_sound("truck.wav", 0.6),
+            }
+
+    def stop_sounds(self):
+        if self.enable_sounds:
+            for k in  self.sounds.values():
+                k.stop()
+
+    def switch_music(self, type, loops=1000):
+        if self.enable_sounds:
+            self.stop_sounds()
+            print ("switch_music {}".format(type))
+            self.sounds[type].play(loops=loops)
+
+
 class TRacesGame:
     def __init__(self, args):
         self.args = args
-        self.enable_sounds = not args.silent
-        self.wheel_center = args.wheel_center
-        self.width = 800
-        self.height = 1000
-        self.roadside_width = 100
-        self.gd = pygame.display.set_mode((self.width, self.height))
-        self.my_car = TSprite(self.gd, 'my_car.png', 0, 0, 80, 100)
-        self.other_car = TSprite(self.gd, 'other_car.png', 0, 0, 80, 100)
+        assert self.args.mode in {"normal_mode", "gangster_mode"}
+        pygame.display.init()
+        pygame.font.init()
+        if args.full_screen:
+            self.gd = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
+            pygame.display.toggle_fullscreen()
+            self.width = pygame.display.get_window_size()[0]
+            self.height = pygame.display.get_window_size()[1]
+        else:
+            self.width = 1600
+            self.height = 1000
+            self.gd = pygame.display.set_mode((self.width, self.height))
+
+        self.roadside_width = 200
+        self.car_width = 160
+        self.my_car = TSprite(self.gd, 'my_car.png', 0, 0, self.car_width, 160)
+        self.passenger_car = TSprite(self.gd, 'passenger_car.png', 0, 0, self.car_width, 160)
+        self.truck_car = TSprite(self.gd, 'truck.png', 0, 0, self.car_width, 260)
+        self.other_car = None
         self.game_over = False
+        self.score = 0
         self.finish_top = 250
         self.start_time_on_the_road_side = None
+        self.other_car_sound = None
+        self.sounds = TSounds(not args.silent)
 
-        if self.enable_sounds:
-            pygame.mixer.init()
-            self.roadside_sound = pygame.mixer.Sound("roadside.wav")
-            self.roadside_sound.set_volume(0.5)
-
-            self.normal_driving = pygame.mixer.Sound("normal_driving.wav")
-            self.normal_driving.set_volume(0.3)
-
-            self.accident = pygame.mixer.Sound("accident.wav")
-            self.accident.set_volume(1.0)
         self.speed = 10
-        joysticks = list_devices()
-        self.last_wheel_value = None
-        if len(joysticks) > 0:
-            self.racing_wheel = InputDevice(joysticks[0])
-            self.read_last_wheel_value()
-        else:
-            print ("no racing wheel found")
-            self.racing_wheel = None
+        self.racing_wheel = TRacingWheel(args.wheel_center)
 
     def message(self, mess, colour, size, x, y):
         font = pygame.font.SysFont(None, size)
@@ -116,6 +209,7 @@ class TRacesGame:
             font = pygame.font.SysFont(None, 100)
             if win:
                 screen_text = font.render('Победа!', True, TColors.green)
+                self.sounds.switch_music(TSounds.victory, loops=0)
             else:
                 screen_text = font.render('Проигрыш!', True, TColors.white)
             self.gd.blit(screen_text, (250, 280))
@@ -129,81 +223,75 @@ class TRacesGame:
 
     def car_crash(self):
         if self.my_car.intersect(self.other_car):
-            if self.enable_sounds:
-                self.accident.play(loops=0)
-            self.message('CRASHED!', TColors.red, 100, 250, 280)
+            self.sounds.switch_music(TSounds.accident, loops=0)
+            self.message('Авария', TColors.red, 100, 250, 280)
             time.sleep(3)
-            self.my_car.top += 20
+            if self.args.mode == "normal_mode":
+                self.my_car.top += 20
+            elif self.args.mode == "gangster_mode":
+                if self.other_car == self.truck_car:
+                    self.my_car.top -= 40
+                else:
+                    self.my_car.top -= 20
+                self.score += 1
             self.init_new_other_car()
             pygame.display.update()
 
     def is_on_the_roadside(self):
         return self.my_car.left < self.roadside_width or self.my_car.right() > self.width - self.roadside_width
 
-    def score(self, count):
+    def draw_params(self):
         font = pygame.font.SysFont(None, 30)
-        screen_text = font.render('score :' + str(count), True, TColors.white)
-        self.gd.blit(screen_text, (0, 0))
+        screen_text = font.render('score: ' + str(self.score), True, TColors.white)
+        self.gd.blit(screen_text, (70, 0))
+
+        screen_text = font.render('speed: ' + str(self.speed), True, TColors.white)
+        self.gd.blit(screen_text, (70, 40))
+
         pygame.display.update()
 
     def game_intro(self):
-        self.stop_sounds()
-        v = pygame.image.load('background1.jpg')
+        def draw_button(x, y, message, color,  func):
+            self.button(x, y, 70, 30, message, TColors.white, color, TColors.red, 25, x + 6,
+                        y + 6, func)
+
+        self.sounds.stop_sounds()
+        v = pygame.transform.scale(pygame.image.load('background1.jpg'), (self.width, self.height))
         self.gd.blit(v, (0, 0))
         pygame.display.update()
         game_intro = False
         while not game_intro:
-            self.read_last_wheel_value()
-
+            self.racing_wheel.forget_buttons()
+            self.racing_wheel.read_events()
+            if TRacingWheel.left_button in self.racing_wheel.pressed_buttons:
+                self.game_loop()
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     game_intro = True
                     self.game_over = True
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_F1:
-                        self.save_wheel_center()
+                        self.racing_wheel.save_wheel_center()
+                    if event.key == pygame.K_ESCAPE:
+                        self.quit()
 
             self.message('MAIN MENU', TColors.green, 100, (self.width / 2 - 220), 100)
-            self.button(100, 400, 70, 30, 'GO!', TColors.white, TColors.bright_red, TColors.red, 25, 106, 406, self.game_loop)
-            self.button(600, 400, 70, 30, 'QUIT', TColors.white, TColors.bright_green, TColors.green, 25, 606, 406, self.quit)
-
+            button_y = 300
+            draw_button(200, button_y, 'GO!', TColors.bright_red, self.game_loop)
+            draw_button(self.width - 200, button_y, 'QUIT', TColors.bright_green, self.quit)
             pygame.display.update()
 
         pygame.display.update()
 
     def init_new_other_car(self):
-        self.other_car.left = random.randrange(100, 600)
+        self.other_car = random.choice([self.passenger_car, self.passenger_car, self.passenger_car, self.truck_car])
+        if self.other_car == self.passenger_car:
+            self.other_car_sound = TSounds.normal_driving
+        elif self.other_car == self.truck_car:
+            self.other_car_sound = TSounds.truck
+        self.other_car.left = random.randrange(self.roadside_width, self.width - self.roadside_width - self.car_width   )
         self.other_car.top = 0
-
-    def stop_sounds(self):
-        if self.enable_sounds:
-            self.normal_driving.stop()
-            self.roadside_sound.stop()
-            self.accident.stop()
-
-    def switch_music(self):
-        if self.enable_sounds:
-            self.stop_sounds()
-            if self.is_on_the_roadside():
-                self.roadside_sound.play(loops=1000)
-            else:
-                self.normal_driving.play(loops=1000)
-
-    def read_last_wheel_value(self):
-        if self.racing_wheel is None:
-            return
-        wheel_event = self.racing_wheel.read_one()
-        while wheel_event is not None:
-            if wheel_event.code == ecodes.ABS_WHEEL:
-                self.last_wheel_value = wheel_event.value
-                print("abs_wheel value={}, center={}".format(self.last_wheel_value, self.wheel_center))
-            wheel_event = self.racing_wheel.read_one()
-        return self.last_wheel_value
-
-    def save_wheel_center(self):
-        if self.last_wheel_value is not None:
-            print("set wheel center to {}".format(self.last_wheel_value))
-            self.wheel_center = self.last_wheel_value
+        self.sounds.switch_music(self.other_car_sound)
 
     def get_speed(self):
         if self.is_on_the_roadside():
@@ -221,17 +309,17 @@ class TRacesGame:
 
     def game_loop(self):
         self.my_car.left = self.width / 2
-        self.my_car.top = self.height - 200
+        self.my_car.top = self.height - 250
         self.game_over = False
-        success_count = 0
+        self.score = 0
         self.init_new_other_car()
         save_is_on_road_side = False
         x_change = 0
-        self.switch_music()
+        self.sounds.switch_music(self.other_car_sound)
         while not self.game_over:
-            wheel_value = self.read_last_wheel_value()
-            if wheel_value is not None:
-                x_change = int( (wheel_value - self.wheel_center) / 50)
+            wheel_angle = self.racing_wheel.get_angle()
+            if wheel_angle is not None:
+                x_change = wheel_angle
 
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
@@ -266,22 +354,25 @@ class TRacesGame:
             if self.other_car.top > min(self.height - 100, self.my_car.bottom() + 200):
                 self.init_new_other_car()
                 if not self.is_on_the_roadside():
-                    success_count += 1
-                self.my_car.top -= 20
+                    if self.args.mode == "normal_mode":
+                        self.score += 1
+                if self.args.mode == "normal_mode":
+                    self.my_car.top -= 20
             else:
                 self.other_car.top += self.get_speed()
 
             self.other_car.draw()
             self.check_finish()
             self.car_crash()
-            self.score(success_count)
+            self.draw_params()
             if save_is_on_road_side != self.is_on_the_roadside():
                 save_is_on_road_side = self.is_on_the_roadside()
                 if self.is_on_the_roadside():
                     self.start_time_on_the_road_side = time.time()
+                    self.sounds.switch_music(TSounds.roadside)
                 else:
                     self.start_time_on_the_road_side = None
-                self.switch_music()
+                    self.sounds.switch_music(self.other_car_sound)
 
             clock.tick(30)
             pygame.display.update()
@@ -291,12 +382,12 @@ def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--silent", dest='silent', default=False, action="store_true")
     parser.add_argument("--wheel-center", dest='wheel_center', default=300, type=int)
+    parser.add_argument("--full-screen", dest='full_screen', default=False, action="store_true")
+    parser.add_argument("--mode", dest='mode', default="normal", required=False, help="can be normal_mode,gangster_mode")
     return parser.parse_args()
 
 
 if __name__ == "__main__":
-    pygame.display.init()
-    pygame.font.init()
     clock = pygame.time.Clock()
     args = parse_args()
     game = TRacesGame(args)

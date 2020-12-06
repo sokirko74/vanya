@@ -32,7 +32,7 @@ last = {
 }
 
 for event in dev.read_loop():
-
+    print (event)
     # calibrate zero on Y button
     if event.type == ecodes.EV_KEY:
         if categorize(event).keycode[0] == "BTN_WEST":
@@ -41,12 +41,16 @@ for event in dev.read_loop():
             center['rs_x'] = last['rs_x']
             center['rs_y'] = last['rs_y']
             print( 'calibrated' )
+        elif event.code == ecodes.BTN_BASE:
+            print("right button")
+        elif event.code == ecodes.BTN_BASE2:
+            print("left button")
 
     #read stick axis movement
     elif event.type == ecodes.EV_ABS:
         if event.code == ecodes.ABS_WHEEL:
             print("abs_whell value={}".format(event.value))
-        elif axis[ event.code ] in [ 'ls_x', 'ls_y', 'rs_x', 'rs_y' ]:
+        elif axis[ event.code] in [ 'ls_x', 'ls_y', 'rs_x', 'rs_y' ]:
             last[ axis[ event.code ] ] = event.value
 
             value = event.value - center[ axis[ event.code ] ]
