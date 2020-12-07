@@ -3,7 +3,12 @@ import time
 import random
 import argparse
 from evdev import list_devices, InputDevice, categorize, ecodes
+import os
+import math
 
+ASSETS_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'assets')
+SPRITES_DIR = os.path.join(ASSETS_DIR, 'sprites')
+SOUNDS_DIR = os.path.join(ASSETS_DIR, 'sounds')
 
 class TColors:
     gray = (119, 118, 110)
@@ -22,10 +27,12 @@ class TSprite:
         self.left = left
         self.width = width
         self.height = height
+        self.hitbox_size_decrease = 0
+        self.angle = 0
         self.image = pygame.transform.scale(pygame.image.load(image_file_name), (width, height))
 
     def draw(self):
-        self.gd.blit(self.image, (self.left, self.top))
+        self.gd.blit(pygame.transform.rotate(self.image, self.angle), (self.left, self.top))
 
     def right(self):
         return self.left + self.width
@@ -34,10 +41,14 @@ class TSprite:
         return self.top + self.height
 
     def intersect(self, other, possible_collision=10):
-        return self.left + possible_collision <= other.right() and \
-          other.left + possible_collision <= self.right() and \
-          self.top + possible_collision <= other.bottom() and \
-          other.top + possible_collision <= self.bottom()
+        return self.left + self.hitbox_size_decrease + possible_collision <= other.right() and \
+          other.left + self.hitbox_size_decrease + possible_collision <= self.right() and \
+          self.top + self.hitbox_size_decrease + possible_collision <= other.bottom() and \
+          other.top + self.hitbox_size_decrease + possible_collision <= self.bottom()
+    
+    def rotate(self, angle):
+        self.angle = angle
+
 
 
 class TRacingWheel:
@@ -103,6 +114,7 @@ class TCarType:
     my_car = 0
     passenger_car = 1
     truck = 2
+    tractor = 3
 
 
 class TSounds:
@@ -111,6 +123,7 @@ class TSounds:
     accident = 3
     victory = 4
     truck = 5
+    tractor = 6
 
     def __init__(self, enable_sounds):
         self.enable_sounds = enable_sounds
@@ -118,11 +131,12 @@ class TSounds:
         if self.enable_sounds:
             pygame.mixer.init()
             self.sounds = {
-                self.roadside: load_sound("roadside.wav", 0.4),
-                self.normal_driving: load_sound("normal_driving.wav", 0.3),
-                self.accident: load_sound("accident.wav", 1),
-                self.victory: load_sound("victory.wav", 1),
-                self.truck: load_sound("truck.wav", 0.6),
+                self.roadside: load_sound(os.path.join(SOUNDS_DIR, "roadside.wav"), 0.4),
+                self.normal_driving: load_sound(os.path.join(SOUNDS_DIR, "normal_driving.wav"), 0.3),
+                self.accident: load_sound(os.path.join(SOUNDS_DIR, "accident.wav"), 1),
+                self.victory: load_sound(os.path.join(SOUNDS_DIR, "victory.wav"), 1),
+                self.truck: load_sound(os.path.join(SOUNDS_DIR, "truck.wav"), 0.6),
+                self.tractor: load_sound(os.path.join(SOUNDS_DIR, "tractor.wav"), 1)
             }
 
     def stop_sounds(self):
@@ -133,14 +147,14 @@ class TSounds:
     def switch_music(self, type, loops=1000):
         if self.enable_sounds:
             self.stop_sounds()
-            print ("switch_music {}".format(type))
+            #print ("switch_music {}".format(type))
             self.sounds[type].play(loops=loops)
 
 
 class TRacesGame:
     def __init__(self, args):
         self.args = args
-        assert self.args.mode in {"normal_mode", "gangster_mode"}
+        #assert self.args.mode in {"normal_mode", "gangster_mode"}
         pygame.display.init()
         pygame.font.init()
         if args.full_screen:
@@ -155,17 +169,41 @@ class TRacesGame:
 
         self.roadside_width = 200
         self.car_width = 160
-        self.my_car = TSprite(self.gd, 'my_car.png', 0, 0, self.car_width, 160)
-        self.passenger_car = TSprite(self.gd, 'passenger_car.png', 0, 0, self.car_width, 160)
-        self.truck_car = TSprite(self.gd, 'truck.png', 0, 0, self.car_width, 260)
+        self.my_car = TSprite(self.gd, os.path.join(SPRITES_DIR, 'my_car.png'), 0, 0, self.car_width, 160)
+        self.passenger_car = TSprite(self.gd, os.path.join(SPRITES_DIR, 'passenger_car.png'), 0, 0, self.car_width, 160)
+        self.truck_car = TSprite(self.gd, os.path.join(SPRITES_DIR, 'truck.png'), 0, 0, self.car_width, 260)
+        self.tractor_car = TSprite(self.gd, os.path.join(SPRITES_DIR, 'tractor.png'), 0, 0, self.car_width, 260)
+        self.tractor_car.hitbox_size_decrease = 200
+
         self.other_car = None
         self.game_over = False
         self.score = 0
         self.finish_top = 250
         self.start_time_on_the_road_side = None
         self.other_car_sound = None
+        self.other_car_spawn_x = 0
         self.sounds = TSounds(not args.silent)
 
+        self.cars_to_sounds = {
+            self.passenger_car : TSounds.normal_driving,
+            self.truck_car : TSounds.truck,
+            self.tractor_car : TSounds.tractor
+        }
+        self.cars_to_spawnchance = {
+            self.passenger_car : 3,
+            self.truck_car : 2,
+            self.tractor_car : 1
+        }
+        self.cars_to_speeds = {
+            self.passenger_car : 1.3,
+            self.truck_car : 1.9,
+            self.tractor_car : 0.7
+        }
+        self.weighted_choice_cars = []
+        for car in self.cars_to_spawnchance:
+            for i in range(self.cars_to_spawnchance[car]):
+                self.weighted_choice_cars.append(car)
+        
         self.speed = 10
         self.racing_wheel = TRacingWheel(args.wheel_center)
 
@@ -195,7 +233,7 @@ class TRacesGame:
         exit()
 
     def draw_background(self):
-        blue_strip = pygame.image.load('border.jpg')
+        blue_strip = pygame.image.load(os.path.join(SPRITES_DIR, 'border.jpg'))
 
         img = pygame.transform.scale(blue_strip, (self.roadside_width, self.height))
         self.gd.blit(img, (0, 0))
@@ -256,7 +294,7 @@ class TRacesGame:
                         y + 6, func)
 
         self.sounds.stop_sounds()
-        v = pygame.transform.scale(pygame.image.load('background1.jpg'), (self.width, self.height))
+        v = pygame.transform.scale(pygame.image.load(os.path.join(SPRITES_DIR, 'background1.jpg')), (self.width, self.height))
         self.gd.blit(v, (0, 0))
         pygame.display.update()
         game_intro = False
@@ -284,12 +322,10 @@ class TRacesGame:
         pygame.display.update()
 
     def init_new_other_car(self):
-        self.other_car = random.choice([self.passenger_car, self.passenger_car, self.passenger_car, self.truck_car])
-        if self.other_car == self.passenger_car:
-            self.other_car_sound = TSounds.normal_driving
-        elif self.other_car == self.truck_car:
-            self.other_car_sound = TSounds.truck
-        self.other_car.left = random.randrange(self.roadside_width, self.width - self.roadside_width - self.car_width   )
+        self.other_car = random.choice(self.weighted_choice_cars)
+        self.other_car_sound = self.cars_to_sounds[self.other_car]
+        self.other_car.left = random.randrange(self.roadside_width, self.width - self.roadside_width - self.car_width)
+        self.other_car_spawn_x = self.other_car.left
         self.other_car.top = 0
         self.sounds.switch_music(self.other_car_sound)
 
@@ -306,6 +342,23 @@ class TRacesGame:
                 return 0
         else:
             return self.speed
+
+    def other_car_update(self):
+        self.other_car.top += self.cars_to_speeds[self.other_car] * self.get_speed()
+        
+        if (self.other_car == self.tractor_car):
+            ampl = 300
+            freq = 0.003
+            self.other_car.left = self.other_car_spawn_x + ampl * math.sin(freq * self.other_car.top)
+            self.other_car.rotate(math.atan(freq * ampl * math.cos(freq * self.other_car.top)) * 180 / math.pi)
+
+        if self.other_car.top > min(self.height - 100, self.my_car.bottom() + 200):
+            self.init_new_other_car()
+            if not self.is_on_the_roadside():
+                if self.args.mode == "normal_mode":
+                    self.score += 1
+            if self.args.mode == "normal_mode":
+                self.my_car.top -= 20
 
     def game_loop(self):
         self.my_car.left = self.width / 2
@@ -350,17 +403,8 @@ class TRacesGame:
             self.gd.fill(TColors.gray)
             self.draw_background()
 
-            self.my_car.draw()
-            if self.other_car.top > min(self.height - 100, self.my_car.bottom() + 200):
-                self.init_new_other_car()
-                if not self.is_on_the_roadside():
-                    if self.args.mode == "normal_mode":
-                        self.score += 1
-                if self.args.mode == "normal_mode":
-                    self.my_car.top -= 20
-            else:
-                self.other_car.top += self.get_speed()
-
+            self.my_car.draw()                
+            self.other_car_update()
             self.other_car.draw()
             self.check_finish()
             self.car_crash()
