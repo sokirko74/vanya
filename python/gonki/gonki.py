@@ -103,13 +103,62 @@ def load_sound(file_path, volume):
 
 
 class TCar:
-    def __init__(self, gd, image_path, width, height, sound_path, sound_volume):
-        self.image = image_path
-        self.image = TSprite(gd, image_path, 0, 0, width, height)
-        self.sound = pygame.mixer.Sound(sound_path)
-        self.sound.set_volume(sound_volume)
+    def __init__(self, gd):
+        self.image = None
+        self.sound = None
+        self.width = 0
+        self.height = 0
+        self.hitbox_width = 0
+        self.hitbox_height = 0
+        self.sound_volume = 0
+        self.speed = 0
+        self.spawn_weight = 0
 
+    def update(self, speedModifier):
+        self.image.top += self.speed * speedModifier
 
+class SimpleCar(TCar):
+    def __init__(self, gd, top=0, left=0):
+        self.width = 160
+        self.height = 160
+        self.image = TSprite(gd, os.path.join(SPRITES_DIR, 'passenger_car.png'), top, left, self.width, self.height)
+        self.sound = TSounds.normal_driving
+        self.speed = 1.3
+        self.spawn_weight = 3
+
+class TruckCar(TCar):
+    def __init__(self, gd, top=0, left=0):
+        self.width = 160
+        self.height = 260
+        self.image = TSprite(gd, os.path.join(SPRITES_DIR, 'truck.png'), top, left, self.width, self.height)
+        self.sound = TSounds.truck
+        self.speed = 1.9
+        self.spawn_weight = 2
+
+class TractorCar(TCar):
+    def __init__(self, gd, top=0, left=0):
+        self.width = 160
+        self.height = 260
+        self.image = TSprite(gd, os.path.join(SPRITES_DIR, 'tractor.png'), top, left, self.width, self.height)
+        self.sound = TSounds.truck
+        self.speed = 1 
+        self.spawn_weight = 1
+        self.image.hitbox_size_decrease = 200
+        self.ampl = 300
+        self.freq = 0.003
+        self.sin_start_point = random.randrange(0, 1000)
+        self.path_start_x = left
+        self.path_started = False
+
+    def update(self, speedModifier):
+        super().update(speedModifier)
+        if (not self.path_started):
+            self.path_start_x = self.image.left
+            self.path_started = True
+        self.image.left = self.path_start_x + self.ampl * math.sin(self.freq * self.image.top + self.sin_start_point)
+        self.image.rotate(math.atan(self.freq * self.ampl * math.cos(self.freq * self.image.top + self.sin_start_point)) * 180 / math.pi)
+
+    
 class TCarType:
     my_car = 0
     passenger_car = 1
@@ -170,10 +219,13 @@ class TRacesGame:
         self.roadside_width = 200
         self.car_width = 160
         self.my_car = TSprite(self.gd, os.path.join(SPRITES_DIR, 'my_car.png'), 0, 0, self.car_width, 160)
-        self.passenger_car = TSprite(self.gd, os.path.join(SPRITES_DIR, 'passenger_car.png'), 0, 0, self.car_width, 160)
-        self.truck_car = TSprite(self.gd, os.path.join(SPRITES_DIR, 'truck.png'), 0, 0, self.car_width, 260)
-        self.tractor_car = TSprite(self.gd, os.path.join(SPRITES_DIR, 'tractor.png'), 0, 0, self.car_width, 260)
-        self.tractor_car.hitbox_size_decrease = 200
+
+        self.enemy_car_types = [SimpleCar, TruckCar, TractorCar]
+        enemy_cars = []
+        for car in self.enemy_car_types:
+            enemy_cars.append(car(self.gd))
+        self.enemy_cars_weights = [car.spawn_weight for car in enemy_cars]
+        del enemy_cars
 
         self.other_car = None
         self.game_over = False
@@ -184,27 +236,9 @@ class TRacesGame:
         self.other_car_spawn_x = 0
         self.sounds = TSounds(not args.silent)
 
-        self.cars_to_sounds = {
-            self.passenger_car : TSounds.normal_driving,
-            self.truck_car : TSounds.truck,
-            self.tractor_car : TSounds.tractor
-        }
-        self.cars_to_spawnchance = {
-            self.passenger_car : 3,
-            self.truck_car : 2,
-            self.tractor_car : 1
-        }
-        self.cars_to_speeds = {
-            self.passenger_car : 1.3,
-            self.truck_car : 1.9,
-            self.tractor_car : 0.7
-        }
-        self.weighted_choice_cars = []
-        for car in self.cars_to_spawnchance:
-            for i in range(self.cars_to_spawnchance[car]):
-                self.weighted_choice_cars.append(car)
-        
-        self.speed = 10
+        self.game_speed = 10
+        self.my_car_horizontal_speed = 10
+        self.my_car_horizontal_speed_increase_with_get_speed = True
         self.racing_wheel = TRacingWheel(args.wheel_center)
 
     def message(self, mess, colour, size, x, y):
@@ -260,7 +294,7 @@ class TRacesGame:
             pygame.display.update()
 
     def car_crash(self):
-        if self.my_car.intersect(self.other_car):
+        if self.my_car.intersect(self.other_car.image):
             self.sounds.switch_music(TSounds.accident, loops=0)
             self.message('Авария', TColors.red, 100, 250, 280)
             time.sleep(3)
@@ -283,7 +317,7 @@ class TRacesGame:
         screen_text = font.render('score: ' + str(self.score), True, TColors.white)
         self.gd.blit(screen_text, (70, 0))
 
-        screen_text = font.render('speed: ' + str(self.speed), True, TColors.white)
+        screen_text = font.render('speed: ' + str(self.game_speed), True, TColors.white)
         self.gd.blit(screen_text, (70, 40))
 
         pygame.display.update()
@@ -322,12 +356,14 @@ class TRacesGame:
         pygame.display.update()
 
     def init_new_other_car(self):
-        self.other_car = random.choice(self.weighted_choice_cars)
-        self.other_car_sound = self.cars_to_sounds[self.other_car]
-        self.other_car.left = random.randrange(self.roadside_width, self.width - self.roadside_width - self.car_width)
-        self.other_car_spawn_x = self.other_car.left
-        self.other_car.top = 0
-        self.sounds.switch_music(self.other_car_sound)
+        other_car_type = random.choices(population=self.enemy_car_types, weights=self.enemy_cars_weights, k=1)[0]
+        self.other_car = other_car_type(self.gd)
+        padding = 0
+        if (other_car_type == TractorCar): padding += self.other_car.ampl
+        self.other_car.image.top = 0
+        self.other_car.image.left = random.randrange(self.roadside_width + padding, self.width - self.roadside_width - self.car_width - padding)
+        self.sounds.switch_music(self.other_car.sound)
+
 
     def get_speed(self):
         if self.is_on_the_roadside():
@@ -335,24 +371,18 @@ class TRacesGame:
                 self.start_time_on_the_road_side = time.time()
             time_on_the_road_side = time.time() - self.start_time_on_the_road_side
             if time_on_the_road_side < 3:
-                return max(int(self.speed / 2), 1)
+                return max(int(self.game_speed / 2), 1)
             elif time_on_the_road_side < 5:
                 return 1
             else:
                 return 0
         else:
-            return self.speed
+            return self.game_speed
 
     def other_car_update(self):
-        self.other_car.top += self.cars_to_speeds[self.other_car] * self.get_speed()
-        
-        if (self.other_car == self.tractor_car):
-            ampl = 300
-            freq = 0.003
-            self.other_car.left = self.other_car_spawn_x + ampl * math.sin(freq * self.other_car.top)
-            self.other_car.rotate(math.atan(freq * ampl * math.cos(freq * self.other_car.top)) * 180 / math.pi)
+        self.other_car.update(self.get_speed())
 
-        if self.other_car.top > min(self.height - 100, self.my_car.bottom() + 200):
+        if self.other_car.image.top > min(self.height - 100, self.my_car.bottom() + 200):
             self.init_new_other_car()
             if not self.is_on_the_roadside():
                 if self.args.mode == "normal_mode":
@@ -368,7 +398,7 @@ class TRacesGame:
         self.init_new_other_car()
         save_is_on_road_side = False
         x_change = 0
-        self.sounds.switch_music(self.other_car_sound)
+        self.sounds.switch_music(self.other_car.sound)
         while not self.game_over:
             wheel_angle = self.racing_wheel.get_angle()
             if wheel_angle is not None:
@@ -379,13 +409,13 @@ class TRacesGame:
                     self.game_over = True
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_LEFT:
-                        x_change = -10
+                        x_change = -self.my_car_horizontal_speed
                     elif event.key == pygame.K_RIGHT:
-                        x_change = +10
+                        x_change = +self.my_car_horizontal_speed
                     elif event.key == pygame.K_UP:
-                        self.speed += 1
+                        self.game_speed += 1
                     elif event.key == pygame.K_DOWN:
-                        self.speed = max(self.speed - 1, 1)
+                        self.game_speed = max(self.game_speed - 1, 1)
                     elif event.key == pygame.K_ESCAPE:
                         self.game_intro()
                     elif event.key == pygame.K_F1:
@@ -394,7 +424,9 @@ class TRacesGame:
                 if event.type == pygame.KEYUP:
                     if event.key == pygame.K_LEFT or event.key == pygame.K_RIGHT:
                         x_change = 0
-
+            if (self.my_car_horizontal_speed_increase_with_get_speed):
+                x_change += 0.01 * x_change * math.sqrt(self.get_speed())
+    
             self.my_car.left += x_change
             if self.my_car.left < 0:
                 self.my_car.left = 0
@@ -405,7 +437,7 @@ class TRacesGame:
 
             self.my_car.draw()                
             self.other_car_update()
-            self.other_car.draw()
+            self.other_car.image.draw()
             self.check_finish()
             self.car_crash()
             self.draw_params()
