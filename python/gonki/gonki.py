@@ -193,11 +193,10 @@ class TSounds:
             for k in  self.sounds.values():
                 k.stop()
 
-    def switch_music(self, type, loops=1000):
+    def switch_music(self, sound_type, loops=1000):
         if self.enable_sounds:
             self.stop_sounds()
-            #print ("switch_music {}".format(type))
-            self.sounds[type].play(loops=loops)
+            self.sounds[sound_type].play(loops=loops)
 
 
 class TRacesGame:
@@ -301,7 +300,7 @@ class TRacesGame:
             if self.args.mode == "normal_mode":
                 self.my_car.top += 20
             elif self.args.mode == "gangster_mode":
-                if self.other_car == self.truck_car:
+                if self.other_car == TruckCar:
                     self.my_car.top -= 40
                 else:
                     self.my_car.top -= 20
@@ -359,7 +358,8 @@ class TRacesGame:
         other_car_type = random.choices(population=self.enemy_car_types, weights=self.enemy_cars_weights, k=1)[0]
         self.other_car = other_car_type(self.gd)
         padding = 0
-        if (other_car_type == TractorCar): padding += self.other_car.ampl
+        if other_car_type == TractorCar:
+            padding += self.other_car.ampl
         self.other_car.image.top = 0
         self.other_car.image.left = random.randrange(self.roadside_width + padding, self.width - self.roadside_width - self.car_width - padding)
         self.sounds.switch_music(self.other_car.sound)
@@ -424,7 +424,7 @@ class TRacesGame:
                 if event.type == pygame.KEYUP:
                     if event.key == pygame.K_LEFT or event.key == pygame.K_RIGHT:
                         x_change = 0
-            if (self.my_car_horizontal_speed_increase_with_get_speed):
+            if self.my_car_horizontal_speed_increase_with_get_speed:
                 x_change += 0.01 * x_change * math.sqrt(self.get_speed())
     
             self.my_car.left += x_change
@@ -448,7 +448,7 @@ class TRacesGame:
                     self.sounds.switch_music(TSounds.roadside)
                 else:
                     self.start_time_on_the_road_side = None
-                    self.sounds.switch_music(self.other_car_sound)
+                    self.sounds.switch_music(self.other_car.sound)
 
             clock.tick(30)
             pygame.display.update()
