@@ -10,6 +10,7 @@ ASSETS_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'assets')
 SPRITES_DIR = os.path.join(ASSETS_DIR, 'sprites')
 SOUNDS_DIR = os.path.join(ASSETS_DIR, 'sounds')
 
+
 class TColors:
     gray = (119, 118, 110)
     white = (255, 255, 255)
@@ -48,7 +49,6 @@ class TSprite:
     
     def rotate(self, angle):
         self.angle = angle
-
 
 
 class TRacingWheel:
@@ -114,8 +114,9 @@ class TCar:
         self.speed = 0
         self.spawn_weight = 0
 
-    def update(self, speedModifier):
-        self.image.top += self.speed * speedModifier
+    def update(self, speed_modifier):
+        self.image.top += self.speed * speed_modifier
+
 
 class SimpleCar(TCar):
     def __init__(self, gd, top=0, left=0):
@@ -123,8 +124,10 @@ class SimpleCar(TCar):
         self.height = 160
         self.image = TSprite(gd, os.path.join(SPRITES_DIR, 'passenger_car.png'), top, left, self.width, self.height)
         self.sound = TSounds.normal_driving
+        self.accident_sound = TSounds.accident
         self.speed = 1.3
         self.spawn_weight = 3
+
 
 class TruckCar(TCar):
     def __init__(self, gd, top=0, left=0):
@@ -132,15 +135,18 @@ class TruckCar(TCar):
         self.height = 260
         self.image = TSprite(gd, os.path.join(SPRITES_DIR, 'truck.png'), top, left, self.width, self.height)
         self.sound = TSounds.truck
+        self.accident_sound = TSounds.accident
         self.speed = 1.9
         self.spawn_weight = 2
+
 
 class TractorCar(TCar):
     def __init__(self, gd, top=0, left=0):
         self.width = 160
         self.height = 260
         self.image = TSprite(gd, os.path.join(SPRITES_DIR, 'tractor.png'), top, left, self.width, self.height)
-        self.sound = TSounds.truck
+        self.sound = TSounds.tractor
+        self.accident_sound = TSounds.accident
         self.speed = 1 
         self.spawn_weight = 1
         self.image.hitbox_size_decrease = 200
@@ -152,11 +158,22 @@ class TractorCar(TCar):
 
     def update(self, speedModifier):
         super().update(speedModifier)
-        if (not self.path_started):
+        if not self.path_started:
             self.path_start_x = self.image.left
             self.path_started = True
         self.image.left = self.path_start_x + self.ampl * math.sin(self.freq * self.image.top + self.sin_start_point)
         self.image.rotate(math.atan(self.freq * self.ampl * math.cos(self.freq * self.image.top + self.sin_start_point)) * 180 / math.pi)
+
+
+class Spider(TCar):
+    def __init__(self, gd, top=0, left=0):
+        self.width = 160
+        self.height = 160
+        self.image = TSprite(gd, os.path.join(SPRITES_DIR, 'spider.png'), top, left, self.width, self.height)
+        self.sound = TSounds.spider
+        self.accident_sound = TSounds.spider_accident
+        self.speed = 1.3
+        self.spawn_weight = 1
 
     
 class TCarType:
@@ -164,6 +181,7 @@ class TCarType:
     passenger_car = 1
     truck = 2
     tractor = 3
+    spider = 4
 
 
 class TSounds:
@@ -173,6 +191,8 @@ class TSounds:
     victory = 4
     truck = 5
     tractor = 6
+    spider = 7
+    spider_accident = 8
 
     def __init__(self, enable_sounds):
         self.enable_sounds = enable_sounds
@@ -185,7 +205,9 @@ class TSounds:
                 self.accident: load_sound(os.path.join(SOUNDS_DIR, "accident.wav"), 1),
                 self.victory: load_sound(os.path.join(SOUNDS_DIR, "victory.wav"), 1),
                 self.truck: load_sound(os.path.join(SOUNDS_DIR, "truck.wav"), 0.6),
-                self.tractor: load_sound(os.path.join(SOUNDS_DIR, "tractor.wav"), 1)
+                self.tractor: load_sound(os.path.join(SOUNDS_DIR, "tractor.wav"), 1),
+                self.spider: load_sound(os.path.join(SOUNDS_DIR, "spider.wav"), 0.2),
+                self.spider_accident: load_sound(os.path.join(SOUNDS_DIR, "spider_accident.wav"), 1),
             }
 
     def stop_sounds(self):
@@ -219,7 +241,7 @@ class TRacesGame:
         self.car_width = 160
         self.my_car = TSprite(self.gd, os.path.join(SPRITES_DIR, 'my_car.png'), 0, 0, self.car_width, 160)
 
-        self.enemy_car_types = [SimpleCar, TruckCar, TractorCar]
+        self.enemy_car_types = [SimpleCar, TruckCar, TractorCar, Spider]
         enemy_cars = []
         for car in self.enemy_car_types:
             enemy_cars.append(car(self.gd))
@@ -292,11 +314,26 @@ class TRacesGame:
                     self.quit()
             pygame.display.update()
 
+    def redraw(self):
+        self.gd.fill(TColors.gray)
+        self.draw_background()
+        self.my_car.draw()
+        self.other_car.image.draw()
+
     def car_crash(self):
         if self.my_car.intersect(self.other_car.image):
-            self.sounds.switch_music(TSounds.accident, loops=0)
-            self.message('Авария', TColors.red, 100, 250, 280)
-            time.sleep(3)
+            self.sounds.switch_music(self.other_car.accident_sound, loops=0)
+            if isinstance( self.other_car, Spider):
+                for x in range(30):
+                    self.other_car.image.top -= 20
+                    self.other_car.image.left += random.randint(1, 30) - 15
+                    self.redraw()
+                    pygame.display.update()
+                    time.sleep(0.1)
+            else:
+                self.message('Авария', TColors.red, 100, 250, 280)
+                time.sleep(3)
+
             if self.args.mode == "normal_mode":
                 self.my_car.top += 20
             elif self.args.mode == "gangster_mode":
@@ -363,7 +400,6 @@ class TRacesGame:
         self.other_car.image.top = 0
         self.other_car.image.left = random.randrange(self.roadside_width + padding, self.width - self.roadside_width - self.car_width - padding)
         self.sounds.switch_music(self.other_car.sound)
-
 
     def get_speed(self):
         if self.is_on_the_roadside():
@@ -432,12 +468,9 @@ class TRacesGame:
                 self.my_car.left = 0
             if self.my_car.left > self.width - 50:
                 self.my_car.left = self.width - 50
-            self.gd.fill(TColors.gray)
-            self.draw_background()
-
-            self.my_car.draw()                
             self.other_car_update()
-            self.other_car.image.draw()
+
+            self.redraw()
             self.check_finish()
             self.car_crash()
             self.draw_params()
