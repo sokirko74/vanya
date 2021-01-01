@@ -54,6 +54,9 @@ class TSprite:
 class TRacingWheel:
     left_button = 295
     right_button = 294
+    left_pedal =  10
+    right_pedal = 9
+
     def __init__(self, center):
         self.raw_angle = None
         self.center = center
@@ -88,7 +91,26 @@ class TRacingWheel:
             elif event.code == TRacingWheel.right_button:
                 print ("right_button")
                 self.pressed_buttons.add(TRacingWheel.right_button)
+            elif event.code == TRacingWheel.left_pedal:
+                if event.value > 5:
+                    self.pressed_buttons.add(TRacingWheel.left_pedal)
+                else:
+                    if TRacingWheel.left_pedal in self.pressed_buttons:
+                        self.pressed_buttons.remove(TRacingWheel.left_pedal)
+                print("left_pedal value={} {}".format(event.value, self.pressed_buttons))
+            elif event.code == TRacingWheel.right_pedal:
+                print("right_pedal")
+                if event.value > 5:
+                    self.pressed_buttons.add(TRacingWheel.right_pedal)
+                else:
+                    if TRacingWheel.right_pedal in self.pressed_buttons:
+                        self.pressed_buttons.remove(TRacingWheel.right_pedal)
+
+
             event = self.device.read_one()
+
+    def is_pedal_pressed(self):
+        return TRacingWheel.right_pedal in self.pressed_buttons or TRacingWheel.left_pedal in self.pressed_buttons
 
     def get_angle(self):
         self.read_events()
@@ -191,9 +213,8 @@ class Mosquito(TCar):
         self.sound = TSounds.mosquito
         self.accident_sound = TSounds.mosquito_accident
         self.speed = 1.3
-        self.spawn_weight = 1.2
+        self.spawn_weight = 1
 
-    
 
 class TSounds:
     roadside = 1
@@ -206,6 +227,7 @@ class TSounds:
     spider_accident = 8
     mosquito = 9
     mosquito_accident = 10
+    car_honk = 11
 
     def __init__(self, enable_sounds):
         self.enable_sounds = enable_sounds
@@ -223,6 +245,7 @@ class TSounds:
                 self.spider_accident: load_sound(os.path.join(SOUNDS_DIR, "spider_accident.wav"), 1),
                 self.mosquito: load_sound(os.path.join(SOUNDS_DIR, "mosquito.wav"), 0.2),
                 self.mosquito_accident: load_sound(os.path.join(SOUNDS_DIR, "mosquito_accident.wav"), 0.2),
+                self.car_honk: load_sound(os.path.join(SOUNDS_DIR, "car_honk.wav"), 1),
             }
 
     def stop_sounds(self):
@@ -234,6 +257,9 @@ class TSounds:
         if self.enable_sounds:
             self.stop_sounds()
             self.sounds[sound_type].play(loops=loops)
+
+    def play_sound(self, sound_type):
+        self.sounds[sound_type].play()
 
 
 class TRacesGame:
@@ -336,29 +362,28 @@ class TRacesGame:
         self.other_car.image.draw()
 
     def car_crash(self):
-        if self.my_car.intersect(self.other_car.image):
-            self.sounds.switch_music(self.other_car.accident_sound, loops=0)
-            if self.other_car.retreat_after_crash:
-                for x in range(20):
-                    self.other_car.image.top -= 30
-                    self.other_car.image.left += random.randint(1, 30) - 15
-                    self.redraw()
-                    pygame.display.update()
-                    time.sleep(0.1)
-            else:
-                self.message('Авария', TColors.red, 100, 250, 280)
-                time.sleep(3)
+        self.sounds.switch_music(self.other_car.accident_sound, loops=0)
+        if self.other_car.retreat_after_crash:
+            for x in range(20):
+                self.other_car.image.top -= 30
+                self.other_car.image.left += random.randint(1, 30) - 15
+                self.redraw()
+                pygame.display.update()
+                time.sleep(0.1)
+        else:
+            self.message('Авария', TColors.red, 100, 250, 280)
+            time.sleep(3)
 
-            if self.args.mode == "normal_mode":
-                self.my_car.top += 20
-            elif self.args.mode == "gangster_mode":
-                if self.other_car == TruckCar:
-                    self.my_car.top -= 40
-                else:
-                    self.my_car.top -= 20
-                self.score += 1
-            self.init_new_other_car()
-            pygame.display.update()
+        if self.args.mode == "normal_mode":
+            self.my_car.top += 20
+        elif self.args.mode == "gangster_mode":
+            if isinstance(self.other_car, TruckCar):
+                self.my_car.top -= 40
+            else:
+                self.my_car.top -= 20
+            self.score += 1
+        self.init_new_other_car()
+        pygame.display.update()
 
     def is_on_the_roadside(self):
         return self.my_car.left < self.roadside_width or self.my_car.right() > self.width - self.roadside_width
@@ -455,6 +480,12 @@ class TRacesGame:
             wheel_angle = self.racing_wheel.get_angle()
             if wheel_angle is not None:
                 x_change = wheel_angle
+            if self.racing_wheel.is_pedal_pressed():
+                self.sounds.play_sound(TSounds.car_honk)
+                if isinstance(self.other_car, Mosquito):
+                    time.sleep(1)
+                    self.car_crash()
+
 
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
@@ -488,7 +519,8 @@ class TRacesGame:
 
             self.redraw()
             self.check_finish()
-            self.car_crash()
+            if self.my_car.intersect(self.other_car.image):
+                self.car_crash()
             self.draw_params()
             if save_is_on_road_side != self.is_on_the_roadside():
                 save_is_on_road_side = self.is_on_the_roadside()
