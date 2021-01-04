@@ -92,7 +92,7 @@ class TRacingWheel:
                 print ("right_button")
                 self.pressed_buttons.add(TRacingWheel.right_button)
             elif event.code == TRacingWheel.left_pedal:
-                if event.value > 5:
+                if event.value > 120:
                     self.pressed_buttons.add(TRacingWheel.left_pedal)
                 else:
                     if TRacingWheel.left_pedal in self.pressed_buttons:
@@ -100,7 +100,7 @@ class TRacingWheel:
                 print("left_pedal value={} {}".format(event.value, self.pressed_buttons))
             elif event.code == TRacingWheel.right_pedal:
                 print("right_pedal")
-                if event.value > 5:
+                if event.value > 120:
                     self.pressed_buttons.add(TRacingWheel.right_pedal)
                 else:
                     if TRacingWheel.right_pedal in self.pressed_buttons:
@@ -109,8 +109,11 @@ class TRacingWheel:
 
             event = self.device.read_one()
 
-    def is_pedal_pressed(self):
-        return TRacingWheel.right_pedal in self.pressed_buttons or TRacingWheel.left_pedal in self.pressed_buttons
+    def is_left_pedal_pressed(self):
+        return TRacingWheel.left_pedal in self.pressed_buttons
+
+    def is_right_pedal_pressed(self):
+        return TRacingWheel.right_pedal in self.pressed_buttons
 
     def get_angle(self):
         self.read_events()
@@ -227,7 +230,8 @@ class TSounds:
     spider_accident = 8
     mosquito = 9
     mosquito_accident = 10
-    car_honk = 11
+    car_honk_left = 11
+    car_honk_right = 12
 
     def __init__(self, enable_sounds):
         self.enable_sounds = enable_sounds
@@ -245,7 +249,8 @@ class TSounds:
                 self.spider_accident: load_sound(os.path.join(SOUNDS_DIR, "spider_accident.wav"), 1),
                 self.mosquito: load_sound(os.path.join(SOUNDS_DIR, "mosquito.wav"), 0.2),
                 self.mosquito_accident: load_sound(os.path.join(SOUNDS_DIR, "mosquito_accident.wav"), 0.2),
-                self.car_honk: load_sound(os.path.join(SOUNDS_DIR, "car_honk.wav"), 1),
+                self.car_honk: load_sound(os.path.join(SOUNDS_DIR, "car_honk_left.wav"), 0.3),
+                self.car_honk: load_sound(os.path.join(SOUNDS_DIR, "car_honk_right.wav"), 0.3),
             }
 
     def stop_sounds(self):
@@ -480,9 +485,16 @@ class TRacesGame:
             wheel_angle = self.racing_wheel.get_angle()
             if wheel_angle is not None:
                 x_change = wheel_angle
-            if self.racing_wheel.is_pedal_pressed():
-                self.sounds.play_sound(TSounds.car_honk)
+
+            if self.racing_wheel.is_left_pedal_pressed():
+                self.sounds.play_sound(TSounds.car_honk_left)
                 if isinstance(self.other_car, Mosquito):
+                    time.sleep(1)
+                    self.car_crash()
+
+            if self.racing_wheel.is_right_pedal_pressed():
+                self.sounds.play_sound(TSounds.car_honk_right)
+                if isinstance(self.other_car, Spider):
                     time.sleep(1)
                     self.car_crash()
 
