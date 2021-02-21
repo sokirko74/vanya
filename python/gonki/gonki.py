@@ -5,8 +5,7 @@ import argparse
 from evdev import list_devices, InputDevice, categorize, ecodes
 import os
 import math
-
-ASSETS_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'assets')
+ASSETS_DIR = "assets"
 SPRITES_DIR = os.path.join(ASSETS_DIR, 'sprites')
 SOUNDS_DIR = os.path.join(ASSETS_DIR, 'sounds')
 
@@ -144,7 +143,7 @@ class TCar:
         self.image.top += self.speed * speed_modifier
 
 
-class SimpleCar(TCar):
+class TSimpleCar(TCar):
     def __init__(self, gd, top=0, left=0):
         super().__init__()
         self.width = 160
@@ -156,7 +155,7 @@ class SimpleCar(TCar):
         self.spawn_weight = 2
 
 
-class TruckCar(TCar):
+class TTruckCar(TCar):
     def __init__(self, gd, top=0, left=0):
         super().__init__()
         self.width = 160
@@ -194,7 +193,7 @@ class TractorCar(TCar):
         self.image.rotate(math.atan(self.freq * self.ampl * math.cos(self.freq * self.image.top + self.sin_start_point)) * 180 / math.pi)
 
 
-class Spider(TCar):
+class TSpider(TCar):
     def __init__(self, gd, top=0, left=0):
         super().__init__()
         self.retreat_after_crash = True
@@ -207,7 +206,7 @@ class Spider(TCar):
         self.spawn_weight = 1
 
 
-class Mosquito(TCar):
+class TMosquito(TCar):
     def __init__(self, gd, top=0, left=0):
         self.retreat_after_crash = True
         self.width = 160
@@ -249,8 +248,8 @@ class TSounds:
                 self.spider_accident: load_sound(os.path.join(SOUNDS_DIR, "spider_accident.wav"), 1),
                 self.mosquito: load_sound(os.path.join(SOUNDS_DIR, "mosquito.wav"), 0.2),
                 self.mosquito_accident: load_sound(os.path.join(SOUNDS_DIR, "mosquito_accident.wav"), 0.2),
-                self.car_honk: load_sound(os.path.join(SOUNDS_DIR, "car_honk_left.wav"), 0.3),
-                self.car_honk: load_sound(os.path.join(SOUNDS_DIR, "car_honk_right.wav"), 0.3),
+                self.car_honk_left: load_sound(os.path.join(SOUNDS_DIR, "car_honk_left.wav"), 0.3),
+                self.car_honk_right: load_sound(os.path.join(SOUNDS_DIR, "car_honk_right.wav"), 0.3),
             }
 
     def stop_sounds(self):
@@ -287,7 +286,7 @@ class TRacesGame:
         self.car_width = 160
         self.my_car = TSprite(self.gd, os.path.join(SPRITES_DIR, 'my_car.png'), 0, 0, self.car_width, 160)
 
-        self.enemy_car_types = [SimpleCar, TruckCar, TractorCar, Spider, Mosquito]
+        self.enemy_car_types = [TSimpleCar, TTruckCar, TractorCar, TSpider, TMosquito]
         enemy_cars = []
         for car in self.enemy_car_types:
             enemy_cars.append(car(self.gd))
@@ -380,9 +379,12 @@ class TRacesGame:
             time.sleep(3)
 
         if self.args.mode == "normal_mode":
-            self.my_car.top += 20
+            if isinstance(self.other_car, TSpider) or isinstance(self.other_car, TMosquito):
+                self.my_car.top -= 20
+            else:
+                self.my_car.top += 20
         elif self.args.mode == "gangster_mode":
-            if isinstance(self.other_car, TruckCar):
+            if isinstance(self.other_car, TTruckCar):
                 self.my_car.top -= 40
             else:
                 self.my_car.top -= 20
@@ -400,6 +402,9 @@ class TRacesGame:
 
         screen_text = font.render('speed: ' + str(self.game_speed), True, TColors.white)
         self.gd.blit(screen_text, (70, 40))
+
+        screen_text = font.render('position: ' + str(self.my_car.top), True, TColors.white)
+        self.gd.blit(screen_text, (70, 80))
 
         pygame.display.update()
 
@@ -465,12 +470,15 @@ class TRacesGame:
         self.other_car.update(self.get_speed())
 
         if self.other_car.image.top > min(self.height - 100, self.my_car.bottom() + 200):
-            self.init_new_other_car()
             if not self.is_on_the_roadside():
                 if self.args.mode == "normal_mode":
                     self.score += 1
             if self.args.mode == "normal_mode":
-                self.my_car.top -= 20
+                if isinstance(self.other_car, TSpider) or isinstance(self.other_car, TMosquito):
+                    self.my_car.top += 10
+                else:
+                    self.my_car.top -= 20
+            self.init_new_other_car()
 
     def game_loop(self):
         self.my_car.left = self.width / 2
@@ -488,16 +496,15 @@ class TRacesGame:
 
             if self.racing_wheel.is_left_pedal_pressed():
                 self.sounds.play_sound(TSounds.car_honk_left)
-                if isinstance(self.other_car, Mosquito):
+                if isinstance(self.other_car, TMosquito):
                     time.sleep(1)
                     self.car_crash()
 
             if self.racing_wheel.is_right_pedal_pressed():
                 self.sounds.play_sound(TSounds.car_honk_right)
-                if isinstance(self.other_car, Spider):
+                if isinstance(self.other_car, TSpider):
                     time.sleep(1)
                     self.car_crash()
-
 
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
@@ -544,6 +551,8 @@ class TRacesGame:
                     self.sounds.switch_music(self.other_car.sound)
 
             clock.tick(30)
+            if self.my_car.top + 30 > self.height:
+                self.my_car.top = self.heightc - 30
             pygame.display.update()
 
 
@@ -552,7 +561,7 @@ def parse_args():
     parser.add_argument("--silent", dest='silent', default=False, action="store_true")
     parser.add_argument("--wheel-center", dest='wheel_center', default=300, type=int)
     parser.add_argument("--full-screen", dest='full_screen', default=False, action="store_true")
-    parser.add_argument("--mode", dest='mode', default="normal", required=False, help="can be normal_mode,gangster_mode")
+    parser.add_argument("--mode", dest='mode', default="normal_mode", required=False, help="can be normal_mode,gangster_mode")
     return parser.parse_args()
 
 
