@@ -235,6 +235,7 @@ class TApplication(tk.Frame):
         self.master.bind('<Down>', self.down_key)
         self.master.bind("<Configure>", self.resize)
         self.master.bind('<Control-n>', self.init_new_game)
+        self.master.bind('<space>', self.init_new_game)
         self.master.bind('<Control-N>', self.init_new_game)
         self.master.bind("<Button-3>", self.init_new_game)
         self.master.bind('<Control-x>', self.quit_command)
@@ -271,6 +272,9 @@ class TApplication(tk.Frame):
                     self.canvas.configure(bg="green")
                     self.canvas.update()
                     self.sprite.sprite_form.play_success()
+                    self.canvas.create_text(300, 300,
+                                  text="нажать пробел для следующей игры",
+                                  justify=tk.CENTER)
                 else:
                     self.canvas.configure(bg="red")
                     self.canvas.update()
