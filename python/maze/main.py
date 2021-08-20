@@ -321,10 +321,13 @@ def next_map():
 
 
 def update_text_surface(text=None):
-    global text_surface
+    global text_surfaces
     if text is not None:
-        text_surface = font.render(text, False, text_color)
-    screen.blit(text_surface, (SCREEN_WIDTH - 400, SCREEN_HEIGHT - 1000))
+        texts = text.splitlines()
+        text_surfaces = [None] * len(texts)
+        for i, t in enumerate(texts):
+            text_surfaces[i] = font.render(t, False, text_color)
+            screen.blit(text_surfaces[i], (SCREEN_WIDTH - font.size(t)[1] * 10 - 50, SCREEN_HEIGHT - 1000 + font.size(t)[1] * i))
 
 
 def arrange_buttons():
@@ -370,7 +373,7 @@ def check_game_events(event):
                 player = playable_types[playable_types_buttons.index(event.ui_element)]()
                 player.set_pos(grid_to_screen(gen.target_room_source))
         elif event.user_type == pygame_gui.UI_HORIZONTAL_SLIDER_MOVED:
-            for s in settings_sliders: s.update()
+            [s for s in settings_sliders if s.s == event.ui_element][0].update()
             if event.ui_element == settings_sliders[0].s:
                 if settings_sliders[0].s.current_value >= settings_sliders[1].s.current_value:
                     settings_sliders[1].s.current_value = settings_sliders[0].s.current_value
@@ -403,9 +406,8 @@ manager = pygame_gui.UIManager((SCREEN_WIDTH, SCREEN_HEIGHT))
 
 # --- objects ---
 
-font = pygame.font.SysFont('Impact', 30, italic=True, bold=False)
-text_color = (200, 200, 200)
-text_surface = font.render('MAZEGAME', False, text_color)
+font = pygame.font.SysFont('Impact', 20, italic=False, bold=True)
+text_color = (120, 120, 120)
 
 gen = generator.Generator()
 player = Car()
@@ -413,6 +415,7 @@ rendered_map = None
 tiles = []
 walls = []
 target_tiles = []
+text_surfaces = []
 playable_types = Player.__subclasses__()
 playable_types_buttons = []
 score = 0
@@ -464,7 +467,10 @@ while is_running:
     manager.update(time_delta)
     player.update()
     screen.blit(rendered_map, (0, 0))
-    update_text_surface(f'MazeGame    |    Score:   {player.score}')
+    update_text_surface(f'MazeGame    |    Score:   {player.score} \n\n'
+                        f'R - New Level\n'
+                        f'F - Fullscreen\n'
+                        f'SPACE - Pause')
     player.draw(screen)
     if (is_paused): manager.draw_ui(screen)
     pygame.display.update([player.rect, screen_rect])

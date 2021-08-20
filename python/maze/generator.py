@@ -18,7 +18,7 @@ def add_tuples(a, b):
 
 
 class Generator():
-    def __init__(self, grid_rows=40, grid_cols=40, min_rooms=3, max_rooms=4, min_room_connections=2, max_room_size=50,
+    def __init__(self, grid_rows=40, grid_cols=75, min_rooms=3, max_rooms=4, min_room_connections=2, max_room_size=50,
                  allow_redundant_connections=False, distance_to_target=75, path_width=4):
         self.rows = grid_rows
         self.cols = grid_cols
@@ -263,7 +263,7 @@ class Generator():
         cur_pos = start
         while (cur_pos != end):
             val = self.grid[cur_pos[1]][cur_pos[0]]
-            if val == WALL_TILE or val == -1: return -1, 0
+            if val == WALL_TILE or not self.__check_bounds(cur_pos): return -1, 0
             cur_pos = add_tuples(cur_pos, extend_dir)
         if self.grid[end[1]][end[0]] == WALKABLE_TILE or self.grid[end[1]][end[0]] == WALL_TILE:
             return -1, 0
