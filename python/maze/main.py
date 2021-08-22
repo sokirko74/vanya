@@ -60,23 +60,26 @@ class Player(pygame.sprite.Sprite):
         self.sound_moving = sound_moving
         self.sound_crash = pygame.mixer.Sound(sound_crash)
         self.sound_success = pygame.mixer.Sound(sound_success)
-        self.width = height
-        self.height = width
+        self.width = width
+        self.height = height
         pygame.mixer.music.load(self.sound_moving)
         pygame.mixer.music.play(-1, fade_ms=2000)
-        self.image = pygame.transform.scale(self.image, (BLOCK_SIZE * self.height * self.size, BLOCK_SIZE * self.width *self.size))
+        self.image = pygame.transform.scale(self.image, (BLOCK_SIZE * self.width * self.size, BLOCK_SIZE * self.height *self.size))
         self.rect = self.image.get_rect()
-        self.circle_collider_radius = collider_size * self.size
+        self.collider_size_start = collider_size
+        self.collider_size = self.collider_size_start
         self.default_image = self.image.copy()
         self.default_rect = self.rect.copy()
         self.rect.center = screen_rect.center
         self.max_speed = max_speed
         self.score = 0
+        self.set_scale(size)
 
     def set_scale(self, scale):
         self.size = scale
+        self.collider_size = self.collider_size_start * self.size
         self.image = pygame.transform.scale(self.image,
-                                            (BLOCK_SIZE * self.height * self.size, BLOCK_SIZE * self.width * self.size))
+                                            (BLOCK_SIZE * self.width * self.size, BLOCK_SIZE * self.height * self.size))
         self.rect = self.image.get_rect()
         self.default_image = self.image.copy()
         self.default_rect = self.rect.copy()
@@ -89,14 +92,17 @@ class Player(pygame.sprite.Sprite):
         new_rect = self.rect.copy()
         new_rect.x += round(self.move_x)
         new_rect.y += round(self.move_y)
-        if circle_collidelist(new_rect.center, self.circle_collider_radius, [t.rect for t in target_tiles]) != -1:
+        if self.collision_check(new_rect, [t.rect for t in target_tiles]):
             if not chan_2.get_busy(): chan_2.play(self.sound_success)
             self.score += 1
             next_map()
-        elif circle_collidelist(new_rect.center, self.circle_collider_radius, walls) == -1:
+        elif not self.collision_check(new_rect, walls):
             self.rect = new_rect
         elif not chan_2.get_busy():
             chan_2.play(self.sound_crash)
+
+    def collision_check(self, new_rect, c_ls):
+        return circle_collidelist(new_rect.center, self.collider_size, c_ls) != -1
 
     def update_move(self):
         pass
@@ -116,9 +122,6 @@ class Bee(Player):
                          max_speed=6,
                          collider_size=5,
                          sound_moving=os.path.join('assets', 'sounds', 'bee_moving.wav'))
-
-    def draw(self, surface):
-        surface.blit(self.image, self.rect)
 
     def update_move(self):
         pass
@@ -153,7 +156,7 @@ class Car(Player):
                          height=4,
                          width=3,
                          max_speed=4,
-                         collider_size=15,
+                         collider_size=16,
                          sound_moving=os.path.join('assets', 'sounds', 'truck_driving.wav'),
                          sound_crash=os.path.join('assets', 'sounds', 'truck_crash.wav'))
 
@@ -163,9 +166,30 @@ class Car(Player):
         pygame.mixer.music.play(-1, fade_ms=2000)
         self.move_dir = 0
         self.rotation = 0
+        self.rotation_changed = True
         self.tire_rotation = 0
         self.tire_rotation_max = 40
         self.target_rotation = 0
+
+        self.collider_front_start = (0, -self.height / 4 * self.collider_size)
+        self.collider_back_start = (0, self.height / 4 * self.collider_size)
+        self.collider_front = self.collider_front_start
+        self.collider_back = self.collider_back_start
+
+    def draw(self, surface):
+        surface.blit(self.image, self.rect)
+
+        img1 = pygame.Surface((10, 10))
+        img1.fill(GREEN)
+        img1_rect = img1.get_rect()
+        img1_rect.center = add_tuples(self.rect.center, self.collider_front)
+        surface.blit(img1, img1_rect)
+
+        img2 = pygame.Surface((10, 10))
+        img2.fill(GREEN)
+        img2_rect = img2.get_rect()
+        img2_rect.center = add_tuples(self.rect.center, self.collider_back)
+        surface.blit(img2, img2_rect)
 
     def update(self):
         self.target_rotation += self.tire_rotation
@@ -177,11 +201,31 @@ class Car(Player):
             self.switch_sound = False
         if self.move_dir != 0:
             if self.rotation != self.target_rotation:
-                self.rotation += self.tire_rotation / 5
-                self.image, self.rect = rot_center(self.default_image, self.rect, self.rotation)
-        self.rotation %= 360
-        self.target_rotation %= 360
+                c_f = self.collider_front
+                c_b = self.collider_back
+                self.collider_front = rotate_point(self.collider_front_start, self.rotation - 90)
+                self.collider_back = rotate_point(self.collider_back_start, self.rotation - 90)
+                if self.collision_check(self.rect, walls):
+                    self.collider_front = c_f
+                    self.collider_back = c_b
+                else:
+                    self.rotation += self.tire_rotation / 5
+                    self.image, self.rect = rot_center(self.default_image, self.rect, self.rotation)
+                    self.target_rotation %= 360
+                    self.rotation %= 360
         super().update()
+
+    def set_scale(self, scale):
+        super().set_scale(scale)
+        self.collider_front_start = (0, -self.height / 4 * self.collider_size)
+        self.collider_back_start = (0, self.height / 4 * self.collider_size)
+        self.collider_front = self.collider_front_start
+        self.collider_back = self.collider_back_start
+
+    def collision_check(self, new_rect, c_ls):
+        if circle_collidelist(add_tuples(new_rect.center, self.collider_front), self.collider_size, c_ls) != -1: return True
+        if circle_collidelist(add_tuples(new_rect.center, self.collider_back), self.collider_size, c_ls) != -1: return True
+        return False
 
     def update_move(self):
         self.move_x = -math.sin(math.radians(self.rotation)) * self.max_speed * self.move_dir
@@ -259,6 +303,23 @@ def circle_collidelist(center, r, rec_ls):
         if circle_distance_x <= rec_ls[i].w/2.0 or circle_distance_y <= rec_ls[i].h/2.0:
             return i
     return -1
+
+
+def rotate_point(pt, angle):
+    x = pt[1] * math.cos(math.radians(angle)) + pt[0] * math.sin(math.radians(angle))
+    y = pt[0] * math.cos(math.radians(angle)) - pt[1] * math.sin(math.radians(angle))
+    return (x, y)
+
+
+def rotate_shape(pt_ls, angle):
+    res = []
+    s = math.sin(math.radians(angle))
+    c = math.cos(math.radians(angle))
+    for pt in pt_ls:
+        x = pt[1] * c + pt[0] * s
+        y = pt[0] * c - pt[1] * s
+        res.append((x, y))
+    return res
 
 
 def rot_center(image, rect, angle):
