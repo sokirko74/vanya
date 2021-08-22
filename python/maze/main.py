@@ -176,21 +176,6 @@ class Car(Player):
         self.collider_front = self.collider_front_start
         self.collider_back = self.collider_back_start
 
-    def draw(self, surface):
-        surface.blit(self.image, self.rect)
-
-        img1 = pygame.Surface((10, 10))
-        img1.fill(GREEN)
-        img1_rect = img1.get_rect()
-        img1_rect.center = add_tuples(self.rect.center, self.collider_front)
-        surface.blit(img1, img1_rect)
-
-        img2 = pygame.Surface((10, 10))
-        img2.fill(GREEN)
-        img2_rect = img2.get_rect()
-        img2_rect.center = add_tuples(self.rect.center, self.collider_back)
-        surface.blit(img2, img2_rect)
-
     def update(self):
         self.target_rotation += self.tire_rotation
         if self.switch_sound:
