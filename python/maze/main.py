@@ -16,18 +16,19 @@ F - Enter Fullscreen
 
 # === CONSTANTS ===
 
-BLACK = (0, 0, 0)
-WHITE = (255, 255, 255)
-
-RED = (255, 0, 0)
-GREEN = (0, 255, 0)
-BLUE = (0, 0, 255)
+MAP_FILL_SCREEN = True
 
 SCREEN_WIDTH = 1920
 SCREEN_HEIGHT = 1080
 
 BLOCK_SIZE = 25
 
+BLACK = (0, 0, 0)
+WHITE = (255, 255, 255)
+
+RED = (255, 0, 0)
+GREEN = (0, 255, 0)
+BLUE = (0, 0, 255)
 
 # === CLASSES ===
 
@@ -276,8 +277,8 @@ def clear_map():
 
 
 def grid_to_screen(pos):
-    t = (pos[0] * BLOCK_SIZE - len(gen.grid[0]) * BLOCK_SIZE / 2,
-         pos[1] * BLOCK_SIZE - len(gen.grid) * BLOCK_SIZE / 2)
+    t = (pos[0] * BLOCK_SIZE - len(gen.grid[0]) * BLOCK_SIZE / 2 - 10,
+         pos[1] * BLOCK_SIZE - len(gen.grid) * BLOCK_SIZE / 2 - 10)
     return t
 
 
@@ -311,7 +312,6 @@ def toggle_pause():
 
 
 def next_map():
-    player.set_pos(grid_to_screen(gen.start))
     clear_map()
     setup_map()
     render_map()
@@ -344,6 +344,9 @@ def arrange_buttons():
 def start_game():
     global rendered_map
     screen.fill(BLACK)
+    if MAP_FILL_SCREEN:
+        gen.rows = int(SCREEN_HEIGHT / BLOCK_SIZE)
+        gen.cols = int(SCREEN_WIDTH / BLOCK_SIZE)
     setup_map()
     render_map()
     rendered_map = screen.copy()

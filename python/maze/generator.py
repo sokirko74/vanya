@@ -18,7 +18,7 @@ def add_tuples(a, b):
 
 
 class Generator():
-    def __init__(self, grid_rows=40, grid_cols=75, min_rooms=3, max_rooms=4, min_room_connections=2, max_room_size=50,
+    def __init__(self, grid_rows=40, grid_cols=75, min_rooms=3, max_rooms=4, min_room_connections=2, max_room_size=100,
                  allow_redundant_connections=False, distance_to_target=75, path_width=4):
         self.rows = grid_rows
         self.cols = grid_cols
@@ -55,6 +55,7 @@ class Generator():
         self.grid = self.get_grid()
 
     def generate_maze(self):
+        self.grid = self.get_grid()
         room_amount = random.randint(self.min_rooms, self.max_rooms)
         start_i = (self.padding + 2, self.padding + 2)
         end_i = (len(self.grid[0]) - self.padding - 2, len(self.grid) - self.padding - 2)
