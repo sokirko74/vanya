@@ -21,10 +21,10 @@ class TMazeCommon:
 
     @staticmethod
     def rect_collide_list(rect, obstacles):
-        for index, obstacle in enumerate(obstacles):
+        for obstacle in obstacles:
             if rect.colliderect(obstacle):
-                return index
-        return -1
+                return True
+        return False
 
     @staticmethod
     def rotate_point(pt, angle):

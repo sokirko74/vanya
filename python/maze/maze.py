@@ -88,7 +88,7 @@ class TKeyEventType:
 
 
 class TMaze:
-    def __init__(self, use_joystick, is_full_screen):
+    def __init__(self, use_joystick, is_full_screen, player_type_str):
         self.gen = generator.Generator()
         self.logger = setup_logging()
         self.rendered_map = None
@@ -124,7 +124,10 @@ class TMaze:
         self.manager = pygame_gui.UIManager((self.maze_width, self.maze_height))
         self.chan_2 = pygame.mixer.Channel(2)
         self.font = pygame.font.SysFont('Impact', 20, italic=False, bold=True)
-        self.player = Bee(self)
+        if player_type_str == "bee":
+            self.player = Bee(self)
+        else:
+            self.player = Car(self)
         self.joystick = None
         if use_joystick:
             self.init_joystick()
@@ -251,11 +254,12 @@ def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--use-joystick", dest='use_joystick', default=False, action="store_true")
     parser.add_argument("--fullscreen", dest='fullscreen', default=False, action="store_true")
+    parser.add_argument("--player", dest='player', default="bee", help="can be car or bee (default)")
     return parser.parse_args()
 
 
 if __name__ == '__main__':
     args = parse_args()
-    maze = TMaze(args.use_joystick, args.fullscreen)
+    maze = TMaze(args.use_joystick, args.fullscreen, args.player)
     maze.main_loop()
     pygame.quit()

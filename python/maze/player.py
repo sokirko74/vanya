@@ -65,8 +65,7 @@ class Player(pygame.sprite.Sprite):
             self.parent.chan_2.play(self.sound_crash)
 
     def collision_check(self, new_rect, c_ls):
-        #return TMazeCommon.circle_collidelist(new_rect.center, self.collider_size, c_ls) != -1
-        return TMazeCommon.rect_collide_list(new_rect, c_ls) != -1
+        return TMazeCommon.rect_collide_list(new_rect, c_ls)
 
     def update_move(self):
         pass
