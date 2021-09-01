@@ -1,23 +1,26 @@
-import pygame
 import random
 from enum import Enum
 import numpy as np
 
 
-# === CONSTANTS ===
+class Direction(Enum):
+    UP = (0, -1)
+    RIGHT = (1, 0)
+    DOWN = (0, 1)
+    LEFT = (-1, 0)
+
 
 WALKABLE_TILE = 1
 WALL_TILE = 2
 START_TILE = 3
 TARGET_TILE = 4
 
-# === CLASSES ===
 
 def add_tuples(a, b):
-    return (a[0] + b[0], a[1] + b[1])
+    return a[0] + b[0], a[1] + b[1]
 
 
-class Generator():
+class Generator:
     def __init__(self, grid_rows=40, grid_cols=75, min_rooms=3, max_rooms=4, min_room_connections=2, max_room_size=100,
                  allow_redundant_connections=False, distance_to_target=75, path_width=4):
         self.rows = grid_rows
@@ -32,42 +35,31 @@ class Generator():
         self.start = (0, 0)
         self.target_room_source = (0, 0)
         self.targets = []
-        self.padding = 10
-
-        self.grid = self.get_grid()
+        self.padding = 0
+        self.grid = None
+        self.init_grid()
         self.maze_rooms_sources = []
         self.maze_rooms = []
         self.maze_rooms_groups = []
 
-    def get_grid(self):
-        pad = self.padding
-        grid = np.full((self.rows + pad * 2, self.cols + pad * 2), -1, dtype=int)
-        for i in range(len(grid)):
-            for j in range(len(grid[0])):
-                if i > pad and j > pad:
-                    if i < self.rows + pad + 1 and j < self.cols + pad + 1:
-                        grid[i][j] = 0
-        return grid
+    def init_grid(self):
+        self.grid = np.zeros((self.rows, self.cols), dtype=int)
 
     def clear(self):
         self.maze_rooms.clear()
         self.maze_rooms_sources.clear()
-        self.grid = self.get_grid()
+        self.init_grid()
 
-    def generate_maze(self):
-        self.grid = self.get_grid()
+    def _generate_maze_rooms_groups(self):
         room_amount = random.randint(self.min_rooms, self.max_rooms)
-        start_i = (self.padding + 2, self.padding + 2)
-        end_i = (len(self.grid[0]) - self.padding - 2, len(self.grid) - self.padding - 2)
-        positions = []
+        positions = set()
         for i in range(room_amount):
-            x = random.randint(start_i[0], end_i[0])
-            y = random.randint(start_i[1], end_i[1])
+            x = random.randint(0, self.cols - 1)
+            y = random.randint(0, self.rows - 1)
             if (x, y) in positions:
                 i -= 1
                 continue
-            positions.append((x, y))
-
+            positions.add((x, y))
         # choose some random points on the grid as room sources
         for pos in positions:
             self.grid[pos[1]][pos[0]] = WALKABLE_TILE
@@ -75,6 +67,7 @@ class Generator():
             self.maze_rooms.append([(pos[0], pos[1]), (pos[0], pos[1]), (pos[0], pos[1]), (pos[0], pos[1])])
         self.maze_rooms_groups = [[x] for x in self.maze_rooms_sources]
 
+    def _extend_rooms(self):
         # "grow" the rooms around the sources until they collide
         for _ in range(self.max_room_size):
             for room in self.maze_rooms:
@@ -84,31 +77,7 @@ class Generator():
                         room[i] = a
                         room[(i + 1) % 4] = b
 
-        # try find better spot to generate exit from (to avoid leaving room)
-        # distances = []
-        # for i, d in enumerate(Direction):
-        #     distances.append((0, d.value))
-        #     cur_pos = self.target_room_source
-        #     while self.grid[cur_pos[1]][cur_pos[0]] != WALL_TILE:
-        #         cur_pos = add_tuples(cur_pos, d.value)
-        #         distances[i][0] += 1
-        # distances.sort(key=lambda x: x[0])
-        # d_1 = distances[0][1]
-        # d_1_dist = int(distances[0][0] / 2)
-        # d_2 = 0
-        # d_2_dist = 0
-        # for d in distances[1:]:
-        #     if d[1] == (d_1[1], d_1[0]) or d[1] == (-d_1[1], -d_1[0]):
-        #         d_2 = d[1]
-        #         d_2_dist = int(d[0] / 2)
-        #         break
-        # cur_pos = self.target_room_source
-        # for _ in range(d_1_dist):
-        #     cur_pos = add_tuples(cur_pos, d_1)
-        # for _ in range(d_2_dist):
-        #     cur_pos = add_tuples(cur_pos, d_2)
-        # self.target_room_source = cur_pos
-
+    def _connect_rooms(self):
         # connect the room sources with a greedy search
         for p in self.maze_rooms_sources:
             distances = []
@@ -125,6 +94,7 @@ class Generator():
                     if p_ind == r_ind: continue
                 self.__path(p, r)
 
+    def _test_rooms_are_reachable(self):
         # verify every room is reachable
         while len(self.maze_rooms_groups) > 1:
             self.maze_rooms_groups.sort(key=lambda x: len(x))
@@ -136,6 +106,7 @@ class Generator():
             p2 = self.maze_rooms_groups[1][distances[0][1]]
             self.__path(p1, p2)
 
+    def _choose_start_and_end_room(self):
         # choose start and target room
         ind_1 = random.randint(0, len(self.maze_rooms_sources) - 1)
         self.start = self.maze_rooms_sources[ind_1]
@@ -153,7 +124,7 @@ class Generator():
             self.target_room_source = distances[ind_2][1]
         self.grid[self.start[1]][self.start[0]] = START_TILE
 
-        # generate exit
+    def _generate_exit(self):
         found = False
         for d in Direction:
             if found: break
@@ -186,7 +157,6 @@ class Generator():
                         i -= 1
         if not found:
             self.grid[self.target_room_source[1]][self.target_room_source[0]] = TARGET_TILE
-
 
     def __path(self, p1, p2):
         cur_pos = (p1[0], p1[1])
@@ -283,25 +253,13 @@ class Generator():
 
         return start, end
 
-
-class Direction(Enum):
-    UP = (0, -1)
-    RIGHT = (1, 0)
-    DOWN = (0, 1)
-    LEFT = (-1, 0)
-
-
-# === FUNCTIONS ===
-
-def _pad_with(vector, pad_width, iaxis, kwargs):
-    pad_value = kwargs.get('padder', -1)
-    vector[:pad_width[0]] = pad_value
-    vector[-pad_width[1]:] = pad_value
-
-# --- init ---
+    def generate_maze(self):
+        self.init_grid()
+        self._generate_maze_rooms_groups()
+        self._extend_rooms()
+        self._connect_rooms()
+        self._test_rooms_are_reachable()
+        self._choose_start_and_end_room()
+        self._generate_exit()
 
 
-# --- objects ---
-
-
-# --- mainloop ---

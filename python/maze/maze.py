@@ -2,24 +2,13 @@ import sys
 import time
 
 from player import Player, Car, Bee
-from common import  TMazeCommon
+from common import TMazeCommon
 import generator
 
 import pygame
 import pygame_gui
-from enum import Enum
 import argparse
 import logging
-
-'''
-SPACE - Pause and Settings
-ESC - Quit
-R - New map
-F - Enter Fullscreen
-'''
-
-
-
 
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
@@ -28,13 +17,6 @@ RED = (255, 0, 0)
 GREEN = (0, 255, 0)
 BLUE = (0, 0, 255)
 TEXT_COLOR = (120, 120, 120)
-
-
-class Direction(Enum):
-    UP = (0, -1)
-    RIGHT = (1, 0)
-    DOWN = (0, 1)
-    LEFT = (-1, 0)
 
 
 ColorMap = {
@@ -52,7 +34,7 @@ class Tile(pygame.sprite.Sprite):
         if tile_type in ColorMap:
             color = ColorMap[tile_type]
         self.tile_type = tile_type
-        self.image = pygame.Surface((self.parent.BLOCK_SIZE, self.parent.BLOCK_SIZE))
+        self.image = pygame.Surface((self.parent.block_size, self.parent.block_size))
         self.wall = False
         self.image.fill(color)
         self.rect = self.image.get_rect()
@@ -60,27 +42,6 @@ class Tile(pygame.sprite.Sprite):
 
     def draw(self):
         self.parent.screen.blit(self.image, self.rect)
-
-
-class AnotSlider():
-    def __init__(self, parent, disp, text, start_value, value_range, func):
-        self.parent = parent
-        self.text = text
-        self.func = func
-        s_w = self.parent.screen_width / 2 + disp[0]
-        s_h = self.parent.screen_height / 2 + disp[1]
-        self.s = pygame_gui.elements.UIHorizontalSlider(relative_rect=pygame.Rect((s_w, s_h), (300, 30)),
-                                                        start_value=start_value, value_range=value_range,
-                                                        manager=parent.manager)
-        self.s_button_rect = pygame.Rect((s_w - 200, s_h), (200, 30))
-        self.s_button = pygame_gui.elements.UIButton(relative_rect=self.s_button_rect,
-                                                     text=text + ': ' + str(self.s.current_value),
-                                                     manager=parent.manager)
-
-    def update(self):
-        self.func(self.s.current_value)
-        self.s_button.text = self.text + ': ' + str(self.s.current_value)
-        self.s_button.rebuild()
 
 
 def setup_logging():
@@ -106,6 +67,7 @@ class TKeyEventType:
     def __init__(self, type, key_code):
         self.type = type
         self.key = key_code
+
     @staticmethod
     def from_joystick_event(event):
         if event.axis == 0:
@@ -144,7 +106,7 @@ class TMaze:
             self.screen = pygame.display.set_mode((0, 0), flags=pygame.FULLSCREEN)
             pygame.display.toggle_fullscreen()
             self.screen_width = pygame.display.get_window_size()[0]
-            self.screen_height = pygame.display.get_window_size()[1]
+            self.screen_height = pygame.display.get_window_size()[1] - 50
             self.screen_rect = self.screen.get_rect()
             self.logger.info("{}".format(self.screen_rect))
         else:
@@ -154,17 +116,14 @@ class TMaze:
             self.screen_rect = self.screen.get_rect()
         pygame.init()
         pygame.mixer.set_num_channels(8)
-        self.BLOCK_SIZE = 25
-        self.manager = pygame_gui.UIManager((self.screen_width, self.screen_height))
+        self.block_size = 25
+        self.manager = pygame_gui.UIManager((self.screen_width, self.screen_height ))
         self.chan_2 = pygame.mixer.Channel(2)
         self.font = pygame.font.SysFont('Impact', 20, italic=False, bold=True)
         self.player = Bee(self)
         self.joystick = None
         if use_joystick:
             self.init_joystick()
-
-        self.settings_sliders = self.init_settings_sliders()
-
 
     def init_joystick(self):
         pygame.joystick.init()
@@ -183,34 +142,6 @@ class TMaze:
         self.logger.info("joystick get_numballs = {}".format(self.joystick.get_numballs()))
         self.logger.info("joystick get_numbuttons = {}".format(self.joystick.get_numbuttons()))
 
-    def init_settings_sliders(self):
-        return [
-            AnotSlider(self, disp=(-100, -150), text='Min Rooms', start_value=self.gen.min_rooms, value_range=(1, 100),
-                       func=self.set_min_rooms),
-            AnotSlider(self, disp=(-100, -110), text='Max Rooms', start_value=self.gen.max_rooms, value_range=(1, 100),
-                       func=self.set_max_rooms),
-            AnotSlider(self, disp=(-100, -70), text='Min Room Connections', start_value=self.gen.min_room_connections,
-                       value_range=(1, 20), func=self.set_min_room_conn),
-            AnotSlider(self, disp=(-100, -30), text='Max Room Size', start_value=self.gen.max_room_size, value_range=(1, 500),
-                       func=self.set_max_room_conn),
-            AnotSlider(self, disp=(-100, 10), text='Redundant Connections', start_value=int(self.gen.allow_redundant_connections),
-                       value_range=(0, 1), func=self.set_redundant_conn),
-            AnotSlider(self, disp=(-100, 50), text='Distance To Target', start_value=self.gen.distance_to_target,
-                       value_range=(0, 100), func=self.set_distant_to_target),
-            AnotSlider(self,disp=(-100, 90), text='Path Width', start_value=self.gen.path_width, value_range=(1, 20),
-                       func=self.set_path_width),
-            AnotSlider(self, disp=(-100, 130), text='Map Width', start_value=self.gen.cols, value_range=(1, 500),
-                       func=self.set_map_width),
-            AnotSlider(self, disp=(-100, 170), text='Map Height', start_value=self.gen.rows, value_range=(1, 500),
-                       func=self.set_map_height),
-            AnotSlider(self, disp=(-100, 210), text='Player Size', start_value=self.player.size, value_range=(1, 10),
-                       func=self.set_player_size),
-            AnotSlider(self, disp=(-100, 250), text='Player Max Speed', start_value=self.player.max_speed, value_range=(1, 50),
-                       func=self.set_player_max_speed),
-            AnotSlider(self, disp=(-100, 290), text='Block Size', start_value=self.BLOCK_SIZE, value_range=(1, 100),
-                       func=self.set_block_size)
-        ]
-
     def clear_map(self):
         self.tiles.clear()
         self.walls.clear()
@@ -218,8 +149,8 @@ class TMaze:
         self.screen.fill(BLACK)
 
     def grid_to_screen(self, pos):
-        t = (pos[0] * self.BLOCK_SIZE - len(self.gen.grid[0]) * self.BLOCK_SIZE / 2 - 10,
-             pos[1] * self.BLOCK_SIZE - len(self.gen.grid) * self.BLOCK_SIZE / 2 - 10)
+        t = (pos[0] * self.block_size - len(self.gen.grid[0]) * self.block_size / 2 - 10,
+             pos[1] * self.block_size - len(self.gen.grid) * self.block_size / 2 - 10)
         return t
 
     def setup_map(self):
@@ -270,8 +201,8 @@ class TMaze:
 
     def start_game(self):
         self.screen.fill(BLACK)
-        self.gen.rows = int(self.screen_height / self.BLOCK_SIZE)
-        self.gen.cols = int(self.screen_width / self.BLOCK_SIZE)
+        self.gen.rows = int(self.screen_height / self.block_size)
+        self.gen.cols = int(self.screen_width / self.block_size)
         self.setup_map()
         self.render_map()
         self.rendered_map = self.screen.copy()
@@ -313,7 +244,7 @@ class TMaze:
         self.player.max_speed = x
 
     def set_block_size(self, x):
-        self.BLOCK_SIZE = x
+        self.block_size = x
 
     def check_game_events(self, event):
         if event.type == pygame.QUIT:
@@ -331,25 +262,6 @@ class TMaze:
                 if event.ui_element in self.playable_types_buttons:
                     self.player = self.playable_types[self.playable_types_buttons.index(event.ui_element)]()
                     self.player.set_pos(self.grid_to_screen(self.gen.target_room_source))
-            elif event.user_type == pygame_gui.UI_HORIZONTAL_SLIDER_MOVED:
-                settings = self.settings_sliders
-                [s for s in settings if s.s == event.ui_element][0].update()
-                if event.ui_element == settings[0].s:
-                    if settings[0].s.current_value >= settings[1].s.current_value:
-                        settings[1].s.current_value = settings[0].s.current_value
-                        settings[1].s.rebuild()
-                        settings[1].update()
-                elif event.ui_element == settings[1].s:
-                    if settings[1].s.current_value <= settings[0].s.current_value:
-                        settings[0].s.current_value = settings[1].s.current_value
-                        settings[0].s.rebuild()
-                        settings[0].update()
-                if settings[5].s.current_value == 0:
-                    settings[5].s_button.text = settings[5].text + ': Rand'
-                    settings[5].s_button.rebuild()
-                elif settings[5].s.current_value == 100:
-                    settings[5].s_button.text = settings[5].text + ': Max'
-                    settings[5].s_button.rebuild()
 
     def main_loop(self):
         self.start_game()
@@ -381,10 +293,9 @@ class TMaze:
             self.manager.update(time_delta)
             self.player.update()
             self.screen.blit(self.rendered_map, (0, 0))
-            self.update_text_surface(f'MazeGame    |    Score:   {self.player.score} \n\n'
-                                f'R - New Level\n'
-                                f'F - Fullscreen\n'
-                                f'SPACE - Pause')
+            # self.update_text_surface(f'MazeGame    |    Score:   {self.player.score} \n\n'
+            #                     f'R - New Level\n'
+            #                     f'SPACE - Pause')
             self.player.draw(self.screen)
             if self.is_paused:
                 self.manager.draw_ui(self.screen)

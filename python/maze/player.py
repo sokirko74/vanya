@@ -24,8 +24,8 @@ class Player(pygame.sprite.Sprite):
         pygame.mixer.music.load(self.sound_moving)
         pygame.mixer.music.play(-1, fade_ms=2000)
         self.image = pygame.transform.scale(self.image,
-                                            (self.parent.BLOCK_SIZE * self.width * self.size,
-                                               self.parent.BLOCK_SIZE * self.height * self.size))
+                                            (self.parent.block_size * self.width * self.size,
+                                             self.parent.block_size * self.height * self.size))
         self.rect = self.image.get_rect()
         self.collider_size_start = collider_size
         self.collider_size = self.collider_size_start
@@ -40,8 +40,8 @@ class Player(pygame.sprite.Sprite):
         self.size = scale
         self.collider_size = self.collider_size_start * self.size
         self.image = pygame.transform.scale(self.image,
-                                            (self.parent.BLOCK_SIZE * self.width * self.size,
-                                             self.parent.BLOCK_SIZE * self.height * self.size))
+                                            (self.parent.block_size * self.width * self.size,
+                                             self.parent.block_size * self.height * self.size))
         self.rect = self.image.get_rect()
         self.default_image = self.image.copy()
         self.default_rect = self.rect.copy()
