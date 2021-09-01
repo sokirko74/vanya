@@ -160,8 +160,8 @@ class TMaze:
     def setup_map(self):
         self.gen.generate_maze()
         self.player.set_pos(self.grid_to_screen(self.gen.start))
-        for i in range(len(self.gen.grid)):
-            for j in range(len(self.gen.grid[0])):
+        for i in range(self.gen.rows):
+            for j in range(self.gen.cols):
                 self.tiles.append(Tile(self, self.grid_to_screen((j, i)), self.gen.grid[i][j]))
         self.walls = [t.rect for t in self.tiles if t.tile_type == generator.WALL_TILE]
         self.target_tiles = [t for t in self.tiles if t.tile_type == generator.TARGET_TILE]
@@ -193,42 +193,6 @@ class TMaze:
         self.rendered_map = self.screen.copy()
         self.logger.info("start_game")
         pygame.display.update()
-
-    def set_min_rooms(self, x):
-        self.gen.min_rooms = x
-
-    def set_max_rooms(self, x):
-        self.gen.max_rooms = x
-
-    def set_min_room_conn(self, x):
-        self.gen.min_room_connections = x
-
-    def set_max_room_conn(self, x):
-        self.gen.max_room_size = x
-
-    def set_redundant_conn(self, x):
-        self.gen.allow_redundant_connections = bool(x)
-
-    def set_distant_to_target(self, x):
-        self.gen.distance_to_target = x
-
-    def set_path_width(self, x):
-        self.gen.path_width = x
-
-    def set_map_width(self, x):
-        self.gen.cols = x
-
-    def set_map_height(self, x):
-        self.gen.rows = x
-
-    def set_player_size(self, x):
-        self.player.set_scale(x)
-
-    def set_player_max_speed(self, x):
-        self.player.max_speed = x
-
-    def set_block_size(self, x):
-        self.block_size = x
 
     def check_game_events(self, event):
         if event.type == pygame.QUIT:
