@@ -16,7 +16,6 @@ WHITE = (255, 255, 255)
 RED = (255, 0, 0)
 GREEN = (0, 255, 0)
 BLUE = (0, 0, 255)
-TEXT_COLOR = (120, 120, 120)
 
 
 ColorMap = {
@@ -182,25 +181,6 @@ class TMaze:
         self.rendered_map = self.screen.copy()
         self.player.set_pos(self.grid_to_screen(self.gen.start))
 
-    def update_text_surface(self, text=None):
-        if text is not None:
-            texts = text.splitlines()
-            self.text_surfaces = [None] * len(texts)
-            for i, t in enumerate(texts):
-                self.text_surfaces[i] = self.font.render(t, False, TEXT_COLOR)
-                self.screen.blit(self.text_surfaces[i], (self.screen_width - self.font.size(t)[1] * 10 - 50,
-                                                         self.screen_height - 1000 + self.font.size(t)[1] * i))
-
-    def arrange_buttons(self):
-        s_w = self.screen_width / 2
-        s_h = self.screen_height / 2
-        button_width = 500 / len(self.playable_types)
-        for i, x in enumerate(self.playable_types):
-            pos = (s_w - 300 + button_width * i, s_h - 400)
-            self.playable_types_buttons.append(
-                pygame_gui.elements.UIButton(relative_rect=pygame.Rect(pos, (button_width, 200)), text=x.__name__,
-                                             manager=self.manager))
-
     def start_game(self):
         self.screen.fill(BLACK)
         self.gen.rows = int(self.screen_height / self.block_size)
@@ -208,7 +188,6 @@ class TMaze:
         self.setup_map()
         self.render_map()
         self.rendered_map = self.screen.copy()
-        self.arrange_buttons()
         self.logger.info("start_game")
         pygame.display.update()
 
@@ -295,9 +274,6 @@ class TMaze:
             self.manager.update(time_delta)
             self.player.update()
             self.screen.blit(self.rendered_map, (0, 0))
-            # self.update_text_surface(f'MazeGame    |    Score:   {self.player.score} \n\n'
-            #                     f'R - New Level\n'
-            #                     f'SPACE - Pause')
             self.player.draw(self.screen)
             if self.is_paused:
                 self.manager.draw_ui(self.screen)
