@@ -261,7 +261,7 @@ class Generator:
         return start, end
 
     def generate_maze(self):
-        while True:
+        for i in range(20):
             try:
                 self.init_grid()
                 self._generate_maze_rooms_groups()
@@ -273,5 +273,6 @@ class Generator:
                 return
             except IndexError as exp:
                 print (exp)
-
+                random.seed()
+        raise Exception("cannot generate maze")
 

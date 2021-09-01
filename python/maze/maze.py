@@ -37,7 +37,7 @@ class Tile(pygame.sprite.Sprite):
         self.wall = False
         self.image.fill(color)
         self.rect = self.image.get_rect()
-        self.rect.center = TMazeCommon.add_tuples(self.parent.screen_rect.center, pos)
+        self.rect.topleft = TMazeCommon.add_tuples(self.parent.maze_rect.topleft, pos)
 
     def draw(self):
         self.parent.screen.blit(self.image, self.rect)
@@ -102,23 +102,26 @@ class TMaze:
         self.is_running = True
         self.is_paused = False
         if is_full_screen:
+            self.left_maze = 80
+            self.top_maze = 0
             self.screen = pygame.display.set_mode((0, 0), flags=pygame.FULLSCREEN)
             pygame.display.toggle_fullscreen()
             pygame.init()
-            self.screen_width = pygame.display.get_window_size()[0]
-            self.screen_height = pygame.display.get_window_size()[1]
+            self.maze_width = pygame.display.get_window_size()[0] - self.left_maze
+            self.maze_height = pygame.display.get_window_size()[1] - 40
         else:
-            self.left_padding = 0
-            self.screen_width = 800
-            self.screen_height = 600
-            self.screen = pygame.display.set_mode((self.screen_width, self.screen_height))
+            self.left_maze = 0
+            self.top_maze = 0
+            self.maze_width = 800
+            self.maze_height = 600
+            self.screen = pygame.display.set_mode((self.maze_width, self.maze_height))
             pygame.init()
 
-        self.screen_rect = self.screen.get_rect()
-        self.logger.info("{}".format(self.screen_rect))
+        self.maze_rect = pygame.Rect(self.left_maze, self.top_maze, self.maze_width, self.maze_height)
+        self.logger.info("{}".format(self.maze_rect))
         pygame.mixer.set_num_channels(8)
         self.block_size = 25
-        self.manager = pygame_gui.UIManager((self.screen_width, self.screen_height ))
+        self.manager = pygame_gui.UIManager((self.maze_width, self.maze_height))
         self.chan_2 = pygame.mixer.Channel(2)
         self.font = pygame.font.SysFont('Impact', 20, italic=False, bold=True)
         self.player = Bee(self)
@@ -150,8 +153,8 @@ class TMaze:
         self.screen.fill(BLACK)
 
     def grid_to_screen(self, pos):
-        x = pos[0] * self.block_size - self.gen.cols * self.block_size / 2
-        y = pos[1] * self.block_size - self.gen.rows * self.block_size / 2
+        x = pos[0] * self.block_size
+        y = pos[1] * self.block_size
         return x, y
 
     def setup_map(self):
@@ -183,8 +186,8 @@ class TMaze:
 
     def start_game(self):
         self.screen.fill(BLACK)
-        self.gen.rows = int(self.screen_height / self.block_size)
-        self.gen.cols = int(self.screen_width / self.block_size)
+        self.gen.rows = int(self.maze_height / self.block_size)
+        self.gen.cols = int(self.maze_width / self.block_size)
         self.setup_map()
         self.render_map()
         self.rendered_map = self.screen.copy()
@@ -260,7 +263,6 @@ class TMaze:
                     #self.logger.info("joystick: {}, movement: {} in the {}-axis".format(event.joy, event.value, axis[event.axis]))
                     joystick_direction[event.axis] = int(event.value)
                     for e in TKeyEventType.from_joystick_event(event):
-                        #self.logger.info("key={}, type={}".format(e.key, e.type))
                         self.player.handle_event(e)
                 else:
                    self.check_game_events(event)
@@ -277,9 +279,8 @@ class TMaze:
             self.player.draw(self.screen)
             if self.is_paused:
                 self.manager.draw_ui(self.screen)
-            pygame.display.update([self.player.rect, self.screen_rect])
+            pygame.display.update([self.player.rect, self.maze_rect])
             clock.tick(25)
-            #time.sleep(1)
 
 
 def parse_args():

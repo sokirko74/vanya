@@ -11,7 +11,7 @@ class Player(pygame.sprite.Sprite):
                  sound_success=os.path.join('assets', 'sounds', 'success.wav')):
         pygame.sprite.Sprite.__init__(self)
         self.parent = parent
-        self.screen_rect = self.parent.screen_rect
+        self.screen_rect = self.parent.maze_rect
         self.move_x = 0
         self.move_y = 0
         self.size = size
@@ -31,7 +31,7 @@ class Player(pygame.sprite.Sprite):
         self.collider_size = self.collider_size_start
         self.default_image = self.image.copy()
         self.default_rect = self.rect.copy()
-        self.rect.center = parent.screen_rect.center
+        self.rect.topleft = parent.maze_rect.topleft
         self.max_speed = max_speed
         self.score = 0
         self.set_scale(size)
@@ -65,13 +65,13 @@ class Player(pygame.sprite.Sprite):
             self.parent.chan_2.play(self.sound_crash)
 
     def collision_check(self, new_rect, c_ls):
-        return TMazeCommon.circle_collidelist(new_rect.center, self.collider_size, c_ls) != -1
+        return TMazeCommon.circle_collidelist(new_rect.topleft, self.collider_size, c_ls) != -1
 
     def update_move(self):
         pass
 
     def set_pos(self, pos):
-        self.rect.center = TMazeCommon.add_tuples(self.parent.screen_rect.center, pos)
+        self.rect.topleft = TMazeCommon.add_tuples(self.parent.maze_rect.topleft, pos)
 
     def handle_event(self, event):
         pass
@@ -91,7 +91,7 @@ class Bee(Player):
         pass
 
     def set_pos(self, pos):
-        self.rect.center = TMazeCommon.add_tuples(self.screen_rect.center, pos)
+        self.rect.topleft = TMazeCommon.add_tuples(self.screen_rect.topleft, pos)
 
     def handle_event(self, event):
         if event.type == pygame.KEYDOWN:
@@ -175,10 +175,10 @@ class Car(Player):
         self.collider_back = self.collider_back_start
 
     def collision_check(self, new_rect, c_ls):
-        t = TMazeCommon.add_tuples(new_rect.center, self.collider_front)
+        t = TMazeCommon.add_tuples(new_rect.topleft, self.collider_front)
         if TMazeCommon.circle_collidelist(t, self.collider_size, c_ls) != -1:
             return True
-        t = TMazeCommon.add_tuples(new_rect.center, self.collider_back)
+        t = TMazeCommon.add_tuples(new_rect.topleft, self.collider_back)
         if TMazeCommon.circle_collidelist(t, self.collider_size, c_ls) != -1:
             return True
         return False
