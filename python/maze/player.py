@@ -105,13 +105,13 @@ class Bee(Player):
                 self.move_y += self.max_speed
         elif event.type == pygame.KEYUP:
             if event.key == pygame.K_LEFT:
-                self.move_x += self.max_speed
+                self.move_x = 0
             elif event.key == pygame.K_RIGHT:
-                self.move_x -= self.max_speed
+                self.move_x = 0
             elif event.key == pygame.K_UP:
-                self.move_y += self.max_speed
+                self.move_y = 0
             elif event.key == pygame.K_DOWN:
-                self.move_y -= self.max_speed
+                self.move_y = 0
 
 
 class Car(Player):

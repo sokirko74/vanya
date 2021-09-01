@@ -1,3 +1,6 @@
+import sys
+import time
+
 from player import Player, Car, Bee
 from common import  TMazeCommon
 import generator
@@ -5,6 +8,8 @@ import generator
 import pygame
 import pygame_gui
 from enum import Enum
+import argparse
+import logging
 
 '''
 SPACE - Pause and Settings
@@ -14,10 +19,7 @@ F - Enter Fullscreen
 '''
 
 
-MAP_FILL_SCREEN = True
 
-SCREEN_WIDTH = 1920
-SCREEN_HEIGHT = 1000
 
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
@@ -65,8 +67,8 @@ class AnotSlider():
         self.parent = parent
         self.text = text
         self.func = func
-        s_w = SCREEN_WIDTH / 2 + disp[0]
-        s_h = SCREEN_HEIGHT / 2 + disp[1]
+        s_w = self.parent.screen_width / 2 + disp[0]
+        s_h = self.parent.screen_height / 2 + disp[1]
         self.s = pygame_gui.elements.UIHorizontalSlider(relative_rect=pygame.Rect((s_w, s_h), (300, 30)),
                                                         start_value=start_value, value_range=value_range,
                                                         manager=parent.manager)
@@ -81,11 +83,53 @@ class AnotSlider():
         self.s_button.rebuild()
 
 
+def setup_logging():
+    logger = logging.getLogger("maze_logger")
+    logger.setLevel(logging.DEBUG)
+
+    # create formatter and add it to the handlers
+    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    fh = logging.FileHandler("maze.log",  mode='w')
+    fh.setLevel(logging.DEBUG)
+    fh.setFormatter(formatter)
+    logger.addHandler(fh)
+
+    # create console handler with a higher log level
+    ch = logging.StreamHandler()
+    ch.setLevel(logging.INFO)
+    logger.addHandler(ch)
+
+    return logger
+
+
+class TKeyEventType:
+    def __init__(self, type, key_code):
+        self.type = type
+        self.key = key_code
+    @staticmethod
+    def from_joystick_event(event):
+        if event.axis == 0:
+            if event.value > 0:
+                yield TKeyEventType(pygame.KEYDOWN, pygame.K_RIGHT)
+            elif event.value < 0:
+                yield TKeyEventType(pygame.KEYDOWN, pygame.K_LEFT)
+            else:
+                yield TKeyEventType(pygame.KEYUP, pygame.K_LEFT)
+                yield TKeyEventType(pygame.KEYUP, pygame.K_RIGHT)
+        elif event.axis == 1:
+            if event.value > 0:
+                yield TKeyEventType(pygame.KEYDOWN, pygame.K_DOWN)
+            elif event.value < 0:
+                yield TKeyEventType(pygame.KEYDOWN, pygame.K_UP)
+            else:
+                yield TKeyEventType(pygame.KEYUP, pygame.K_DOWN)
+                yield TKeyEventType(pygame.KEYUP, pygame.K_UP)
 
 
 class TMaze:
-    def __init__(self):
+    def __init__(self, use_joystick, is_full_screen):
         self.gen = generator.Generator()
+        self.logger = setup_logging()
         self.rendered_map = None
         self.tiles = []
         self.walls = []
@@ -96,15 +140,51 @@ class TMaze:
         self.score = 0
         self.is_running = True
         self.is_paused = False
-        self.is_fullscreen = False
-        self.screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
-        self.screen_rect = self.screen.get_rect()
+        if is_full_screen:
+            self.screen = pygame.display.set_mode((0, 0), flags=pygame.FULLSCREEN)
+            pygame.display.toggle_fullscreen()
+            self.screen_width = pygame.display.get_window_size()[0]
+            self.screen_height = pygame.display.get_window_size()[1]
+            self.screen_rect = self.screen.get_rect()
+            self.logger.info("{}".format(self.screen_rect))
+        else:
+            self.screen_width = 800
+            self.screen_height = 600
+            self.screen = pygame.display.set_mode((self.screen_width, self.screen_height))
+            self.screen_rect = self.screen.get_rect()
+        pygame.init()
+        pygame.mixer.set_num_channels(8)
         self.BLOCK_SIZE = 25
-        self.manager = pygame_gui.UIManager((SCREEN_WIDTH, SCREEN_HEIGHT))
+        self.manager = pygame_gui.UIManager((self.screen_width, self.screen_height))
         self.chan_2 = pygame.mixer.Channel(2)
         self.font = pygame.font.SysFont('Impact', 20, italic=False, bold=True)
         self.player = Bee(self)
-        self.settings_sliders = [
+        self.joystick = None
+        if use_joystick:
+            self.init_joystick()
+
+        self.settings_sliders = self.init_settings_sliders()
+
+
+    def init_joystick(self):
+        pygame.joystick.init()
+        self.logger.info("joysticks count = {}".format(pygame.joystick.get_count()))
+        if not pygame.joystick.get_init() or pygame.joystick.get_count() < 1:
+            self.logger.error("cannot find joystick")
+            return
+        self.joystick = pygame.joystick.Joystick(0)
+        self.joystick.init()
+        if not self.joystick.get_init():
+            self.joystick = None
+            self.logger.error("cannot init joystick")
+            return
+        self.logger.info("joystick name = {}".format(self.joystick.get_name()))
+        self.logger.info("joystick axes count = {}".format(self.joystick.get_numaxes()))
+        self.logger.info("joystick get_numballs = {}".format(self.joystick.get_numballs()))
+        self.logger.info("joystick get_numbuttons = {}".format(self.joystick.get_numbuttons()))
+
+    def init_settings_sliders(self):
+        return [
             AnotSlider(self, disp=(-100, -150), text='Min Rooms', start_value=self.gen.min_rooms, value_range=(1, 100),
                        func=self.set_min_rooms),
             AnotSlider(self, disp=(-100, -110), text='Max Rooms', start_value=self.gen.max_rooms, value_range=(1, 100),
@@ -167,7 +247,7 @@ class TMaze:
         self.setup_map()
         self.render_map()
         self.rendered_map = self.screen.copy()
-        self.player.set_pos(seld.grid_to_screen(self.gen.start))
+        self.player.set_pos(self.grid_to_screen(self.gen.start))
 
     def update_text_surface(self, text=None):
         if text is not None:
@@ -175,12 +255,12 @@ class TMaze:
             self.text_surfaces = [None] * len(texts)
             for i, t in enumerate(texts):
                 self.text_surfaces[i] = self.font.render(t, False, TEXT_COLOR)
-                self.screen.blit(self.text_surfaces[i], (SCREEN_WIDTH - self.font.size(t)[1] * 10 - 50,
-                                                         SCREEN_HEIGHT - 1000 + self.font.size(t)[1] * i))
+                self.screen.blit(self.text_surfaces[i], (self.screen_width - self.font.size(t)[1] * 10 - 50,
+                                                         self.screen_height - 1000 + self.font.size(t)[1] * i))
 
     def arrange_buttons(self):
-        s_w = SCREEN_WIDTH / 2
-        s_h = SCREEN_HEIGHT / 2
+        s_w = self.screen_width / 2
+        s_h = self.screen_height / 2
         button_width = 500 / len(self.playable_types)
         for i, x in enumerate(self.playable_types):
             pos = (s_w - 300 + button_width * i, s_h - 400)
@@ -190,13 +270,14 @@ class TMaze:
 
     def start_game(self):
         self.screen.fill(BLACK)
-        if MAP_FILL_SCREEN:
-            self.gen.rows = int(SCREEN_HEIGHT / self.BLOCK_SIZE)
-            self.gen.cols = int(SCREEN_WIDTH / self.BLOCK_SIZE)
+        self.gen.rows = int(self.screen_height / self.BLOCK_SIZE)
+        self.gen.cols = int(self.screen_width / self.BLOCK_SIZE)
         self.setup_map()
         self.render_map()
         self.rendered_map = self.screen.copy()
         self.arrange_buttons()
+        self.logger.info("start_game")
+        pygame.display.update()
 
     def set_min_rooms(self, x):
         self.gen.min_rooms = x
@@ -244,11 +325,6 @@ class TMaze:
                 self.is_running = False
             elif event.key == pygame.K_r:
                 self.next_map()
-            elif event.key == pygame.K_f:
-                if not self.is_fullscreen:
-                    self.screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT), flags=pygame.FULLSCREEN)
-                else:
-                    self.screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT), flags=pygame.RESIZABLE)
 
         if event.type == pygame.USEREVENT:
             if event.user_type == pygame_gui.UI_BUTTON_PRESSED:
@@ -257,13 +333,13 @@ class TMaze:
                     self.player.set_pos(self.grid_to_screen(self.gen.target_room_source))
             elif event.user_type == pygame_gui.UI_HORIZONTAL_SLIDER_MOVED:
                 settings = self.settings_sliders
-                [s for s in settings_sliders if s.s == event.ui_element][0].update()
+                [s for s in settings if s.s == event.ui_element][0].update()
                 if event.ui_element == settings[0].s:
                     if settings[0].s.current_value >= settings[1].s.current_value:
-                        settings[1].s.current_value = setting[0].s.current_value
+                        settings[1].s.current_value = settings[0].s.current_value
                         settings[1].s.rebuild()
                         settings[1].update()
-                elif event.ui_element == settings_sliders[1].s:
+                elif event.ui_element == settings[1].s:
                     if settings[1].s.current_value <= settings[0].s.current_value:
                         settings[0].s.current_value = settings[1].s.current_value
                         settings[0].s.rebuild()
@@ -278,15 +354,29 @@ class TMaze:
     def main_loop(self):
         self.start_game()
         clock = pygame.time.Clock()
-
         while self.is_running:
             time_delta = clock.tick(120) / 1000.0
+            joystick_direction = [0, 0]
             for event in pygame.event.get():
-                self.check_game_events(event)
+                if event.type == pygame.JOYBUTTONDOWN:
+                    self.logger.info("Joystick button pressed.")
+                elif event.type == pygame.JOYBUTTONUP:
+                    self.logger.info("Joystick button released.")
+                elif event.type == pygame.JOYAXISMOTION:
+                    #axis = ['X', 'Y']
+                    #self.logger.info("joystick: {}, movement: {} in the {}-axis".format(event.joy, event.value, axis[event.axis]))
+                    joystick_direction[event.axis] = int(event.value)
+                    for e in TKeyEventType.from_joystick_event(event):
+                        #self.logger.info("key={}, type={}".format(e.key, e.type))
+                        self.player.handle_event(e)
+                else:
+                   self.check_game_events(event)
                 if not self.is_paused:
-                    self.player.handle_event(event)
+                   self.player.handle_event(event)
                 if self.is_paused:
-                    self.manager.process_events(event)
+                   self.manager.process_events(event)
+                if joystick_direction[0] != 0 or joystick_direction[1] != 0:
+                    self.logger.info("joystick_direction = {}".format(joystick_direction))
 
             self.manager.update(time_delta)
             self.player.update()
@@ -300,12 +390,18 @@ class TMaze:
                 self.manager.draw_ui(self.screen)
             pygame.display.update([self.player.rect, self.screen_rect])
             clock.tick(25)
+            #time.sleep(1)
+
+
+def parse_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--use-joystick", dest='use_joystick', default=False, action="store_true")
+    parser.add_argument("--fullscreen", dest='fullscreen', default=False, action="store_true")
+    return parser.parse_args()
 
 
 if __name__ == '__main__':
-    pygame.init()
-    pygame.font.init()
-    pygame.mixer.set_num_channels(8)
-    maze = TMaze()
+    args = parse_args()
+    maze = TMaze(args.use_joystick, args.fullscreen)
     maze.main_loop()
     pygame.quit()
