@@ -20,6 +20,13 @@ class TMazeCommon:
         return -1
 
     @staticmethod
+    def rect_collide_list(rect, obstacles):
+        for index, obstacle in enumerate(obstacles):
+            if rect.colliderect(obstacle):
+                return index
+        return -1
+
+    @staticmethod
     def rotate_point(pt, angle):
         x = pt[1] * math.cos(math.radians(angle)) + pt[0] * math.sin(math.radians(angle))
         y = pt[0] * math.cos(math.radians(angle)) - pt[1] * math.sin(math.radians(angle))

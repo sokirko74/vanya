@@ -65,7 +65,8 @@ class Player(pygame.sprite.Sprite):
             self.parent.chan_2.play(self.sound_crash)
 
     def collision_check(self, new_rect, c_ls):
-        return TMazeCommon.circle_collidelist(new_rect.topleft, self.collider_size, c_ls) != -1
+        #return TMazeCommon.circle_collidelist(new_rect.center, self.collider_size, c_ls) != -1
+        return TMazeCommon.rect_collide_list(new_rect, c_ls) != -1
 
     def update_move(self):
         pass
@@ -175,10 +176,10 @@ class Car(Player):
         self.collider_back = self.collider_back_start
 
     def collision_check(self, new_rect, c_ls):
-        t = TMazeCommon.add_tuples(new_rect.topleft, self.collider_front)
+        t = TMazeCommon.add_tuples(new_rect.center, self.collider_front)
         if TMazeCommon.circle_collidelist(t, self.collider_size, c_ls) != -1:
             return True
-        t = TMazeCommon.add_tuples(new_rect.topleft, self.collider_back)
+        t = TMazeCommon.add_tuples(new_rect.center, self.collider_back)
         if TMazeCommon.circle_collidelist(t, self.collider_size, c_ls) != -1:
             return True
         return False

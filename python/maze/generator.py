@@ -22,7 +22,7 @@ def add_tuples(a, b):
 
 class Generator:
     def __init__(self, grid_rows=40, grid_cols=75, min_rooms=3, max_rooms=4, min_room_connections=2, max_room_size=100,
-                 allow_redundant_connections=False, distance_to_target=75, path_width=4):
+                 allow_redundant_connections=False, distance_to_target=75, path_width=6):
         self.rows = grid_rows
         self.cols = grid_cols
         self.min_rooms = min_rooms
