@@ -112,7 +112,8 @@ class Generator:
         self.start = self.maze_rooms_sources[ind_1]
         if self.distance_to_target == 0:
             ind_2 = random.randint(0, len(self.maze_rooms_sources) - 1)
-            if ind_2 >= ind_1: ind_2 += 1
+            if ind_2 >= ind_1:
+                ind_2 += 1
             self.target_room_source = self.maze_rooms_sources[ind_2]
         else:
             distances = []
@@ -161,14 +162,15 @@ class Generator:
     def __path(self, p1, p2):
         cur_pos = (p1[0], p1[1])
         count = 0
-        while (cur_pos != p2):
+        while cur_pos != p2:
             vals = []
             for d in Direction:
                 new_pos = add_tuples(cur_pos, d.value)
                 if not self.__check_bounds(new_pos): continue
                 vals.append((self.__grid_weight(new_pos) + self.__get_distance(new_pos, p2), new_pos, d.value))
             vals.sort(key=lambda x: x[0])
-            if len(vals) == 0: return
+            if len(vals) == 0:
+                return
             cur_pos = vals[0][1]
             path_width_pos = (cur_pos[0], cur_pos[1])
             low = add_tuples(cur_pos, (-vals[0][2][1], -vals[0][2][0]))
@@ -186,7 +188,8 @@ class Generator:
                 if self.grid[wall_2[1]][wall_2[0]] != WALKABLE_TILE:
                     self.grid[wall_2[1]][wall_2[0]] = WALL_TILE
             count += 1
-            if count > self.rows * self.cols: return
+            if count > self.rows * self.cols:
+                return
         self.__update_groups(p1, p2)
 
     def __update_groups(self, p1, p2):
@@ -197,9 +200,12 @@ class Generator:
             self.maze_rooms_groups.remove(self.maze_rooms_groups[p2_ind])
 
     def __check_bounds(self, pos):
-        if pos[0] >= len(self.grid[0]) or pos[0] < 0: return False
-        if pos[1] >= len(self.grid) or pos[1] < 0: return False
-        if self.grid[pos[1]][pos[0]] == -1: return False
+        if pos[0] >= len(self.grid[0]) or pos[0] < 0:
+            return False
+        if pos[1] >= len(self.grid) or pos[1] < 0:
+            return False
+        if self.grid[pos[1]][pos[0]] == -1:
+            return False
         return True
 
     def __grid_weight(self, pos):
@@ -219,20 +225,21 @@ class Generator:
     def __extend_if_available(self, v1, v2, dir):
         start = add_tuples(v1, dir)
         end = add_tuples(v2, dir)
-        if (not self.__check_bounds(start)): return -1, 0
+        if not self.__check_bounds(start):
+            return -1, 0
 
         extend_dir = (0, 0)
-        if (dir == Direction.UP.value):
+        if dir == Direction.UP.value:
             extend_dir = Direction.RIGHT.value
-        elif (dir == Direction.RIGHT.value):
+        elif dir == Direction.RIGHT.value:
             extend_dir = Direction.DOWN.value
-        elif (dir == Direction.DOWN.value):
+        elif dir == Direction.DOWN.value:
             extend_dir = Direction.LEFT.value
-        elif (dir == Direction.LEFT.value):
+        elif dir == Direction.LEFT.value:
             extend_dir = Direction.UP.value
 
         cur_pos = start
-        while (cur_pos != end):
+        while cur_pos != end:
             val = self.grid[cur_pos[1]][cur_pos[0]]
             if val == WALL_TILE or not self.__check_bounds(cur_pos): return -1, 0
             cur_pos = add_tuples(cur_pos, extend_dir)
@@ -242,7 +249,7 @@ class Generator:
         cur_pos = start
         cur_pos2 = v1
         draw_white = False
-        while (cur_pos != end):
+        while cur_pos != end:
             self.grid[cur_pos[1]][cur_pos[0]] = WALL_TILE
             if draw_white: self.grid[cur_pos2[1]][cur_pos2[0]] = WALKABLE_TILE
             draw_white = True
@@ -254,12 +261,17 @@ class Generator:
         return start, end
 
     def generate_maze(self):
-        self.init_grid()
-        self._generate_maze_rooms_groups()
-        self._extend_rooms()
-        self._connect_rooms()
-        self._test_rooms_are_reachable()
-        self._choose_start_and_end_room()
-        self._generate_exit()
+        while True:
+            try:
+                self.init_grid()
+                self._generate_maze_rooms_groups()
+                self._extend_rooms()
+                self._connect_rooms()
+                self._test_rooms_are_reachable()
+                self._choose_start_and_end_room()
+                self._generate_exit()
+                return
+            except IndexError as exp:
+                print (exp)
 
 

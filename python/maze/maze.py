@@ -105,16 +105,18 @@ class TMaze:
         if is_full_screen:
             self.screen = pygame.display.set_mode((0, 0), flags=pygame.FULLSCREEN)
             pygame.display.toggle_fullscreen()
+            pygame.init()
             self.screen_width = pygame.display.get_window_size()[0]
-            self.screen_height = pygame.display.get_window_size()[1] - 50
-            self.screen_rect = self.screen.get_rect()
-            self.logger.info("{}".format(self.screen_rect))
+            self.screen_height = pygame.display.get_window_size()[1]
         else:
+            self.left_padding = 0
             self.screen_width = 800
             self.screen_height = 600
             self.screen = pygame.display.set_mode((self.screen_width, self.screen_height))
-            self.screen_rect = self.screen.get_rect()
-        pygame.init()
+            pygame.init()
+
+        self.screen_rect = self.screen.get_rect()
+        self.logger.info("{}".format(self.screen_rect))
         pygame.mixer.set_num_channels(8)
         self.block_size = 25
         self.manager = pygame_gui.UIManager((self.screen_width, self.screen_height ))
@@ -149,9 +151,9 @@ class TMaze:
         self.screen.fill(BLACK)
 
     def grid_to_screen(self, pos):
-        t = (pos[0] * self.block_size - len(self.gen.grid[0]) * self.block_size / 2 - 10,
-             pos[1] * self.block_size - len(self.gen.grid) * self.block_size / 2 - 10)
-        return t
+        x = pos[0] * self.block_size - self.gen.cols * self.block_size / 2
+        y = pos[1] * self.block_size - self.gen.rows * self.block_size / 2
+        return x, y
 
     def setup_map(self):
         self.gen.generate_maze()
