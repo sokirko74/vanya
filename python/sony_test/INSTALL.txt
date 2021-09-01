@@ -1,0 +1,61 @@
+#1. Install open-cv 3.x
+https://docs.opencv.org/3.4/d7/d9f/tutorial_linux_install.html
+sudo apt install libgtk2.0-dev
+git clone https://github.com/opencv/opencv.git
+cd opencv
+git checkout 3.4.9
+mkdir build
+cd build
+cmake ..
+make -j 4
+sudo make install
+
+#2. git psmoveapi
+cd ~/vanya/python/sony_test
+git clone https://github.com/thp/psmoveapi.git
+
+#3. install hidapi
+cd ~/vanya/python/sony_test/psmoveapi/external
+rm -rf hidapi
+git clone https://github.com/signal11/hidapi.git
+cd hidapi
+./bootstrap
+./configure
+make
+sudo make install
+
+
+#4. compiling
+cd ~/vanya/python/sony_test
+bash -e -x scripts/install_dependencies.sh
+bash -e -x scripts/linux/build-debian
+
+#4.1 rebuild with debug
+cd build
+cmake -DPSMOVE_USE_DEBUG=on ..
+make
+
+#5. testing  via usb  (лучше, через Bluetooth), а то возникает как бы два устройства
+#
+#plug your sony move (sony motion controller)
+sudo build/psmove pair
+sudo build/psmove list
+sudo build/example - реагирует на все кнопки, но не видит
+
+
+#5 check video camear
+ lsusb
+ ffplay /dev/video2
+
+#6. bluetooth
+# charge battery
+# unplug
+#(работало без переменных PSMOVE_TRACKER_CAMERA)
+sudo build/test_tracker   (показывает еще картинку с камеры)
+sudo python3  examples/python/test_tracker.py  (просто печать переменных)
+# почему-то sudo python3 examples/python/pair.py - отключает bluetooth
+# bluetooth надо включать кнопкой на move controller
+
+
+
+

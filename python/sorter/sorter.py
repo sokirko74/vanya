@@ -11,15 +11,6 @@ import time
 import vlc
 
 
-
-def play_file(filename):
-    player = vlc.MediaPlayer(os.path.join(os.path.dirname(__file__), "audio", filename))
-    player.play()
-    time.sleep(1)
-    while player.is_playing():
-        time.sleep(1)
-
-
 def pentagram_points(center_x, center_y, r):
     return [
         #
@@ -72,6 +63,7 @@ class TSpriteForm:
     sprite_width = 200
     sprite_height = 200
     font_size = 90
+    player = None
 
     def __init__(self, collection_id, form=None, color=None, image_path=None, char=None):
         self.collection_id = collection_id
@@ -91,12 +83,22 @@ class TSpriteForm:
                other.image_path == self.image_path and \
                other.char == self.char
 
+    @staticmethod
+    def play_file(filename):
+        if TSpriteForm.player is not None:
+            TSpriteForm.player.stop()
+        TSpriteForm.player = vlc.MediaPlayer(os.path.join(os.path.dirname(__file__), "audio", filename))
+        TSpriteForm.player.play()
+        time.sleep(1)
+        while TSpriteForm.player.is_playing():
+            time.sleep(1)
+
     def play_success(self):
         specific_mp3 = os.path.join("audio", str(self)+".mp3")
         if os.path.exists(specific_mp3):
-            play_file(os.path.basename(specific_mp3))
+            TSpriteForm.play_file(os.path.basename(specific_mp3))
         else:
-            play_file("success.mp3")
+            TSpriteForm.play_file("success.mp3")
 
     def __str__(self):
         if self.image_path is not None:
@@ -227,6 +229,7 @@ class TApplication(tk.Frame):
         self.orientation = 'bottom_up'
         master.wm_protocol("WM_DELETE_WINDOW", self.quit_command )
         self.canvas.update()
+        self.playing = False
 
     def bind_keys(self):
         self.master.bind('<Left>', self.left_key)
@@ -248,8 +251,8 @@ class TApplication(tk.Frame):
     def set_main_window_geometry(self):
         if self.args.fullscreen:
             self.master.attributes('-fullscreen', True)
-            TSpriteForm.sprite_width = 300
-            TSpriteForm.sprite_height = 300
+            TSpriteForm.sprite_width = 500
+            TSpriteForm.sprite_height = 500
             TSpriteForm.font_size = 180
         else:
             TSpriteForm.sprite_width = 100
@@ -264,10 +267,13 @@ class TApplication(tk.Frame):
             self.canvas.config(width=event.width, height=self.canvas_height)
 
     def check_end_of_game(self):
+        if not self.playing:
+            return
         for g in self.goals:
             m = self.sprite.matches(g)
             if m is not None:
                 self.unbind_mouse_move()
+                self.playing = False
                 if m:
                     self.canvas.configure(bg="green")
                     self.canvas.update()
@@ -278,7 +284,7 @@ class TApplication(tk.Frame):
                 else:
                     self.canvas.configure(bg="red")
                     self.canvas.update()
-                    play_file("fail.mp3")
+                    TSpriteForm.play_file("fail.mp3")
 
     def redraw_canvas(self, sprite_x, sprite_y):
         if self.sprite.point is None:
@@ -359,6 +365,8 @@ class TApplication(tk.Frame):
         left = padding
         right = self.canvas.winfo_width() - TSpriteForm.sprite_width - padding
 
+        if self.args.orientation is not None:
+            self.orientation = self.args.orientation
         if self.orientation == 'bottom_up':
             return TPoint(vertical_half, bottom)
         if self.orientation == 'up_bottom':
@@ -392,6 +400,9 @@ class TApplication(tk.Frame):
             g.draw_sprite()
 
     def init_new_game(self, event=None):
+        if TSpriteForm.player is not None:
+            TSpriteForm.player.stop()
+        self.playing = True
         padding = 10
         self.canvas.delete("all")
         self.canvas.configure(bg="white")
@@ -472,6 +483,8 @@ def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--not-fullscreen", dest='fullscreen', default=True, action="store_false")
     parser.add_argument("--goals-count", dest='goals_count', default=2, required=False)
+    parser.add_argument("--orientation", dest='orientation',
+                        default=None, required=False, help="can be bottom_up, up_bottom, left_right, right_left" )
     return parser.parse_args()
 
 
