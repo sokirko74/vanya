@@ -1,7 +1,6 @@
 import random
 import numpy as np
 import pygame
-from copy import  deepcopy
 from collections import defaultdict
 
 WALKABLE_TILE = 1
@@ -11,7 +10,7 @@ TARGET_TILE = 4
 
 
 def get_room_with_walls(room_without_walls):
-    r = deepcopy(room_without_walls)
+    r = room_without_walls.copy()
     r.left -= 1
     r.top -= 1
     r.width += 2
@@ -93,8 +92,8 @@ class Generator:
         for r in self.maze_rooms:
             self.grid[r.left:r.right, r.top:r.bottom] = WALKABLE_TILE
 
-    def check_rooms_are_adjacent_for_door(self, room1, room2):
-        if not room1.colliderect(room2): 
+    def check_rooms_are_adjacent_to_make_a_door(self, room1, room2):
+        if not room1.colliderect(room2):
             return False
         wall = get_rect_intersection(room1, room2)
         wall_square = wall.width * wall.height
@@ -105,7 +104,7 @@ class Generator:
         self.adjacent_rooms = defaultdict(set)
         for i in range(0, len(rooms_with_walls)):
             for k in range(i + 1, len(rooms_with_walls)):
-                if self.check_rooms_are_adjacent_for_door(rooms_with_walls[i], rooms_with_walls[k]):
+                if self.check_rooms_are_adjacent_to_make_a_door(rooms_with_walls[i], rooms_with_walls[k]):
                     self.adjacent_rooms[i].add(k)
                     self.adjacent_rooms[k].add(i)
 
@@ -120,7 +119,6 @@ class Generator:
                     yield path + [next_node]
                 else:
                     todo.append([next_node, path + [next_node]])
-
 
     def _make_door(self, room1, room2, walkable_tile=WALKABLE_TILE):
         wall = get_rect_intersection(room1, room2)
@@ -171,8 +169,6 @@ class Generator:
     def generate_maze(self, grid_width, grid_height):
         self.grid_width = grid_width
         self.grid_height = grid_height
-
-        self.maze_rooms.clear()
         self._generate_rooms()
         self._build_start()
         self._build_exit()

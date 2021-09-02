@@ -1,8 +1,17 @@
 from common import TMazeCommon
-
 import pygame
 import os
 import math
+
+
+class TempSprite(pygame.sprite.Sprite):
+    def __init__(self, original):
+        super().__init__()
+        self.rect = original.rect.copy()
+        self.image = original.image
+
+    def collision_check(self, obstacles):
+        return pygame.sprite.spritecollideany(self, obstacles, collided=pygame.sprite.collide_mask) is not None
 
 
 class Player(pygame.sprite.Sprite):
@@ -51,21 +60,18 @@ class Player(pygame.sprite.Sprite):
 
     def update(self):
         self.update_move()
-        new_rect = self.rect.copy()
-        new_rect.x += round(self.move_x)
-        new_rect.y += round(self.move_y)
-        if self.collision_check(new_rect, [t.rect for t in self.parent.target_tiles]):
+        new_sprite = TempSprite(self)
+        new_sprite.rect.x += round(self.move_x)
+        new_sprite.rect.y += round(self.move_y)
+        if new_sprite.collision_check([t for t in self.parent.target_tiles]):
             if not self.parent.chan_2.get_busy():
                 self.parent.chan_2.play(self.sound_success)
             self.score += 1
             self.parent.next_map()
-        elif not self.collision_check(new_rect, self.parent.walls):
-            self.rect = new_rect
+        elif not new_sprite.collision_check(self.parent.walls):
+            self.rect = new_sprite.rect.copy()
         elif not self.parent.chan_2.get_busy():
             self.parent.chan_2.play(self.sound_crash)
-
-    def collision_check(self, new_rect, c_ls):
-        return TMazeCommon.rect_collide_list(new_rect, c_ls)
 
     def update_move(self):
         pass
@@ -148,6 +154,7 @@ class Car(Player):
                 pygame.mixer.music.load(self.sound_moving)
             pygame.mixer.music.play(-1, fade_ms=300)
             self.switch_sound = False
+
         if self.move_dir != 0:
             if self.rotation != self.target_rotation:
                 c_f = self.collider_front

@@ -165,7 +165,7 @@ class TMaze:
         for x in range(self.gen.grid_width):
             for y in range(self.gen.grid_height):
                 self.tiles.append(Tile(self, self.grid_to_screen((x, y)), self.gen.grid[x][y]))
-        self.walls = [t.rect for t in self.tiles if t.tile_type == generator.WALL_TILE]
+        self.walls = [t for t in self.tiles if t.tile_type == generator.WALL_TILE]
         self.target_tiles = [t for t in self.tiles if t.tile_type == generator.TARGET_TILE]
 
     def render_map(self):
