@@ -112,8 +112,8 @@ class TMaze:
         else:
             self.left_maze = 0
             self.top_maze = 0
-            self.maze_width = 800
-            self.maze_height = 600
+            self.maze_width = 1000
+            self.maze_height = 800
             self.screen = pygame.display.set_mode((self.maze_width, self.maze_height))
             pygame.init()
 
@@ -152,7 +152,6 @@ class TMaze:
     def clear_map(self):
         self.tiles.clear()
         self.walls.clear()
-        self.gen.clear()
         self.screen.fill(BLACK)
 
     def grid_to_screen(self, pos):
@@ -161,11 +160,11 @@ class TMaze:
         return x, y
 
     def setup_map(self):
-        self.gen.generate_maze()
-        self.player.set_pos(self.grid_to_screen(self.gen.start))
-        for i in range(self.gen.rows):
-            for j in range(self.gen.cols):
-                self.tiles.append(Tile(self, self.grid_to_screen((j, i)), self.gen.grid[i][j]))
+        self.gen.generate_maze(int(self.maze_width / self.block_size), int(self.maze_height / self.block_size))
+        self.player.set_initial_position(self.grid_to_screen(self.gen.start_pos))
+        for x in range(self.gen.grid_width):
+            for y in range(self.gen.grid_height):
+                self.tiles.append(Tile(self, self.grid_to_screen((x, y)), self.gen.grid[x][y]))
         self.walls = [t.rect for t in self.tiles if t.tile_type == generator.WALL_TILE]
         self.target_tiles = [t for t in self.tiles if t.tile_type == generator.TARGET_TILE]
 
@@ -185,12 +184,10 @@ class TMaze:
         self.setup_map()
         self.render_map()
         self.rendered_map = self.screen.copy()
-        self.player.set_pos(self.grid_to_screen(self.gen.start))
+        self.player.set_initial_position(self.grid_to_screen(self.gen.start_pos))
 
     def start_game(self):
         self.screen.fill(BLACK)
-        self.gen.rows = int(self.maze_height / self.block_size)
-        self.gen.cols = int(self.maze_width / self.block_size)
         self.setup_map()
         self.render_map()
         self.rendered_map = self.screen.copy()
@@ -207,12 +204,6 @@ class TMaze:
                 self.is_running = False
             elif event.key == pygame.K_r:
                 self.next_map()
-
-        if event.type == pygame.USEREVENT:
-            if event.user_type == pygame_gui.UI_BUTTON_PRESSED:
-                if event.ui_element in self.playable_types_buttons:
-                    self.player = self.playable_types[self.playable_types_buttons.index(event.ui_element)]()
-                    self.player.set_pos(self.grid_to_screen(self.gen.target_room_source))
 
     def main_loop(self):
         self.start_game()

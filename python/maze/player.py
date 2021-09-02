@@ -70,8 +70,8 @@ class Player(pygame.sprite.Sprite):
     def update_move(self):
         pass
 
-    def set_pos(self, pos):
-        self.rect.topleft = TMazeCommon.add_tuples(self.parent.maze_rect.topleft, pos)
+    def set_initial_position(self, pos):
+        self.rect.center = TMazeCommon.add_tuples(self.parent.maze_rect.topleft, pos)
 
     def handle_event(self, event):
         pass
@@ -89,9 +89,6 @@ class Bee(Player):
 
     def update_move(self):
         pass
-
-    def set_pos(self, pos):
-        self.rect.topleft = TMazeCommon.add_tuples(self.screen_rect.topleft, pos)
 
     def handle_event(self, event):
         if event.type == pygame.KEYDOWN:
