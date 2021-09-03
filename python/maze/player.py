@@ -1,24 +1,22 @@
-from common import TMazeCommon
 import pygame
 import os
 import math
+from pygame.math import Vector2
 
 
-class TempSprite(pygame.sprite.Sprite):
-    def __init__(self, original):
-        super().__init__()
-        self.rect = original.rect.copy()
-        self.image = original.image
+# https://en.wikipedia.org/wiki/Unit_vector
 
-    def collision_check(self, obstacles):
-        return pygame.sprite.spritecollideany(self, obstacles, collided=pygame.sprite.collide_mask) is not None
+def unit_vector(angle, coef):
+    theta = math.radians(angle)
+    return Vector2(round(coef * math.cos(theta)), round(coef * math.sin(theta)))
 
 
 class Player(pygame.sprite.Sprite):
-    def __init__(self, parent, image, height, width, max_speed, sound_moving, collider_size, size=2,
+    def __init__(self, parent, image, height, width, max_speed, sound_moving,  size=2,
                  sound_crash=os.path.join('assets', 'sounds', 'bee_crash.wav'),
                  sound_success=os.path.join('assets', 'sounds', 'success.wav')):
         pygame.sprite.Sprite.__init__(self)
+        self.angle = 180
         self.parent = parent
         self.screen_rect = self.parent.maze_rect
         self.move_x = 0
@@ -36,48 +34,46 @@ class Player(pygame.sprite.Sprite):
                                             (self.parent.block_size * self.width * self.size,
                                              self.parent.block_size * self.height * self.size))
         self.rect = self.image.get_rect()
-        self.collider_size_start = collider_size
-        self.collider_size = self.collider_size_start
-        self.default_image = self.image.copy()
+        self.orig_image = self.image.copy()
         self.default_rect = self.rect.copy()
-        self.rect.topleft = parent.maze_rect.topleft
         self.max_speed = max_speed
         self.score = 0
         self.set_scale(size)
 
     def set_scale(self, scale):
         self.size = scale
-        self.collider_size = self.collider_size_start * self.size
         self.image = pygame.transform.scale(self.image,
                                             (self.parent.block_size * self.width * self.size,
                                              self.parent.block_size * self.height * self.size))
         self.rect = self.image.get_rect()
-        self.default_image = self.image.copy()
+        self.orig_image = self.image.copy()
         self.default_rect = self.rect.copy()
 
     def draw(self, surface):
         surface.blit(self.image, self.rect)
 
-    def update(self):
-        self.update_move()
-        new_sprite = TempSprite(self)
-        new_sprite.rect.x += round(self.move_x)
-        new_sprite.rect.y += round(self.move_y)
-        if new_sprite.collision_check([t for t in self.parent.target_tiles]):
+    def collision_check(self, obstacles):
+        collided = pygame.sprite.spritecollideany(self, obstacles, collided=pygame.sprite.collide_mask)
+        return collided is not None
+
+    def check_all_collisions(self):
+        if self.collision_check(self.parent.target_tiles):
             if not self.parent.chan_2.get_busy():
                 self.parent.chan_2.play(self.sound_success)
             self.score += 1
             self.parent.next_map()
-        elif not new_sprite.collision_check(self.parent.walls):
-            self.rect = new_sprite.rect.copy()
-        elif not self.parent.chan_2.get_busy():
-            self.parent.chan_2.play(self.sound_crash)
-
-    def update_move(self):
-        pass
+            return True
+        elif self.collision_check(self.parent.walls):
+            if not self.parent.chan_2.get_busy():
+                self.parent.chan_2.play(self.sound_crash)
+            return False
+        else:
+            return True
 
     def set_initial_position(self, pos):
-        self.rect.center = TMazeCommon.add_tuples(self.parent.maze_rect.topleft, pos)
+        self.rect.center = Vector2(self.parent.maze_rect.topleft) + Vector2(pos)
+        self.angle = 180
+        self.image = pygame.transform.rotate(self.orig_image, -self.angle)
 
     def handle_event(self, event):
         pass
@@ -90,11 +86,8 @@ class Bee(Player):
                          height=2,
                          width=2,
                          max_speed=6,
-                         collider_size=5,
                          sound_moving=os.path.join('assets', 'sounds', 'bee_moving.wav'))
-
-    def update_move(self):
-        pass
+        self.orig_image = self.image.copy()
 
     def handle_event(self, event):
         if event.type == pygame.KEYDOWN:
@@ -116,15 +109,21 @@ class Bee(Player):
             elif event.key == pygame.K_DOWN:
                 self.move_y = 0
 
+    def update(self):
+        save_rect = self.rect.copy()
+        self.rect.x += round(self.move_x)
+        self.rect.y += round(self.move_y)
+        if not self.check_all_collisions():
+            self.rect = save_rect
+
 
 class Car(Player):
     def __init__(self, parent):
         super().__init__(parent,
                          image=os.path.join('assets', 'sprites', 'truck.png'),
-                         height=4,
-                         width=3,
+                         height=3,
+                         width=2,
                          max_speed=4,
-                         collider_size=16,
                          sound_moving=os.path.join('assets', 'sounds', 'truck_driving.wav'),
                          sound_crash=os.path.join('assets', 'sounds', 'truck_crash.wav'))
 
@@ -132,87 +131,67 @@ class Car(Player):
         self.switch_sound = False
         pygame.mixer.music.load(self.sound_idle)
         pygame.mixer.music.play(-1, fade_ms=2000)
-        self.move_dir = 0
-        self.rotation = 0
-        self.rotation_changed = True
-        self.tire_rotation = 0
-        self.tire_rotation_max = 40
-        self.target_rotation = 0
-
-        self.collider_front_start = (0, -self.height / 4 * self.collider_size)
-        self.collider_back_start = (0, self.height / 4 * self.collider_size)
-        self.collider_front = self.collider_front_start
-        self.collider_back = self.collider_back_start
+        self.move_direction = 0  # 1 forward, -1 backward
+        self.steering_wheel_angle = 0
 
     def update(self):
-        self.target_rotation += self.tire_rotation
         if self.switch_sound:
             pygame.mixer.music.stop()
-            if self.move_dir == 0:
+            if self.move_direction == 0:
                 pygame.mixer.music.load(self.sound_idle)
             else:
                 pygame.mixer.music.load(self.sound_moving)
             pygame.mixer.music.play(-1, fade_ms=300)
             self.switch_sound = False
 
-        if self.move_dir != 0:
-            if self.rotation != self.target_rotation:
-                c_f = self.collider_front
-                c_b = self.collider_back
-                self.collider_front = TMazeCommon.rotate_point(self.collider_front_start, self.rotation - 90)
-                self.collider_back = TMazeCommon.rotate_point(self.collider_back_start, self.rotation - 90)
-                if self.collision_check(self.rect, self.parent.walls):
-                    self.collider_front = c_f
-                    self.collider_back = c_b
-                else:
-                    self.rotation += self.tire_rotation / 5
-                    self.image, self.rect = TMazeCommon.rot_center(self.default_image, self.rect, self.rotation)
-                    self.target_rotation %= 360
-                    self.rotation %= 360
-        super().update()
+        if self.move_direction == 0:
+            return
+        save_angle = self.angle
+        save_rect = self.rect.copy()
+        save_image = self.image
+
+        if self.steering_wheel_angle != 0:
+            radius = 100 * self.move_direction
+            angle_delta = 0 if self.steering_wheel_angle > 0 else 180
+            pivot_point = self.rect.center - unit_vector(self.angle + angle_delta, radius)
+            self.angle += self.steering_wheel_angle
+            new_center = pivot_point + unit_vector(self.angle + angle_delta, radius)
+            self.image = pygame.transform.rotate(self.orig_image, -self.angle)
+            self.rect = self.image.get_rect(center=new_center)
+        else:
+            self.rect.center = Vector2(self.rect.center) + \
+                               unit_vector(self.angle + 90, self.max_speed) * self.move_direction
+
+        if not self.check_all_collisions():
+            self.rect = save_rect
+            self.image = save_image
+            self.angle = save_angle
 
     def set_scale(self, scale):
         super().set_scale(scale)
-        self.collider_front_start = (0, -self.height / 4 * self.collider_size)
-        self.collider_back_start = (0, self.height / 4 * self.collider_size)
-        self.collider_front = self.collider_front_start
-        self.collider_back = self.collider_back_start
-
-    def collision_check(self, new_rect, c_ls):
-        t = TMazeCommon.add_tuples(new_rect.center, self.collider_front)
-        if TMazeCommon.circle_collidelist(t, self.collider_size, c_ls) != -1:
-            return True
-        t = TMazeCommon.add_tuples(new_rect.center, self.collider_back)
-        if TMazeCommon.circle_collidelist(t, self.collider_size, c_ls) != -1:
-            return True
-        return False
-
-    def update_move(self):
-        self.move_x = -math.sin(math.radians(self.rotation)) * self.max_speed * self.move_dir
-        self.move_y = -math.cos(math.radians(self.rotation)) * self.max_speed * self.move_dir
 
     def handle_event(self, event):
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_LEFT:
-                self.tire_rotation = self.tire_rotation_max
+                self.steering_wheel_angle = -1
             elif event.key == pygame.K_RIGHT:
-                self.tire_rotation = -self.tire_rotation_max
+                self.steering_wheel_angle = +1
             elif event.key == pygame.K_UP:
-                self.move_dir = 1
+                self.move_direction = 1
                 self.switch_sound = True
             elif event.key == pygame.K_DOWN:
-                self.move_dir = -1
+                self.move_direction = -1
                 self.switch_sound = True
         elif event.type == pygame.KEYUP:
             if event.key == pygame.K_LEFT:
-                self.tire_rotation = 0
+                self.steering_wheel_angle = 0
             elif event.key == pygame.K_RIGHT:
-                self.tire_rotation = 0
+                self.steering_wheel_angle = 0
             elif event.key == pygame.K_UP:
-                self.move_dir = 0
+                self.move_direction = 0
                 self.switch_sound = True
             elif event.key == pygame.K_DOWN:
-                self.move_dir = 0
+                self.move_direction = 0
                 self.switch_sound = True
         if event.type == pygame.KEYUP or event.type == pygame.KEYDOWN:
             pass

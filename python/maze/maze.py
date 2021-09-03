@@ -9,6 +9,7 @@ import pygame
 import pygame_gui
 import argparse
 import logging
+from pygame.math import Vector2
 
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
@@ -37,7 +38,7 @@ class Tile(pygame.sprite.Sprite):
         self.wall = False
         self.image.fill(color)
         self.rect = self.image.get_rect()
-        self.rect.topleft = TMazeCommon.add_tuples(self.parent.maze_rect.topleft, pos)
+        self.rect.topleft = Vector2(self.parent.maze_rect.topleft) + pos
 
     def draw(self):
         self.parent.screen.blit(self.image, self.rect)

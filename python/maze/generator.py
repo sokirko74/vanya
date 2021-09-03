@@ -27,7 +27,7 @@ def get_rect_intersection(rect1, rect2):
 
 
 class Generator:
-    def __init__(self,  rooms=6, door_width=6):
+    def __init__(self,  rooms=2, door_width=6):
         self.grid_width = None
         self.grid_height = None
         self.inner_rooms_count = rooms
@@ -83,6 +83,7 @@ class Generator:
         self.main_room = pygame.Rect(1, 1, self.grid_width - 2, self.grid_height - 2)
         self.maze_rooms.clear()
         self.maze_rooms.extend(self._divide_room(self.main_room))
+
         for i in range(self.inner_rooms_count - 2):
             room_index = self._find_random_room()
             new_rooms = self._divide_room(self.maze_rooms.pop(room_index))
