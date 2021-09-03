@@ -2,7 +2,6 @@ import sys
 import time
 
 from player import Player, Car, Bee
-from common import TMazeCommon
 import generator
 
 import pygame
@@ -89,8 +88,8 @@ class TKeyEventType:
 
 
 class TMaze:
-    def __init__(self, use_joystick, is_full_screen, player_type_str):
-        self.gen = generator.Generator()
+    def __init__(self, use_joystick, is_full_screen, player_type_str, rooms_count):
+        self.gen = generator.Generator(rooms=max(rooms_count, 2))
         self.logger = setup_logging()
         self.rendered_map = None
         self.tiles = []
@@ -247,11 +246,12 @@ def parse_args():
     parser.add_argument("--use-joystick", dest='use_joystick', default=False, action="store_true")
     parser.add_argument("--fullscreen", dest='fullscreen', default=False, action="store_true")
     parser.add_argument("--player", dest='player', default="bee", help="can be car or bee (default)")
+    parser.add_argument("--rooms-count", dest='rooms_count', default=2, type=int)
     return parser.parse_args()
 
 
 if __name__ == '__main__':
     args = parse_args()
-    maze = TMaze(args.use_joystick, args.fullscreen, args.player)
+    maze = TMaze(args.use_joystick, args.fullscreen, args.player, args.rooms_count)
     maze.main_loop()
     pygame.quit()
