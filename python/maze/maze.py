@@ -88,7 +88,7 @@ class TKeyEventType:
 
 
 class TMaze:
-    def __init__(self, use_joystick, is_full_screen, player_type_str, rooms_count):
+    def __init__(self, use_joystick, is_full_screen, player_type_str, rooms_count, speed):
         self.gen = generator.Generator(rooms=max(rooms_count, 2))
         self.logger = setup_logging()
         self.rendered_map = None
@@ -125,9 +125,9 @@ class TMaze:
         self.chan_2 = pygame.mixer.Channel(2)
         self.font = pygame.font.SysFont('Impact', 20, italic=False, bold=True)
         if player_type_str == "bee":
-            self.player = Bee(self)
+            self.player = Bee(self, speed=speed)
         else:
-            self.player = Car(self)
+            self.player = Car(self, speed=speed)
         self.joystick = None
         if use_joystick:
             self.init_joystick()
@@ -247,11 +247,12 @@ def parse_args():
     parser.add_argument("--fullscreen", dest='fullscreen', default=False, action="store_true")
     parser.add_argument("--player", dest='player', default="bee", help="can be car or bee (default)")
     parser.add_argument("--rooms-count", dest='rooms_count', default=2, type=int)
+    parser.add_argument("--speed", dest='speed', default=2, type=int)
     return parser.parse_args()
 
 
 if __name__ == '__main__':
     args = parse_args()
-    maze = TMaze(args.use_joystick, args.fullscreen, args.player, args.rooms_count)
+    maze = TMaze(args.use_joystick, args.fullscreen, args.player, args.rooms_count, args.speed)
     maze.main_loop()
     pygame.quit()

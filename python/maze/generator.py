@@ -27,7 +27,7 @@ def get_rect_intersection(rect1, rect2):
 
 
 class Generator:
-    def __init__(self,  rooms=2, door_width=6):
+    def __init__(self,  rooms=2, door_width=8):
         self.grid_width = None
         self.grid_height = None
         self.inner_rooms_count = rooms

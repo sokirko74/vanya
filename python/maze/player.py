@@ -2,10 +2,11 @@ import pygame
 import os
 import math
 from pygame.math import Vector2
+import random
+import time
 
 
 # https://en.wikipedia.org/wiki/Unit_vector
-
 def unit_vector(angle, coef):
     theta = math.radians(angle)
     return Vector2(round(coef * math.cos(theta)), round(coef * math.sin(theta)))
@@ -19,35 +20,29 @@ class Player(pygame.sprite.Sprite):
         self.angle = 180
         self.parent = parent
         self.screen_rect = self.parent.maze_rect
-        self.move_x = 0
-        self.move_y = 0
-        self.size = size
         self.image = pygame.image.load(image)
+        self.orig_image = self.image.copy()
         self.sound_moving = sound_moving
         self.sound_crash = pygame.mixer.Sound(sound_crash)
+        self.sound_crash.set_volume(0.2)
         self.sound_success = pygame.mixer.Sound(sound_success)
         self.width = width
         self.height = height
         pygame.mixer.music.load(self.sound_moving)
         pygame.mixer.music.play(-1, fade_ms=2000)
-        self.image = pygame.transform.scale(self.image,
-                                            (self.parent.block_size * self.width * self.size,
-                                             self.parent.block_size * self.height * self.size))
-        self.rect = self.image.get_rect()
-        self.orig_image = self.image.copy()
-        self.default_rect = self.rect.copy()
         self.max_speed = max_speed
         self.score = 0
         self.set_scale(size)
 
-    def set_scale(self, scale):
-        self.size = scale
+    def get_sound_success(self):
+        return self.sound_success
+
+    def set_scale(self, size):
         self.image = pygame.transform.scale(self.image,
-                                            (self.parent.block_size * self.width * self.size,
-                                             self.parent.block_size * self.height * self.size))
+                                            (self.parent.block_size * self.width * size,
+                                             self.parent.block_size * self.height * size))
         self.rect = self.image.get_rect()
         self.orig_image = self.image.copy()
-        self.default_rect = self.rect.copy()
 
     def draw(self, surface):
         surface.blit(self.image, self.rect)
@@ -58,9 +53,12 @@ class Player(pygame.sprite.Sprite):
 
     def check_all_collisions(self):
         if self.collision_check(self.parent.target_tiles):
+            pygame.mixer.stop()
+            self.parent.chan_2.s
             if not self.parent.chan_2.get_busy():
-                self.parent.chan_2.play(self.sound_success)
+                self.parent.chan_2.play(self.get_sound_success())
             self.score += 1
+            time.sleep(5)
             self.parent.next_map()
             return True
         elif self.collision_check(self.parent.walls):
@@ -80,14 +78,25 @@ class Player(pygame.sprite.Sprite):
 
 
 class Bee(Player):
-    def __init__(self, parent):
+    def __init__(self, parent, speed=3):
         super().__init__(parent,
                          image=os.path.join('assets', 'sprites', 'bee.png'),
                          height=2,
                          width=2,
-                         max_speed=6,
+                         max_speed=speed,
                          sound_moving=os.path.join('assets', 'sounds', 'bee_moving.wav'))
-        self.orig_image = self.image.copy()
+        self.move_x = 0
+        self.move_y = 0
+
+    def get_sound_success(self):
+        #paths = list([os.path.join('assets', 'sounds', 'success.wav')])
+        paths = []
+        folder = os.path.join('assets', 'sounds')
+        for filename in  os.listdir(folder):
+            if filename.startswith('thank-'):
+                paths.append(os.path.join(folder, filename))
+        path = random.choice(paths)
+        return pygame.mixer.Sound(path)
 
     def handle_event(self, event):
         if event.type == pygame.KEYDOWN:
@@ -110,20 +119,28 @@ class Bee(Player):
                 self.move_y = 0
 
     def update(self):
-        save_rect = self.rect.copy()
-        self.rect.x += round(self.move_x)
-        self.rect.y += round(self.move_y)
-        if not self.check_all_collisions():
-            self.rect = save_rect
+        move_vector = Vector2(round(self.move_x), round(self.move_y))
+        if move_vector.length() > 0:
+            save_rect = self.rect.copy()
+            save_image = self.image
+            self.rect.topleft += move_vector
+            angle = Vector2(0, 0).angle_to(move_vector) + 270
+            self.image = pygame.transform.rotate(self.orig_image, -angle)
+
+            if not self.check_all_collisions():
+                self.image = save_image
+                if not self.check_all_collisions():
+                    # bee is not a rect
+                    self.rect = save_rect
 
 
 class Car(Player):
-    def __init__(self, parent):
+    def __init__(self, parent, speed=4):
         super().__init__(parent,
                          image=os.path.join('assets', 'sprites', 'truck.png'),
                          height=3,
                          width=2,
-                         max_speed=4,
+                         max_speed=speed,
                          sound_moving=os.path.join('assets', 'sounds', 'truck_driving.wav'),
                          sound_crash=os.path.join('assets', 'sounds', 'truck_crash.wav'))
 
@@ -173,9 +190,9 @@ class Car(Player):
     def handle_event(self, event):
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_LEFT:
-                self.steering_wheel_angle = -1
+                self.steering_wheel_angle = -3
             elif event.key == pygame.K_RIGHT:
-                self.steering_wheel_angle = +1
+                self.steering_wheel_angle = +3
             elif event.key == pygame.K_UP:
                 self.move_direction = 1
                 self.switch_sound = True
