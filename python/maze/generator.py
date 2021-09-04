@@ -36,6 +36,7 @@ class Generator:
         self.maze_rooms = []
         self.main_room = None
         self.start_pos = None
+        self.room_centers_except_start_room = None
         self.adjacent_rooms = None
         self.start_room_index = None
         self.exit_room_index = None
@@ -147,7 +148,10 @@ class Generator:
     def _build_start(self):
         self.start_room_index = random.randint(0, self.inner_rooms_count - 1)
         self.start_pos = self.maze_rooms[self.start_room_index].center
-        self.grid[self.start_pos[0], self.start_pos[1]] = START_TILE
+        self.room_centers_except_start_room = list()
+        for i in range(len(self.maze_rooms)):
+            if i != self.start_room_index:
+                self.room_centers_except_start_room.append(self.maze_rooms[i].center)
 
     def get_main_walls(self):
         return [pygame.Rect(0,  0, self.grid_width, 1),

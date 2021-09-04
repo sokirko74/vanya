@@ -16,7 +16,7 @@ class Player(pygame.sprite.Sprite):
     def __init__(self, parent, image, height, width, max_speed, sound_moving,  size=2,
                  sound_crash=os.path.join('assets', 'sounds', 'bee_crash.wav'),
                  sound_success=os.path.join('assets', 'sounds', 'success.wav')):
-        pygame.sprite.Sprite.__init__(self)
+        super().__init__()
         self.angle = 180
         self.parent = parent
         self.screen_rect = self.parent.maze_rect
@@ -24,12 +24,14 @@ class Player(pygame.sprite.Sprite):
         self.orig_image = self.image.copy()
         self.sound_moving = sound_moving
         self.sound_crash = pygame.mixer.Sound(sound_crash)
+        self.sound_flower = pygame.mixer.Sound(os.path.join('assets', 'sounds', 'sound_flower.wav'))
         self.sound_crash.set_volume(0.2)
         self.sound_success = pygame.mixer.Sound(sound_success)
         self.width = width
         self.height = height
         pygame.mixer.music.load(self.sound_moving)
         pygame.mixer.music.play(-1, fade_ms=2000)
+        pygame.mixer.music.set_volume(0.2)
         self.max_speed = max_speed
         self.score = 0
         self.set_scale(size)
@@ -44,8 +46,8 @@ class Player(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.orig_image = self.image.copy()
 
-    def draw(self, surface):
-        surface.blit(self.image, self.rect)
+    #def draw(self, surface):
+    #    surface.blit(self.image, self.rect)
 
     def collision_check(self, obstacles):
         collided = pygame.sprite.spritecollideany(self, obstacles, collided=pygame.sprite.collide_mask)
@@ -53,12 +55,15 @@ class Player(pygame.sprite.Sprite):
 
     def check_all_collisions(self):
         if self.collision_check(self.parent.target_tiles):
-            pygame.mixer.stop()
-            self.parent.chan_2.s
+            pygame.mixer.music.stop()
+            time.sleep(0.1)
+            #pygame.mixer.stop()
+            #self.parent.chan_2.play
             if not self.parent.chan_2.get_busy():
                 self.parent.chan_2.play(self.get_sound_success())
             self.score += 1
-            time.sleep(5)
+            time.sleep(1)
+            pygame.mixer.music.play(-1, fade_ms=2000)
             self.parent.next_map()
             return True
         elif self.collision_check(self.parent.walls):
@@ -66,6 +71,12 @@ class Player(pygame.sprite.Sprite):
                 self.parent.chan_2.play(self.sound_crash)
             return False
         else:
+            collided_flower = pygame.sprite.spritecollideany(self, self.parent.flowers, collided=pygame.sprite.collide_mask)
+            if collided_flower is not None:
+                if not self.parent.chan_2.get_busy():
+                    self.parent.chan_2.play(self.sound_flower)
+                collided_flower.kill()
+
             return True
 
     def set_initial_position(self, pos):
@@ -95,6 +106,7 @@ class Bee(Player):
         for filename in  os.listdir(folder):
             if filename.startswith('thank-'):
                 paths.append(os.path.join(folder, filename))
+        self.parent.logger.info("choice out of {} sounds".format(len(paths)))
         path = random.choice(paths)
         return pygame.mixer.Sound(path)
 

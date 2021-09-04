@@ -9,6 +9,8 @@ import pygame_gui
 import argparse
 import logging
 from pygame.math import Vector2
+import os
+
 
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
@@ -41,6 +43,30 @@ class Tile(pygame.sprite.Sprite):
 
     def draw(self):
         self.parent.screen.blit(self.image, self.rect)
+
+
+class TFlower(pygame.sprite.Sprite):
+    def __init__(self, parent, pos):
+        pygame.sprite.Sprite.__init__(self)
+        self.parent = parent
+        self.image = pygame.image.load(os.path.join('assets', 'sprites', 'flower.png'))
+        self.image = pygame.transform.scale(self.image,
+                                            (100,
+                                             100))
+        self.rect = self.image.get_rect()
+        self.rect.topleft = Vector2(self.parent.maze_rect.topleft) + pos
+
+
+    #def draw(self):
+    #    if self.alive():
+    #        self.parent.screen.blit(self.image, self.rect)
+
+    def update(self):
+        pass
+        #if not self.alive():
+        #    pygame.Surface((self.parent.block_size, self.parent.block_size))
+        #    #self.image.fill(WHITE)
+        #   self.parent.screen.blit(self.image, self.rect)
 
 
 def setup_logging():
@@ -88,10 +114,9 @@ class TKeyEventType:
 
 
 class TMaze:
-    def __init__(self, use_joystick, is_full_screen, player_type_str, rooms_count, speed):
+    def __init__(self, use_joystick, is_full_screen, player_type_str, rooms_count, speed, block_size):
         self.gen = generator.Generator(rooms=max(rooms_count, 2))
         self.logger = setup_logging()
-        self.rendered_map = None
         self.tiles = []
         self.walls = []
         self.target_tiles = []
@@ -101,6 +126,8 @@ class TMaze:
         self.score = 0
         self.is_running = True
         self.is_paused = False
+        self.all_sprites = None
+        self.flowers = None
         if is_full_screen:
             self.left_maze = 80
             self.top_maze = 0
@@ -120,8 +147,7 @@ class TMaze:
         self.maze_rect = pygame.Rect(self.left_maze, self.top_maze, self.maze_width, self.maze_height)
         self.logger.info("{}".format(self.maze_rect))
         pygame.mixer.set_num_channels(8)
-        self.block_size = 25
-        self.manager = pygame_gui.UIManager((self.maze_width, self.maze_height))
+        self.block_size = block_size
         self.chan_2 = pygame.mixer.Channel(2)
         self.font = pygame.font.SysFont('Impact', 20, italic=False, bold=True)
         if player_type_str == "bee":
@@ -162,15 +188,25 @@ class TMaze:
     def setup_map(self):
         self.gen.generate_maze(int(self.maze_width / self.block_size), int(self.maze_height / self.block_size))
         self.player.set_initial_position(self.grid_to_screen(self.gen.start_pos))
+        self.all_sprites = pygame.sprite.Group()
+        self.flowers = pygame.sprite.Group()
+
         for x in range(self.gen.grid_width):
             for y in range(self.gen.grid_height):
-                self.tiles.append(Tile(self, self.grid_to_screen((x, y)), self.gen.grid[x][y]))
+                tile = Tile(self, self.grid_to_screen((x, y)), self.gen.grid[x][y])
+                self.tiles.append(tile)
+                self.all_sprites.add(tile)
+
+        if isinstance( self.player, Bee):
+            for x,y in self.gen.room_centers_except_start_room:
+                flower = TFlower(self, self.grid_to_screen((x, y)))
+                self.all_sprites.add(flower)
+                self.flowers.add(flower)
+
+        self.all_sprites.add(self.player)
+
         self.walls = [t for t in self.tiles if t.tile_type == generator.WALL_TILE]
         self.target_tiles = [t for t in self.tiles if t.tile_type == generator.TARGET_TILE]
-
-    def render_map(self):
-        for t in self.tiles:
-            t.draw()
 
     def toggle_pause(self):
         self.is_paused = not self.is_paused
@@ -182,17 +218,13 @@ class TMaze:
     def next_map(self):
         self.clear_map()
         self.setup_map()
-        self.render_map()
-        self.rendered_map = self.screen.copy()
         self.player.set_initial_position(self.grid_to_screen(self.gen.start_pos))
 
     def start_game(self):
         self.screen.fill(BLACK)
         self.setup_map()
-        self.render_map()
-        self.rendered_map = self.screen.copy()
         self.logger.info("start_game")
-        pygame.display.update()
+        pygame.display.flip()
 
     def check_game_events(self, event):
         if event.type == pygame.QUIT:
@@ -224,20 +256,14 @@ class TMaze:
                         self.player.handle_event(e)
                 else:
                    self.check_game_events(event)
-                if not self.is_paused:
-                   self.player.handle_event(event)
-                if self.is_paused:
-                   self.manager.process_events(event)
+                self.player.handle_event(event)
                 if joystick_direction[0] != 0 or joystick_direction[1] != 0:
                     self.logger.info("joystick_direction = {}".format(joystick_direction))
 
-            self.manager.update(time_delta)
-            self.player.update()
-            self.screen.blit(self.rendered_map, (0, 0))
-            self.player.draw(self.screen)
-            if self.is_paused:
-                self.manager.draw_ui(self.screen)
-            pygame.display.update([self.player.rect, self.maze_rect])
+            self.all_sprites.update()
+            self.all_sprites.draw(self.screen)
+
+            pygame.display.flip()
             clock.tick(25)
 
 
@@ -248,11 +274,12 @@ def parse_args():
     parser.add_argument("--player", dest='player', default="bee", help="can be car or bee (default)")
     parser.add_argument("--rooms-count", dest='rooms_count', default=2, type=int)
     parser.add_argument("--speed", dest='speed', default=2, type=int)
+    parser.add_argument("--block-size", dest='block_size', default=25, type=int)
     return parser.parse_args()
 
 
 if __name__ == '__main__':
     args = parse_args()
-    maze = TMaze(args.use_joystick, args.fullscreen, args.player, args.rooms_count, args.speed)
+    maze = TMaze(args.use_joystick, args.fullscreen, args.player, args.rooms_count, args.speed, args.block_size)
     maze.main_loop()
     pygame.quit()
