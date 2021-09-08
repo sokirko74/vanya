@@ -64,7 +64,10 @@ class Player(pygame.sprite.Sprite):
             self.score += 1
             time.sleep(1)
             pygame.mixer.music.play(-1, fade_ms=2000)
-            self.parent.next_map()
+            self.kill()
+            for f in self.parent.flowers:
+                f.kill()
+            self.parent.print_victory = True
             return True
         elif self.collision_check(self.parent.walls):
             if not self.parent.chan_2.get_busy():
@@ -100,12 +103,12 @@ class Bee(Player):
         self.move_y = 0
 
     def get_sound_success(self):
-        #paths = list([os.path.join('assets', 'sounds', 'success.wav')])
-        paths = []
-        folder = os.path.join('assets', 'sounds')
-        for filename in  os.listdir(folder):
-            if filename.startswith('thank-'):
-                paths.append(os.path.join(folder, filename))
+        paths = list([os.path.join('assets', 'sounds', 'success.wav')])
+        #paths = []
+        #folder = os.path.join('assets', 'sounds')
+        #for filename in  os.listdir(folder):
+         #   if filename.startswith('thank-'):
+        #        paths.append(os.path.join(folder, filename))
         self.parent.logger.info("choice out of {} sounds".format(len(paths)))
         path = random.choice(paths)
         return pygame.mixer.Sound(path)

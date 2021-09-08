@@ -128,6 +128,7 @@ class TMaze:
         self.is_paused = False
         self.all_sprites = None
         self.flowers = None
+        self.print_victory = False
         if is_full_screen:
             self.left_maze = 80
             self.top_maze = 0
@@ -216,6 +217,7 @@ class TMaze:
             self.player.switch_sound = True
 
     def next_map(self):
+        self.print_victory  = False
         self.clear_map()
         self.setup_map()
         self.player.set_initial_position(self.grid_to_screen(self.gen.start_pos))
@@ -247,6 +249,7 @@ class TMaze:
                 if event.type == pygame.JOYBUTTONDOWN:
                     self.logger.info("Joystick button pressed.")
                 elif event.type == pygame.JOYBUTTONUP:
+                    self.next_map()
                     self.logger.info("Joystick button released.")
                 elif event.type == pygame.JOYAXISMOTION:
                     #axis = ['X', 'Y']
@@ -262,6 +265,12 @@ class TMaze:
 
             self.all_sprites.update()
             self.all_sprites.draw(self.screen)
+
+            if self.print_victory:
+                self.screen.fill((0, 0, 255))
+                font = pygame.font.SysFont(None, 300)
+                screen_text = font.render('ПОБЕДА!', True, (0, 200, 0))
+                self.screen.blit(screen_text, (250, 280))
 
             pygame.display.flip()
             clock.tick(25)
