@@ -24,7 +24,6 @@ class Player(pygame.sprite.Sprite):
         self.orig_image = self.image.copy()
         self.sound_moving = sound_moving
         self.sound_crash = pygame.mixer.Sound(sound_crash)
-        self.sound_flower = pygame.mixer.Sound(os.path.join('assets', 'sounds', 'sound_flower.wav'))
         self.sound_crash.set_volume(0.2)
         self.sound_success = pygame.mixer.Sound(sound_success)
         self.width = width
@@ -76,10 +75,7 @@ class Player(pygame.sprite.Sprite):
         else:
             collided_flower = pygame.sprite.spritecollideany(self, self.parent.flowers, collided=pygame.sprite.collide_mask)
             if collided_flower is not None:
-                if not self.parent.chan_2.get_busy():
-                    self.parent.chan_2.play(self.sound_flower)
-                collided_flower.kill()
-
+                collided_flower.eat_flower()
             return True
 
     def set_initial_position(self, pos):
