@@ -6,7 +6,6 @@ from player import Player, Car, Bee
 import generator
 
 import pygame
-import pygame_gui
 import argparse
 import logging
 from pygame.math import Vector2
@@ -24,7 +23,6 @@ BLUE = (0, 0, 255)
 ColorMap = {
     generator.WALKABLE_TILE: WHITE,
     generator.WALL_TILE: RED,
-    generator.START_TILE: BLUE,
     generator.TARGET_TILE: GREEN,
 }
 
@@ -65,21 +63,35 @@ class TFlower(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.topleft = Vector2(self.parent.maze_rect.topleft) + pos
 
-    def eat_flower(self):
+    def contact_object(self):
         if not self.parent.chan_2.get_busy():
             self.parent.chan_2.play(self.sound_flower)
         self.kill()
 
-    #def draw(self):
-    #    if self.alive():
-    #        self.parent.screen.blit(self.image, self.rect)
 
-    def update(self):
-        pass
-        #if not self.alive():
-        #    pygame.Surface((self.parent.block_size, self.parent.block_size))
-        #    #self.image.fill(WHITE)
-        #   self.parent.screen.blit(self.image, self.rect)
+class TFrog(pygame.sprite.Sprite):
+    sprites = [
+        ('frog.png', 'sound_frog.wav'),
+    ]
+
+    def __init__(self, parent, pos):
+        pygame.sprite.Sprite.__init__(self)
+        self.parent = parent
+        sprite_basename, sound_basename = random.choice(self.sprites)
+        self.image = pygame.image.load(os.path.join('assets', 'sprites', sprite_basename))
+        self.sound_frog = pygame.mixer.Sound(os.path.join('assets', 'sounds', sound_basename))
+        self.sound_frog.set_volume(0.2)
+        self.image = pygame.transform.scale(self.image, (50, 50))
+        self.rect = self.image.get_rect()
+        self.rect.topleft = Vector2(self.parent.maze_rect.topleft) + pos
+        self.contacted = False
+
+    def contact_object(self):
+        if not self.contacted:
+            if not self.parent.chan_2.get_busy():
+                self.parent.chan_2.play(self.sound_frog)
+        self.contacted = True
+        self.parent.open_closed_rooms()
 
 
 def setup_logging():
@@ -128,8 +140,8 @@ class TKeyEventType:
 
 class TMaze:
     def __init__(self, use_joystick, is_full_screen, player_type_str, rooms_count, speed, block_size):
-        self.gen = generator.Generator(rooms=max(rooms_count, 2))
         self.logger = setup_logging()
+        self.gen = generator.Generator(logger=self.logger, rooms=max(rooms_count, 2))
         self.tiles = []
         self.walls = []
         self.target_tiles = []
@@ -140,7 +152,7 @@ class TMaze:
         self.is_running = True
         self.is_paused = False
         self.all_sprites = None
-        self.flowers = None
+        self.objects = None
         self.print_victory = False
         if is_full_screen:
             self.left_maze = 80
@@ -199,28 +211,52 @@ class TMaze:
         y = pos[1] * self.block_size
         return x, y
 
+    def draw_rooms(self):
+        self.tiles.clear()
+        sprites_wo_tiles = list()
+        for sprite in self.all_sprites:
+            if not isinstance(sprite, Tile):
+                sprites_wo_tiles.append(sprite)
+        self.all_sprites.empty()
+
+        for x in range(self.gen.grid_width):
+            for y in range(self.gen.grid_height):
+                tile_type = self.gen.grid[x][y]
+                if tile_type != generator.WALKABLE_TILE:
+                    tile = Tile(self, self.grid_to_screen((x, y)), tile_type)
+                    self.tiles.append(tile)
+                    self.all_sprites.add(tile)
+
+        for s in sprites_wo_tiles:
+            self.all_sprites.add(s)
+
+        self.target_tiles = [t for t in self.tiles if t.tile_type == generator.TARGET_TILE]
+        self.walls = [t for t in self.tiles if t.tile_type == generator.WALL_TILE]
+        self.logger.info("walls count = {}".format(len(self.walls)))
+
+    def open_closed_rooms(self):
+        self.gen.open_closed_rooms()
+        self.draw_rooms()
+
     def setup_map(self):
         self.gen.generate_maze(int(self.maze_width / self.block_size), int(self.maze_height / self.block_size))
         self.player.set_initial_position(self.grid_to_screen(self.gen.start_pos))
         self.all_sprites = pygame.sprite.Group()
-        self.flowers = pygame.sprite.Group()
-
-        for x in range(self.gen.grid_width):
-            for y in range(self.gen.grid_height):
-                tile = Tile(self, self.grid_to_screen((x, y)), self.gen.grid[x][y])
-                self.tiles.append(tile)
-                self.all_sprites.add(tile)
+        self.objects = pygame.sprite.Group()
 
         if isinstance( self.player, Bee):
             for x,y in self.gen.room_centers_except_start_room:
                 flower = TFlower(self, self.grid_to_screen((x, y)))
                 self.all_sprites.add(flower)
-                self.flowers.add(flower)
+                self.objects.add(flower)
+            if len(self.gen.room_corners_except_start_room) >  0:
+                frog_place = random.choice(self.gen.room_corners_except_start_room)
+                frog = TFrog(self, self.grid_to_screen(frog_place))
+                self.all_sprites.add(frog)
+                self.objects.add(frog)
 
         self.all_sprites.add(self.player)
-
-        self.walls = [t for t in self.tiles if t.tile_type == generator.WALL_TILE]
-        self.target_tiles = [t for t in self.tiles if t.tile_type == generator.TARGET_TILE]
+        self.draw_rooms()
 
     def toggle_pause(self):
         self.is_paused = not self.is_paused
@@ -251,6 +287,8 @@ class TMaze:
                 self.is_running = False
             elif event.key == pygame.K_r:
                 self.next_map()
+            elif event.key == pygame.K_o:
+                self.open_closed_rooms()
 
     def main_loop(self):
         self.start_game()
@@ -276,6 +314,7 @@ class TMaze:
                 if joystick_direction[0] != 0 or joystick_direction[1] != 0:
                     self.logger.info("joystick_direction = {}".format(joystick_direction))
 
+            self.screen.fill(WHITE)
             self.all_sprites.update()
             self.all_sprites.draw(self.screen)
 
@@ -284,7 +323,6 @@ class TMaze:
                 font = pygame.font.SysFont(None, 300)
                 screen_text = font.render('ПОБЕДА!', True, (0, 200, 0))
                 self.screen.blit(screen_text, (250, 280))
-
             pygame.display.flip()
             clock.tick(25)
 

@@ -45,8 +45,6 @@ class Player(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.orig_image = self.image.copy()
 
-    #def draw(self, surface):
-    #    surface.blit(self.image, self.rect)
 
     def collision_check(self, obstacles):
         collided = pygame.sprite.spritecollideany(self, obstacles, collided=pygame.sprite.collide_mask)
@@ -56,15 +54,13 @@ class Player(pygame.sprite.Sprite):
         if self.collision_check(self.parent.target_tiles):
             pygame.mixer.music.stop()
             time.sleep(0.1)
-            #pygame.mixer.stop()
-            #self.parent.chan_2.play
             if not self.parent.chan_2.get_busy():
                 self.parent.chan_2.play(self.get_sound_success())
             self.score += 1
             time.sleep(1)
             pygame.mixer.music.play(-1, fade_ms=2000)
             self.kill()
-            for f in self.parent.flowers:
+            for f in self.parent.objects:
                 f.kill()
             self.parent.print_victory = True
             return True
@@ -73,9 +69,9 @@ class Player(pygame.sprite.Sprite):
                 self.parent.chan_2.play(self.sound_crash)
             return False
         else:
-            collided_flower = pygame.sprite.spritecollideany(self, self.parent.flowers, collided=pygame.sprite.collide_mask)
-            if collided_flower is not None:
-                collided_flower.eat_flower()
+            collided_objects = pygame.sprite.spritecollideany(self, self.parent.objects, collided=pygame.sprite.collide_mask)
+            if collided_objects is not None:
+                collided_objects.contact_object()
             return True
 
     def set_initial_position(self, pos):
@@ -100,11 +96,6 @@ class Bee(Player):
 
     def get_sound_success(self):
         paths = list([os.path.join('assets', 'sounds', 'success.wav')])
-        #paths = []
-        #folder = os.path.join('assets', 'sounds')
-        #for filename in  os.listdir(folder):
-         #   if filename.startswith('thank-'):
-        #        paths.append(os.path.join(folder, filename))
         self.parent.logger.info("choice out of {} sounds".format(len(paths)))
         path = random.choice(paths)
         return pygame.mixer.Sound(path)
@@ -134,7 +125,7 @@ class Bee(Player):
         if move_vector.length() > 0:
             save_rect = self.rect.copy()
             save_image = self.image
-            self.rect.topleft += move_vector
+            self.rect.center += move_vector
             angle = Vector2(0, 0).angle_to(move_vector) + 270
             self.image = pygame.transform.rotate(self.orig_image, -angle)
 
