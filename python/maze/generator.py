@@ -156,7 +156,11 @@ class Generator:
         except Exception as exp:
             retry = list(self.get_all_paths_using_bfs(start_room_index, self.exit_room_index))
             raise
-        for i in range(0, len(longest_path) - 1):
+        for opened_room_index in range(0, len(longest_path)):
+            if self.room_to_doors[longest_path[opened_room_index]] > 0:
+                break
+
+        for i in range(opened_room_index):
             room_index1 = longest_path[i]
             room_index2 = longest_path[i + 1]
             r1 = get_room_rect_with_walls(self.maze_rooms[room_index1])
