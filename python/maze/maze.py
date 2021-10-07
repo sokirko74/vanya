@@ -1,6 +1,9 @@
 import random
 import sys
-import time
+import os
+
+sys.path.append(os.path.join(os.path.dirname(__file__), '../common'))
+from joystick import init_joystick
 
 from player import Player, Car, Bee
 import generator
@@ -182,24 +185,7 @@ class TMaze:
             self.player = Car(self, speed=speed)
         self.joystick = None
         if use_joystick:
-            self.init_joystick()
-
-    def init_joystick(self):
-        pygame.joystick.init()
-        self.logger.info("joysticks count = {}".format(pygame.joystick.get_count()))
-        if not pygame.joystick.get_init() or pygame.joystick.get_count() < 1:
-            self.logger.error("cannot find joystick")
-            return
-        self.joystick = pygame.joystick.Joystick(0)
-        self.joystick.init()
-        if not self.joystick.get_init():
-            self.joystick = None
-            self.logger.error("cannot init joystick")
-            return
-        self.logger.info("joystick name = {}".format(self.joystick.get_name()))
-        self.logger.info("joystick axes count = {}".format(self.joystick.get_numaxes()))
-        self.logger.info("joystick get_numballs = {}".format(self.joystick.get_numballs()))
-        self.logger.info("joystick get_numbuttons = {}".format(self.joystick.get_numbuttons()))
+            self.joystick = init_joystick(self.logger)
 
     def clear_map(self):
         self.tiles.clear()
