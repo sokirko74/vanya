@@ -1,0 +1,1 @@
+/usr/bin/florence  --use-config /home/sokirko/vanya/florence/florence.conf
