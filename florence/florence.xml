@@ -11,8 +11,8 @@
 </informations>
 
 <keyboard>
-	<width>25</width>
-	<height>10</height>
+	<width>22</width>
+	<height>8</height>
 	<key>
 		<code>49</code>
 		<xpos>1</xpos>
@@ -23,17 +23,35 @@
 		<xpos>3</xpos>
 		<ypos>1</ypos>
 	</key>
-
+	<key>
+		<code>48</code>
+		<xpos>5</xpos>
+		<ypos>1</ypos>
+	</key>
 	<key>
 		<code>66</code>
-		<xpos>6</xpos>
+		<xpos>7</xpos>
 		<ypos>1</ypos>
 		<width>1</width>
 	</key>
 	<key>
+		<code>65</code>
+		<shape>Space</shape>
+		<xpos>11</xpos>
+		<ypos>1</ypos>
+		<width>5</width>
+	</key>
+	<key>
+		<code>36</code>
+		<xpos>16</xpos>
+		<ypos>1</ypos>
+		<width>3</width>
+	</key>
+
+	<key>
 		<code>22</code>
 		<shape>XL</shape>
-		<xpos>23</xpos>
+		<xpos>20</xpos>
 		<ypos>1</ypos>
 		<width>4</width>
 	</key>
@@ -94,14 +112,6 @@
 		<xpos>21</xpos>
 		<ypos>3</ypos>
 	</key>
-	<key>
-		<code>36</code>
-		<shape>Return</shape>
-		<xpos>23.5</xpos>
-		<ypos>4</ypos>
-		<width>3</width>
-		<height>4</height>
-	</key>
 
 
 	<key>
@@ -154,11 +164,6 @@
 		<xpos>20</xpos>
 		<ypos>5</ypos>
 	</key>
-	<key>
-		<code>48</code>
-		<xpos>22</xpos>
-		<ypos>5</ypos>
-	</key>
 
 
 	<key>
@@ -207,13 +212,6 @@
 		<ypos>7</ypos>
 	</key>
 
-	<key>
-		<code>65</code>
-		<shape>Space</shape>
-		<xpos>12</xpos>
-		<ypos>9</ypos>
-		<width>12</width>
-	</key>
 </keyboard>
 
 <extension>
