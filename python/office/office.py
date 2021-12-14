@@ -2,6 +2,7 @@ import os
 import sys
 import argparse
 import tkinter as tk
+import tkinter.font as tkFont
 import time
 import vlc
 from functools import partial
@@ -41,42 +42,66 @@ class TVanyaOffice(tk.Frame):
             self.main_wnd_height = 800
             self.master.geometry("{}x{}".format(self.main_wnd_width, self.main_wnd_height))
         self.player = None
-        self.font = ("DejaVu Sans Mono", self.args.font_size)
-
+        self.editor_font = ("DejaVu Sans Mono", self.args.font_size+20)
+        self.key_font =  tkFont.Font(family="DejaVu Sans Mono", size=self.args.font_size)
         self.text_widget = tk.Text(self.master,
                                    width=100,
                                    height=1,
-                                   font=self.font)
+                                   font=self.editor_font)
         self.text_widget.pack(side=tk.TOP)
 
-        self.keyboard = tk.PanedWindow(self.master)
         self.keys = dict()
-        self.chars = ['М', 'П', 'А', 'В', 'Я', 'Л', 'О', 'Н', 'Е', ' ']
-        #key_width = int(self.main_wnd_width / len(self.chars))
+        self.last_char = None
+        self.last_char_timestamp = time.time()
+        if len(self.args.row2) > 0:
+            self.add_keyboard_row(self.args.row2 + "𝄞")
+        if len(self.args.row1) > 0:
+            self.add_keyboard_row(self.args.row1)
+
+    def add_keyboard_row(self, chars):
+        char_list = list(c for c in chars)
         key_width = 1
-        for c in self.chars:
-            button = tk.Button(self.keyboard, text=c, width=key_width, relief="raised", height=1, font=self.font,
+        keyboard_row = tk.PanedWindow(self.master)
+        self.last_char_timestamp = time.time()
+        for c in char_list:
+            button = tk.Button(keyboard_row,
+                               #background="black",
+                               text=c, width=key_width, relief="raised", height=1,
+                               font=self.key_font,
                                command=partial(self.keyboard_click, c))
             self.keys[c] = button
             button.pack(side=tk.BOTTOM, expand=False)
-            self.keyboard.add(button)
+            keyboard_row.add(button)
 
-        self.keyboard.pack(fill=tk.BOTH, side=tk.BOTTOM, expand=False)
+        keyboard_row.pack(fill=tk.BOTH, side=tk.BOTTOM, expand=False)
+
+    def play_word(self, w):
+        if w.lower() == "камаз":
+            self.play_file("kamaz01.mp3")
 
     def keyboard_click(self, char):
-        if char == ' ':
+        if char == '𝄞':
+            s = self.text_widget.get(1.0, tk.END).strip("\n")
+            self.play_word(s)
+        elif char == ' ':  #backspace
             s = self.text_widget.get(1.0, tk.END).strip("\n")
             if len(s) > 0:
                 #self.text_widget.delete(float(len(s)), tk.END)
                 self.text_widget.delete(1.0, tk.END)
                 self.text_widget.insert(tk.END, s[:-1])
                 s1 = self.text_widget.get(1.0, tk.END).strip("\n")
-                pass
+            self.play_file("key_sound.wav")
         else:
+            ts = time.time()
+            if ts - self.last_char_timestamp < 1 and char == self.last_char:
+                return
+            self.last_char_timestamp = ts
+            self.last_char = char
             self.text_widget.insert(tk.END, char)
-        self.play_file(os.path.join(os.path.dirname(__file__), "key_sound.wav"))
+            self.play_file("key_sound.wav")
 
     def play_file(self, file_path):
+        file_path = os.path.join(os.path.dirname(__file__), "sound", file_path)
         if self.player is not None:
             self.player.stop()
         self.player = vlc.MediaPlayer(file_path)
@@ -89,6 +114,8 @@ class TVanyaOffice(tk.Frame):
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--not-fullscreen", dest='fullscreen', default=True, action="store_false")
+    parser.add_argument("--row1", dest='row1', default='')
+    parser.add_argument("--row2", dest='row2', default='МПАВЯЛОНЕ𝄞 ')
     parser.add_argument("--font-size", dest='font_size', default=40, type=int)
     return parser.parse_args()
 

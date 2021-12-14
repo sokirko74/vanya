@@ -1,3 +1,5 @@
+from common.movements import detect_movements
+from common.bluetooth_koleso import TBluetoohKolesoThread
 
 import tkinter as tk
 import os
@@ -6,6 +8,7 @@ import time
 import argparse
 from pygame import mixer
 import logging
+import sys
 
 
 ZYNADDSUBFX_BINARY = "zynaddsubfx"
@@ -290,8 +293,7 @@ def main(logger):
     except KeyboardInterrupt:
         logger.error("KeyboardInterrupt")
         tk_app.quit()
-
-
+    
 if __name__ == '__main__':
     logger = setup_logging()
     main(logger)
