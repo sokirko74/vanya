@@ -46,8 +46,12 @@ URLS = {
     'пила1': ('https://www.youtube.com/watch?v=qHKfd-vRdOI', 70),
     'форд1': ('https://www.youtube.com/watch?v=Gt2VJEOuGKY', 80),
     'порш1': ('https://www.youtube.com/watch?v=_JaBoMgM4Y4', 80),
-    'шевроле1': ('https://www.youtube.com/watch?v=6-GQFNC83DA', 80),
+    'шевроле1': ('https://www.youtube.com/watch?v=6-GQFNC83DA', 100),
     'кот1': ('https://www.youtube.com/watch?v=TjmOWZ3y9gg', 60),
+    'лада1': ('https://www.youtube.com/watch?v=sTDneAKEzQY', 53),
+    'кия1': ('https://www.youtube.com/watch?v=U5eVplyAkto', 90),
+    'танк1': ('https://www.youtube.com/watch?v=DyxdDR79a-0', 55),
+    'танк2': ('https://www.youtube.com/watch?v=77qSBoTA%D0%96cbc', 70),
 }
 
 
@@ -60,6 +64,7 @@ class TZvuchki(tk.Frame):
         self.print_victory = False
         self.font_size = self.args.font_size
         self.master = tk.Tk()
+        #self.master.resizable(False, False)
         super().__init__(master)
 
         if self.args.fullscreen:
@@ -77,52 +82,65 @@ class TZvuchki(tk.Frame):
         self.player = None
         self.editor_font = ("DejaVu Sans Mono", self.args.font_size+20)
         self.key_font =  tkFont.Font(family="DejaVu Sans Mono", size=self.args.font_size)
+        self.master.grid_columnconfigure((0, 1, 2, 4, 5, 6, 7, 8, 9, 10, 11, 12 ), weight=1)
+        self.master.grid_rowconfigure(0, weight=1)
+        self.master.grid_rowconfigure((1, 2, 3), weight=2)
+
         self.text_widget = tk.Text(self.master,
                                    width=100,
                                    height=1,
                                    font=self.editor_font)
-        self.text_widget.pack(side=tk.TOP)
+        self.text_widget.grid(column=0, columnspan=13)
 
         self.keys = dict()
         self.last_char = None
         self.last_char_timestamp =   time.time()
         self.keyboard_type = TKeyboardType.ABC
-        self.keyboard_rows = list()
+        #self.keyboard_rows = list()
         self.init_abc_keyboard()
         self.left_queries = set(URLS.keys())
 
     def clear_keyboard(self):
-        for k in self.keyboard_rows:
-            k.destroy(k)
-        self.keyboard_rows.clear()
+        pass
+        #for k in self.keyboard_rows:
+        #    k.destroy(k)
+        #self.keyboard_rows.clear()
 
     def init_abc_keyboard(self):
         self.clear_keyboard()
-        self.add_keyboard_row("МПАВЯЛОНЕШ" + " ")
-        self.add_keyboard_row("ИКТЗГУРДСФ" + TChars.BACKSPACE+ " ")
+        self.add_keyboard_row(1, "12345" + TChars.PLAY+ TChars.BACKSPACE )
+        self.add_keyboard_row(2, "ИКТЗГУРДСФ")
+        self.add_keyboard_row(3, "МПАВЯЛОНЕШ")
 
-        self.add_keyboard_row("12345" + TChars.PLAY + " ")
-
-    def add_keyboard_row(self, chars):
+    def add_keyboard_row(self, row_index, chars):
         char_list = list(c for c in chars)
         key_width = 1
-        keyboard_row = tk.PanedWindow(self.master)
+        #keyboard_row = tk.PanedWindow(self.master)
         self.last_char_timestamp = time.time()
+        column_index = 0
         for c in char_list:
-            w = key_width
-            if c == TChars.BACKSPACE or c == TChars.PLAY:
-                w *= 2
-            button = tk.Button(keyboard_row,
+            colspan = 1
+            width = 1
+            if  c == TChars.PLAY:
+                colspan *= 2
+                width *= 2
+
+            if  c == TChars.BACKSPACE:
+                colspan *= 4
+                width *= 4
+
+            button = tk.Button(self.master,
                                #background="black",
-                               text=c, width=w, relief="raised", height=1,
+                               text=c, width=width, relief="raised", height=1,
                                font=self.key_font,
                                command=partial(self.keyboard_click, c))
             self.keys[c] = button
-            button.pack(side=tk.BOTTOM, expand=False)
-            keyboard_row.add(button)
+            button.grid(column=column_index, row=row_index, columnspan=colspan, padx=0, pady=2)
+            column_index += colspan
+            #keyboard_row.add(button)
 
-        keyboard_row.pack(fill=tk.BOTH, side=tk.BOTTOM, expand=False)
-        self.keyboard_rows.append(keyboard_row)
+        #keyboard_row.pack(fill=tk.BOTH, side=tk.BOTTOM, expand=False)
+        #self.keyboard_rows.append(keyboard_row)
 
     def play_youtube(self, url, max_duration):
         try:
@@ -131,6 +149,7 @@ class TZvuchki(tk.Frame):
 
             WebDriverWait(browser, 15).until(EC.element_to_be_clickable(
                 (By.XPATH, "//button[@aria-label='Play']"))).click()
+            browser.maximize_window()
             time.sleep(max_duration)
             browser.close()
             time.sleep(1)
@@ -145,7 +164,8 @@ class TZvuchki(tk.Frame):
             if  self.args.max_play_seconds < t:
                 t = self.args.max_play_seconds
             self.play_youtube(u, t)
-            self.left_queries.remove(key)
+            if key in self.left_queries:
+                self.left_queries.remove(key)
             self.print_tasks()
             return True
         return False
@@ -204,3 +224,7 @@ if __name__ == "__main__":
 
 
 
+#  максимизация экрана
+# backspace  на 3 линию
+#  не менять размер кнопок
+#жигули, кия,лада
