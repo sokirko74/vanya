@@ -1,12 +1,9 @@
+from utils.joystick import init_joystick
+import utils.maze_generator as generator
+from utils.maze_player import Player
+from utils.logging_wrapper import setup_logging
+
 import random
-import sys
-import os
-
-sys.path.append(os.path.join(os.path.dirname(__file__), '../common'))
-from joystick import init_joystick
-import maze_generator as generator
-from maze_player import Player
-
 
 class Car(Player):
     def __init__(self, parent, speed=4):

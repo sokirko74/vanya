@@ -1,3 +1,5 @@
+from utils.logging_wrapper import setup_logging
+
 import pygame
 import time
 import random
@@ -5,35 +7,10 @@ import argparse
 from evdev import list_devices, InputDevice, ecodes
 import os
 import math
-import logging
 
 ASSETS_DIR = "assets"
 SPRITES_DIR = os.path.join(ASSETS_DIR, 'sprites')
 SOUNDS_DIR = os.path.join(ASSETS_DIR, 'sounds')
-
-
-def setup_logging():
-    logger_name = "gonki"
-    log_file_name = "gonki.log"
-    logger = logging.getLogger(logger_name)
-    logger.setLevel(logging.DEBUG)
-    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-
-    # create file handler which logs even debug messages
-    if log_file_name is not None:
-        if os.path.exists(log_file_name):
-            os.remove(log_file_name)
-        fh = logging.FileHandler(log_file_name, encoding="utf8")
-        fh.setLevel(logging.DEBUG)
-        fh.setFormatter(formatter)
-        logger.addHandler(fh)
-
-    # create console handler with a higher log level
-    ch = logging.StreamHandler()
-    ch.setLevel(logging.INFO)
-    logger.addHandler(ch)
-
-    return logger
 
 
 class TColors:
@@ -337,7 +314,7 @@ class TSounds:
 class TRacesGame:
     def __init__(self, args):
         self.args = args
-        self.logger = setup_logging()
+        self.logger = setup_logging("gonki")
         #assert self.args.mode in {"normal_mode", "gangster_mode"}
         pygame.display.init()
         pygame.font.init()
