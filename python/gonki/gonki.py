@@ -453,6 +453,7 @@ class TRacesGame:
             self.sounds.switch_music(self.puddle.collision_sound, loops=0)
             time.sleep(1)
             self.puddle.collided = True
+            self.puddle_collision_count += 1
             self.broken = True
             self.switch_music()
 
@@ -509,6 +510,8 @@ class TRacesGame:
         self.print_text('speed: {}'.format(self.game_speed), 30, 40)
         self.print_text('position: {}'.format(self.my_car.top), 30, 80)
         self.print_text('broken: {}'.format(self.is_broken_driving()), 30, 120)
+        self.print_text('puddles: {}'.format(self.puddle_collision_count), 30, 160)
+
         if self.paused:
             self.print_text("pause (press spacebar to play)", self.width/2, self.height/2)
 
@@ -645,7 +648,7 @@ class TRacesGame:
                 elif event.key == pygame.K_DOWN:
                     self.game_speed = max(self.game_speed - 1, 1)
                 elif event.key == pygame.K_ESCAPE:
-                    self.game_intro()
+                        self.game_intro()
                 elif event.key == pygame.K_SPACE:
                     self.paused = not self.paused
                 elif event.key == pygame.K_F1:
@@ -696,6 +699,7 @@ class TRacesGame:
         self.my_car.top = self.height - 250
         self.game_over = False
         self.score = 0
+        self.puddle_collision_count = 0
         self.init_new_other_car()
         save_is_on_road_side = False
         self.sounds.switch_music(self.other_car.sound)
