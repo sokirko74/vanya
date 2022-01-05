@@ -43,7 +43,6 @@ class TicTacToe:
         self.myfont = pg.font.SysFont('Comic Sans MS', 80)
         self.draw_game_init()
 
-
     def cell_width(self):
         return int(self.board_size / self.board_cols)
 
@@ -60,7 +59,7 @@ class TicTacToe:
         button_margin = 20
         button_width = 200
         button_height = 100
-        button_top = self.window_height - button_margin - button_height
+        button_top = self.window_height - 4* button_margin - button_height
         button_left = button_margin
         return pg.Rect(button_left, button_top, button_width, button_height)
 

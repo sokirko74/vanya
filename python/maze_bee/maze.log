@@ -1,0 +1,5 @@
+2022-01-05 10:36:34,596 - maze_logger - INFO - <rect(0, 0, 1000, 800)>
+2022-01-05 10:36:34,915 - maze_logger - INFO - joysticks count = 0
+2022-01-05 10:36:34,916 - maze_logger - ERROR - cannot find joystick
+2022-01-05 10:36:35,389 - maze_logger - INFO - walls count = 209
+2022-01-05 10:36:35,390 - maze_logger - INFO - start_game
