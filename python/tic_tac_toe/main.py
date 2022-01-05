@@ -1,12 +1,12 @@
-# importing the required libraries
 import pygame as pg
 import time
 from pygame.locals import *
 import numpy
 from collections import defaultdict
 import argparse
-import vlc
 import os
+
+
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 GRAY = (60, 60, 60)
@@ -14,6 +14,11 @@ RED = (255, 0, 0)
 LINE_COLOR = (0, 0, 0)
 CELL_LINE_WIDTH = 2
 
+
+def load_sound(file_path, volume=1.0):
+    sound = pg.mixer.Sound(os.path.join(os.path.dirname(__file__), file_path))
+    sound.set_volume(volume)
+    return sound
 
 class TicTacToe:
     unknown_player = 0
@@ -42,6 +47,9 @@ class TicTacToe:
         # if you want to use this module.
         self.myfont = pg.font.SysFont('Comic Sans MS', 80)
         self.draw_game_init()
+        pg.mixer.init()
+        self.krestik_sound = load_sound("krestik.wav")
+        self.nolik_sound = load_sound("nolik.wav")
 
     def cell_width(self):
         return int(self.board_size / self.board_cols)
@@ -175,11 +183,10 @@ class TicTacToe:
         print(self.scores)
 
     def play_sound(self):
-        file_name = "krestik.mp3" if self.current_player == self.x_player else "nolik.mp3"
-        p = vlc.MediaPlayer(os.path.join(os.path.dirname(__file__), file_name))
-        p.play()
-        #time.sleep(1)
-        #p.stop()
+        if self.current_player == self.x_player:
+            self.krestik_sound.play(maxtime=1000)
+        else:
+            self.nolik_sound.play(maxtime=1000)
 
     def draw_sign(self, row, col):
         self.board[row][col]['player'] = self.current_player
