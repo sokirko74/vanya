@@ -5,8 +5,11 @@ from pygame.locals import *
 import numpy
 from collections import defaultdict
 import argparse
-
+import vlc
+import os
 WHITE = (255, 255, 255)
+BLACK = (0, 0, 0)
+GRAY = (60, 60, 60)
 RED = (255, 0, 0)
 LINE_COLOR = (0, 0, 0)
 CELL_LINE_WIDTH = 2
@@ -19,8 +22,10 @@ class TicTacToe:
     
     def __init__(self, rows=3, cols=3, win_len=3):
         self.winner = None
-        self.window_width = 1000
-        self.window_height = 1000
+        self.tool_window_width = 300
+        self.board_size = 800
+        self.window_width = self.tool_window_width + self.board_size
+        self.window_height = self.board_size
         self.board_rows = rows
         self.board_cols = cols
         self.win_length = win_len
@@ -33,22 +38,34 @@ class TicTacToe:
         sign_size =  (self.cell_width()-self.margin * 2, self.cell_height()-self.margin * 2)
         self.x_image = pg.transform.scale(pg.image.load("X_modified.png"), sign_size)
         self.o_image = pg.transform.scale(pg.image.load("o_modified.png"), sign_size)
+        pg.font.init()  # you have to call this at the start,
+        # if you want to use this module.
+        self.myfont = pg.font.SysFont('Comic Sans MS', 80)
         self.draw_game_init()
 
+
     def cell_width(self):
-        return int(self.window_width / self.board_cols)
+        return int(self.board_size / self.board_cols)
 
     def cell_height(self):
         return int(self.window_height / self.board_rows)
 
-    def get_rect(self, row, col):
-        return pg.Rect(self.cell_width() * col,
+    def get_cell_rect(self, row, col):
+        return pg.Rect(self.cell_width() * col + self.tool_window_width,
                            self.cell_height() * row,
                            self.cell_width(),
                            self.cell_height())
 
+    def get_restart_button_rect(self):
+        button_margin = 20
+        button_width = 200
+        button_height = 100
+        button_top = self.window_height - button_margin - button_height
+        button_left = button_margin
+        return pg.Rect(button_left, button_top, button_width, button_height)
+
     def get_center_point(self, row, col):
-        return self.get_rect(row, col).center
+        return self.get_cell_rect(row, col).center
 
     def draw_game_init(self):
         self.win_id = 0
@@ -63,13 +80,20 @@ class TicTacToe:
         self.scores.clear()
         self.current_player = self.x_player
         self.screen.fill(WHITE)
-        for col in range(self.board_cols):
-            x = (col + 1) * self.cell_width()
+        for col in range(self.board_cols + 1):
+            x = self.get_cell_rect(0, col).left
             pg.draw.line(self.screen, LINE_COLOR, (x, 0), (x, self.window_height), CELL_LINE_WIDTH)
 
         for row in range(self.board_rows):
             y = (row + 1) * self.cell_height()
-            pg.draw.line(self.screen, LINE_COLOR, (0, y), (self.window_width, y), CELL_LINE_WIDTH)
+            pg.draw.line(self.screen, LINE_COLOR, (self.tool_window_width, y), (self.window_width, y), CELL_LINE_WIDTH)
+
+        pg.draw.rect(self.screen, BLACK, pg.Rect(0,0, self.tool_window_width, self.window_height))
+        button_rect = self.get_restart_button_rect()
+        pg.draw.rect(self.screen, GRAY, button_rect)
+        myfont = pg.font.SysFont('Comic Sans MS', button_rect.height - 20)
+        textsurface = myfont.render('R', False, WHITE)
+        self.screen.blit(textsurface, (button_rect.left + button_rect.width/2.5, button_rect.top - 10))
 
     def draw_win_line(self, points):
         x1, y1 = self.get_center_point(points[0]['row'], points[0]['col'])
@@ -131,7 +155,7 @@ class TicTacToe:
         return numpy.array(r), index
 
     def diagonal2(self, row, col):
-        min_rc = min(self.board_rows  - row -1 , col)
+        min_rc = min(self.board_rows- row -1 , col)
         x = row + min_rc
         y = col - min_rc
         r = list()
@@ -151,13 +175,21 @@ class TicTacToe:
         self.find_win_segment(*self.diagonal2(row, col))
         print(self.scores)
 
+    def play_sound(self):
+        file_name = "krestik.mp3" if self.current_player == self.x_player else "nolik.mp3"
+        p = vlc.MediaPlayer(os.path.join(os.path.dirname(__file__), file_name))
+        p.play()
+        #time.sleep(1)
+        #p.stop()
+
     def draw_sign(self, row, col):
         self.board[row][col]['player'] = self.current_player
-        x, y = self.get_rect(row, col).topleft
+        x, y = self.get_cell_rect(row, col).topleft
         x += self.margin
         y += self.margin
         img = self.x_image if self.current_player == self.x_player else self.o_image
         self.screen.blit(img, (x, y))
+        self.play_sound()
         if self.current_player == self.x_player:
             self.current_player = self.o_player
         else:
@@ -165,14 +197,17 @@ class TicTacToe:
 
     def user_click(self):
         x, y = pg.mouse.get_pos()
-        for col in range(self.board_cols):
-            for row in range(self.board_rows):
-                if self.get_rect(row, col).collidepoint(x, y):
-                    if self.board[row][col]['player'] == self.unknown_player:
-                        self.draw_sign(row, col)
-                        self.find_new_win(row, col)
-                        pg.display.update()
-                    break
+        if self.get_restart_button_rect().collidepoint(x, y):
+            self.draw_game_init()
+        else:
+            for col in range(self.board_cols):
+                for row in range(self.board_rows):
+                    if self.get_cell_rect(row, col).collidepoint(x, y):
+                        if self.board[row][col]['player'] == self.unknown_player:
+                            self.draw_sign(row, col)
+                            self.find_new_win(row, col)
+                            pg.display.update()
+                        break
 
     def reset_game(self):
         time.sleep(2)
