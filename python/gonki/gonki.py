@@ -27,7 +27,8 @@ class TSprite(pygame.sprite.Sprite):
     def __init__(self, parent, image_file_name, rect):
         super().__init__()
         self.parent = parent
-        self.image = pygame.transform.scale(pygame.image.load(image_file_name), (rect.width, rect.height))
+        img = pygame.image.load(os.path.join(SPRITES_DIR, image_file_name))
+        self.image = pygame.transform.scale(img, (rect.width, rect.height))
         self.rect = rect
         self.angle = 0
 
@@ -114,7 +115,7 @@ class TMovingObstacle:
         self.speed_modifier = 1.0
 
     def change_spite_position(self, speed):
-        self.sprite.top += self.speed_modifier * speed
+        self.sprite.rect.top += self.speed_modifier * speed
 
 
 class TCar(TMovingObstacle):
@@ -133,7 +134,9 @@ class TSimpleCar(TCar):
         super().__init__()
         self.width = 160
         self.height = 160
-        self.sprite = TSprite(parent, os.path.join(SPRITES_DIR, 'passenger_car.png'), top, left, self.width, self.height)
+        self.sprite = TSprite(parent,
+                              'passenger_car.png',
+                              pygame.rect(left, top, self.width, self.height))
         self.sound = TSounds.normal_driving
         self.accident_sound = TSounds.accident
         self.speed_modifier = 1.3
@@ -141,11 +144,13 @@ class TSimpleCar(TCar):
 
 
 class TTruckCar(TCar):
-    def __init__(self, gd, top=0, left=0):
+    def __init__(self, parent, top=0, left=0):
         super().__init__()
         self.width = 160
         self.height = 260
-        self.image = TSprite(gd, os.path.join(SPRITES_DIR, 'truck.png'), top, left, self.width, self.height)
+        self.image = TSprite(parent,
+                             'truck.png',
+                             pygame.rect(left, top, self.width, self.height))
         self.sound = TSounds.truck
         self.accident_sound = TSounds.accident
         self.speed_modifier = 1.9
@@ -157,8 +162,8 @@ class TractorCar(TCar):
         super().__init__()
         self.width = 160
         self.height = 260
-        self.image = TSprite(gd, os.path.join(SPRITES_DIR, 'tractor.png'), top, left, self.width,
-                             self.height, hitbox_padding=50)
+        self.image = TSprite(gd, 'tractor.png',
+                             pygame.rect(left, top, self.width, self.height))
         self.sound = TSounds.tractor
         self.accident_sound = TSounds.accident
         self.speed_modifier = 1
@@ -184,7 +189,8 @@ class TSpider(TCar):
         self.retreat_after_crash = True
         self.width = 160
         self.height = 160
-        self.image = TSprite(gd, os.path.join(SPRITES_DIR, 'spider.png'), top, left, self.width, self.height)
+        self.image = TSprite(gd, 'spider.png',
+                             pygame.rect(left, top, self.width, self.height))
         self.sound = TSounds.spider
         self.accident_sound = TSounds.spider_accident
         self.speed_modifier = 1.3
@@ -197,7 +203,7 @@ class TMosquito(TCar):
         self.retreat_after_crash = True
         self.width = 160
         self.height = 160
-        self.image = TSprite(gd, os.path.join(SPRITES_DIR, 'mosquito.png'), top, left, self.width, self.height)
+        self.image = TSprite(gd, 'mosquito.png', pygame.rect(left, top, self.width, self.height))
         self.sound = TSounds.mosquito
         self.accident_sound = TSounds.mosquito_accident
         self.speed_modifier = 1.3
@@ -209,8 +215,8 @@ class TPuddle(TMovingObstacle):
         super().__init__()
         self.width = 160
         self.height = 160
-        self.image = TSprite(gd, os.path.join(SPRITES_DIR, 'puddle.png'), top, left,
-                             self.width, self.height, hitbox_padding=50)
+        self.image = TSprite(gd, 'puddle.png',
+                             pygame.rect(left, top, self.width, self.height))
         self.collision_sound = TSounds.puddle_accident
         self.collided = False
 
@@ -220,8 +226,8 @@ class TRepairPoint(TMovingObstacle):
         super().__init__()
         self.width = 140
         self.height = 140
-        self.image = TSprite(gd, os.path.join(SPRITES_DIR, 'repair.png'), top, left,
-                             self.width, self.height, hitbox_padding=20)
+        self.image = TSprite(gd, 'repair.png',
+                             pygame.rect(left, top, self.width, self.height))
 
 
 class TSounds:
@@ -286,23 +292,23 @@ class TRacesGame:
         pygame.display.init()
         pygame.font.init()
         if args.full_screen:
-            self.gd = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
+            self.screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
             pygame.display.toggle_fullscreen()
             self.width = pygame.display.get_window_size()[0]
             self.height = pygame.display.get_window_size()[1]
         else:
             self.width = 1600
             self.height = 1000
-            self.gd = pygame.display.set_mode((self.width, self.height))
+            self.screen = pygame.display.set_mode((self.width, self.height))
 
         self.roadside_width = 200
         self.car_width = 160
-        self.my_car = TSprite(self.gd, os.path.join(SPRITES_DIR, 'my_car.png'), 0, 0, self.car_width, 160)
+        self.my_car = TSprite(self.screen, 'my_car.png', pygame.Rect(0, 0, self.car_width, 160))
 
         self.enemy_car_types = [TSimpleCar, TTruckCar, TractorCar, TSpider, TMosquito]
         enemy_cars = []
         for car in self.enemy_car_types:
-            enemy_cars.append(car(self.gd))
+            enemy_cars.append(car(self.screen))
         self.enemy_cars_weights = [car.spawn_weight for car in enemy_cars]
         del enemy_cars
 
@@ -328,20 +334,20 @@ class TRacesGame:
     def message(self, mess, colour, size, x, y):
         font = pygame.font.SysFont(None, size)
         screen_text = font.render(mess, True, colour)
-        self.gd.blit(screen_text, (x, y))
+        self.screen.blit(screen_text, (x, y))
         pygame.display.update()
 
     def button(self, x, y, w, h, mess, mess_color, actc, noc, size, tx, ty, func):
         mouse = pygame.mouse.get_pos()
         click = pygame.mouse.get_pressed()
         if x + w > mouse[0] > x and y + h > mouse[1] > y:
-            pygame.draw.rect(self.gd, actc, [x, y, w, h])
+            pygame.draw.rect(self.screen, actc, [x, y, w, h])
             self.message(mess, mess_color, size, tx, ty)
             pygame.display.update()
             if click == (1, 0, 0):
                 func()
         else:
-            pygame.draw.rect(self.gd, noc, [x, y, w, h])
+            pygame.draw.rect(self.screen, noc, [x, y, w, h])
             self.message(mess, mess_color, size, tx, ty)
             pygame.display.update()
         pygame.display.update()
@@ -354,9 +360,9 @@ class TRacesGame:
         blue_strip = pygame.image.load(os.path.join(SPRITES_DIR, 'border.jpg'))
 
         img = pygame.transform.scale(blue_strip, (self.roadside_width, self.height))
-        self.gd.blit(img, (0, 0))
-        self.gd.blit(img, (self.width - self.roadside_width, 0))
-        pygame.draw.line(self.gd, TColors.white, (self.roadside_width, self.finish_top), (self.width-self.roadside_width, self.finish_top))
+        self.screen.blit(img, (0, 0))
+        self.screen.blit(img, (self.width - self.roadside_width, 0))
+        pygame.draw.line(self.screen, TColors.white, (self.roadside_width, self.finish_top), (self.width - self.roadside_width, self.finish_top))
 
     def check_finish(self):
         win = self.finish_top > self.my_car.top
@@ -368,7 +374,7 @@ class TRacesGame:
                 self.sounds.switch_music(TSounds.victory, loops=0)
             else:
                 screen_text = font.render('Проигрыш!', True, TColors.white)
-            self.gd.blit(screen_text, (250, 280))
+            self.screen.blit(screen_text, (250, 280))
             pygame.display.update()
             time.sleep(3)
             self.game_intro()
@@ -378,7 +384,7 @@ class TRacesGame:
             pygame.display.update()
 
     def redraw(self):
-        self.gd.fill(TColors.gray)
+        self.screen.fill(TColors.gray)
         self.draw_background()
         if self.puddle is not None:
             self.puddle.sprite.draw()
@@ -446,7 +452,7 @@ class TRacesGame:
 
     def print_text(self, text, x, y):
         screen_text = self.font.render(text, True, TColors.white)
-        self.gd.blit(screen_text, (x, y))
+        self.screen.blit(screen_text, (x, y))
 
     def draw_params(self):
         font = pygame.font.SysFont(None, 30)
@@ -468,7 +474,7 @@ class TRacesGame:
 
         self.sounds.stop_sounds()
         v = pygame.transform.scale(pygame.image.load(os.path.join(SPRITES_DIR, 'background1.jpg')), (self.width, self.height))
-        self.gd.blit(v, (0, 0))
+        self.screen.blit(v, (0, 0))
         pygame.display.update()
         game_intro = False
         while not game_intro:
@@ -504,7 +510,7 @@ class TRacesGame:
     def init_new_other_car(self):
         self.logger.debug("init_new_other_car")
         other_car_type = random.choices(population=self.enemy_car_types, weights=self.enemy_cars_weights, k=1)[0]
-        self.other_car = other_car_type(self.gd)
+        self.other_car = other_car_type(self.screen)
         padding = 0
         if other_car_type == TractorCar:
             padding += self.other_car.ampl
@@ -557,7 +563,7 @@ class TRacesGame:
         if random.random() > 0.9:
             return
         self.logger.debug("init_puddle")
-        self.puddle = TPuddle(self.gd)
+        self.puddle = TPuddle(self.screen)
         self.set_other_car_random_position(self.puddle.image, 0)
 
     def init_repair_point(self):
@@ -567,7 +573,7 @@ class TRacesGame:
             return
 
         self.logger.debug("init_repair_point")
-        self.repair_point = TRepairPoint(self.gd)
+        self.repair_point = TRepairPoint(self.screen)
         self.repair_point.top = 0
         if random.random() > 0.5:
             self.repair_point.image.left = 0
