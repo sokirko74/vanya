@@ -1,10 +1,11 @@
 from utils.logging_wrapper import setup_logging
+from utils.racing_wheel import TRacingWheel
+from game_sounds import TSounds
 
 import pygame
 import time
 import random
 import argparse
-from evdev import list_devices, InputDevice, ecodes
 import os
 import math
 
@@ -27,116 +28,31 @@ class TSprite(pygame.sprite.Sprite):
     def __init__(self, parent, image_file_name, rect):
         super().__init__()
         self.parent = parent
+        self.rect = rect
         img = pygame.image.load(os.path.join(SPRITES_DIR, image_file_name))
         self.image = pygame.transform.scale(img, (rect.width, rect.height))
-        self.rect = rect
+
         self.angle = 0
-
-
-class TRacingWheel:
-    left_button = 295
-    right_button = 294
-    left_pedal =  10
-    right_pedal = 9
-
-    def __init__(self, center):
-        self.raw_angle = None
-        self.center = center
-        self.pressed_buttons = set()
-        joysticks = list_devices()
-        if len(joysticks) > 0:
-            self.device = InputDevice(joysticks[0])
-            self.read_events()
-        else:
-            print ("no racing wheel found")
-            self.device = None
-
-    def save_wheel_center(self):
-        if self.raw_angle is not None:
-            print("set wheel center to {}".format(self.raw_angle))
-            self.center = self.raw_angle
-
-    def forget_buttons(self):
-        self.pressed_buttons.clear()
-
-    def read_events(self):
-        if self.device is None:
-            return
-        event = self.device.read_one()
-        while event is not None:
-            if event.code == ecodes.ABS_WHEEL:
-                self.raw_angle = event.value
-                print("abs_wheel value={}, center={}".format(self.raw_angle, self.center))
-            if event.code == TRacingWheel.left_button:
-                print ("left_button")
-                self.pressed_buttons.add(TRacingWheel.left_button)
-            elif event.code == TRacingWheel.right_button:
-                print ("right_button")
-                self.pressed_buttons.add(TRacingWheel.right_button)
-            elif event.code == TRacingWheel.left_pedal:
-                if event.value > 120:
-                    self.pressed_buttons.add(TRacingWheel.left_pedal)
-                else:
-                    if TRacingWheel.left_pedal in self.pressed_buttons:
-                        self.pressed_buttons.remove(TRacingWheel.left_pedal)
-                print("left_pedal value={} {}".format(event.value, self.pressed_buttons))
-            elif event.code == TRacingWheel.right_pedal:
-                print("right_pedal")
-                if event.value > 120:
-                    self.pressed_buttons.add(TRacingWheel.right_pedal)
-                else:
-                    if TRacingWheel.right_pedal in self.pressed_buttons:
-                        self.pressed_buttons.remove(TRacingWheel.right_pedal)
-
-
-            event = self.device.read_one()
-
-    def is_left_pedal_pressed(self):
-        return TRacingWheel.left_pedal in self.pressed_buttons
-
-    def is_right_pedal_pressed(self):
-        return TRacingWheel.right_pedal in self.pressed_buttons
-
-    def get_angle(self):
-        self.read_events()
-        if self.raw_angle is not None:
-            return int((self.raw_angle - self.center) / 50)
-
-
-def load_sound(file_path, volume):
-    sound = pygame.mixer.Sound(file_path)
-    sound.set_volume(volume)
-    return sound
-
-
-class TMovingObstacle:
-    def __init__(self):
-        self.sprite = None
         self.speed_modifier = 1.0
 
     def change_spite_position(self, speed):
-        self.sprite.rect.top += self.speed_modifier * speed
+        self.rect.top += self.speed_modifier * speed
 
 
-class TCar(TMovingObstacle):
-    def __init__(self):
-        super().__init__()
+class TCar(TSprite):
+    def __init__(self, parent, image_file_name, rect):
+        super().__init__(parent, image_file_name, rect)
         self.retreat_after_crash = False
         self.sound = None
-        self.width = 0
-        self.height = 0
         self.sound_volume = 0
         self.spawn_weight = 0
 
 
 class TSimpleCar(TCar):
     def __init__(self, parent, top=0, left=0):
-        super().__init__()
-        self.width = 160
-        self.height = 160
-        self.sprite = TSprite(parent,
+        super().__init__(parent,
                               'passenger_car.png',
-                              pygame.rect(left, top, self.width, self.height))
+                              pygame.Rect(left, top, 160, 160))
         self.sound = TSounds.normal_driving
         self.accident_sound = TSounds.accident
         self.speed_modifier = 1.3
@@ -145,12 +61,9 @@ class TSimpleCar(TCar):
 
 class TTruckCar(TCar):
     def __init__(self, parent, top=0, left=0):
-        super().__init__()
-        self.width = 160
-        self.height = 260
-        self.image = TSprite(parent,
+        super().__init__(parent,
                              'truck.png',
-                             pygame.rect(left, top, self.width, self.height))
+                             pygame.Rect(left, top, 160, 260))
         self.sound = TSounds.truck
         self.accident_sound = TSounds.accident
         self.speed_modifier = 1.9
@@ -158,12 +71,10 @@ class TTruckCar(TCar):
 
 
 class TractorCar(TCar):
-    def __init__(self, gd, top=0, left=0):
-        super().__init__()
-        self.width = 160
-        self.height = 260
-        self.image = TSprite(gd, 'tractor.png',
-                             pygame.rect(left, top, self.width, self.height))
+    def __init__(self, parent, top=0, left=0):
+        super().__init__(parent,
+                             'tractor.png',
+                             pygame.Rect(left, top, 160, 260))
         self.sound = TSounds.tractor
         self.accident_sound = TSounds.accident
         self.speed_modifier = 1
@@ -173,24 +84,22 @@ class TractorCar(TCar):
         self.sin_start_point = random.randrange(0, 1000)
         self.path_start_x = left
         self.path_started = False
+        self.orig_image = self.image.copy()
 
     def change_spite_position(self, speed):
         super().change_spite_position(speed)
         if not self.path_started:
-            self.path_start_x = self.image.left
+            self.path_start_x = self.rect.left
             self.path_started = True
-        self.image.left = self.path_start_x + self.ampl * math.sin(self.freq * self.image.top + self.sin_start_point)
-        self.image.rotate(math.atan(self.freq * self.ampl * math.cos(self.freq * self.image.top + self.sin_start_point)) * 180 / math.pi)
+        self.rect.left = self.path_start_x + self.ampl * math.sin(self.freq * self.rect.top + self.sin_start_point)
+        angle = math.atan(self.freq * self.ampl * math.cos(self.freq * self.rect.top + self.sin_start_point)) * 180 / math.pi
+        self.image = pygame.transform.rotate(self.orig_image, angle)
 
 
 class TSpider(TCar):
-    def __init__(self, gd, top=0, left=0):
-        super().__init__()
+    def __init__(self, parent, top=0, left=0):
+        super().__init__(parent, 'spider.png', pygame.Rect(left, top, 160, 160))
         self.retreat_after_crash = True
-        self.width = 160
-        self.height = 160
-        self.image = TSprite(gd, 'spider.png',
-                             pygame.rect(left, top, self.width, self.height))
         self.sound = TSounds.spider
         self.accident_sound = TSounds.spider_accident
         self.speed_modifier = 1.3
@@ -198,99 +107,71 @@ class TSpider(TCar):
 
 
 class TMosquito(TCar):
-    def __init__(self, gd, top=0, left=0):
-        super().__init__()
+    def __init__(self, parent, top=0, left=0):
+        super().__init__(parent, 'mosquito.png', pygame.Rect(left, top, 160, 160))
         self.retreat_after_crash = True
-        self.width = 160
-        self.height = 160
-        self.image = TSprite(gd, 'mosquito.png', pygame.rect(left, top, self.width, self.height))
         self.sound = TSounds.mosquito
         self.accident_sound = TSounds.mosquito_accident
         self.speed_modifier = 1.3
         self.spawn_weight = 1
 
 
-class TPuddle(TMovingObstacle):
-    def __init__(self, gd, top=0, left=0):
-        super().__init__()
-        self.width = 160
-        self.height = 160
-        self.image = TSprite(gd, 'puddle.png',
-                             pygame.rect(left, top, self.width, self.height))
+class TPuddle(TSprite):
+    def __init__(self, parent, top=0, left=0):
+        super().__init__(parent, 'puddle.png', pygame.Rect(left, top, 160, 160))
         self.collision_sound = TSounds.puddle_accident
-        self.collided = False
+        self.collided_time = None
+
+    def save_collision(self):
+        self.collided_time = time.time()
+
+    def is_new(self):
+        return self.collided_time is None or time.time() - self.collided_time > 1
 
 
-class TRepairPoint(TMovingObstacle):
-    def __init__(self, gd, top=0, left=0):
-        super().__init__()
-        self.width = 140
-        self.height = 140
-        self.image = TSprite(gd, 'repair.png',
-                             pygame.rect(left, top, self.width, self.height))
+class TRepairPoint(TSprite):
+    def __init__(self, parent, top=0, left=0):
+        super().__init__(parent, 'repair.png', pygame.Rect(left, top, 140, 140))
 
 
-class TSounds:
-    roadside = 1
-    normal_driving = 2
-    accident = 3
-    victory = 4
-    truck = 5
-    tractor = 6
-    spider = 7
-    spider_accident = 8
-    mosquito = 9
-    mosquito_accident = 10
-    car_honk_left = 11
-    car_honk_right = 12
-    puddle_accident = 13
-    broken_driving = 14
-    repair_car = 15
+class TGameRegisters:
+    def __init__(self, screen):
+        self.screen = screen
+        self.score = 0
+        self.game_over = False
+        self.missed_count = 0
+        self.check_puddle_collision_count = 0
+        self.broken = False
+        self.paused = False
+        self.font = pygame.font.SysFont(None, 30)
 
-    def __init__(self, enable_sounds):
-        self.enable_sounds = enable_sounds
-        self.sounds = dict()
-        if self.enable_sounds:
-            pygame.mixer.init()
-            self.sounds = {
-                self.roadside: load_sound(os.path.join(SOUNDS_DIR, "roadside.wav"), 0.4),
-                self.normal_driving: load_sound(os.path.join(SOUNDS_DIR, "normal_driving.wav"), 0.3),
-                self.accident: load_sound(os.path.join(SOUNDS_DIR, "accident.wav"), 1),
-                self.victory: load_sound(os.path.join(SOUNDS_DIR, "victory.wav"), 1),
-                self.truck: load_sound(os.path.join(SOUNDS_DIR, "truck.wav"), 0.6),
-                self.tractor: load_sound(os.path.join(SOUNDS_DIR, "tractor.wav"), 1),
-                self.spider: load_sound(os.path.join(SOUNDS_DIR, "spider.wav"), 0.2),
-                self.spider_accident: load_sound(os.path.join(SOUNDS_DIR, "spider_accident.wav"), 1),
-                self.mosquito: load_sound(os.path.join(SOUNDS_DIR, "mosquito.wav"), 0.2),
-                self.mosquito_accident: load_sound(os.path.join(SOUNDS_DIR, "mosquito_accident.wav"), 0.2),
-                self.car_honk_left: load_sound(os.path.join(SOUNDS_DIR, "car_honk_left.wav"), 0.3),
-                self.car_honk_right: load_sound(os.path.join(SOUNDS_DIR, "car_honk_right.wav"), 0.3),
-                self.puddle_accident: load_sound(os.path.join(SOUNDS_DIR, "puddle.wav"), 0.3),
-                self.broken_driving: load_sound(os.path.join(SOUNDS_DIR, "broken_driving.wav"), 0.3),
-                self.repair_car: load_sound(os.path.join(SOUNDS_DIR, "repair_car.wav"), 0.3),
-            }
+    def print_text(self, text, x, y):
+        screen_text = self.font.render(text, True, TColors.white)
+        self.screen.blit(screen_text, (x, y))
 
-    def stop_sounds(self):
-        if self.enable_sounds:
-            for k in  self.sounds.values():
-                k.stop()
-
-    def switch_music(self, sound_type, loops=1000):
-        if self.enable_sounds:
-            self.stop_sounds()
-            self.sounds[sound_type].play(loops=loops)
-
-    def play_sound(self, sound_type):
-        self.sounds[sound_type].play()
+    def draw_params(self, my_car_top, game_speed):
+        self.print_text('score: {}'.format(self.score), 30, 0)
+        self.print_text('speed: {}'.format(game_speed), 30, 40)
+        self.print_text('position: {}'.format(my_car_top), 30, 80)
+        self.print_text('broken: {}'.format(self.broken), 30, 120)
+        self.print_text('puddles: {}'.format(self.check_puddle_collision_count), 30, 160)
+        self.print_text('missed: {}'.format(self.missed_count), 30, 200)
+        if self.paused:
+            s = pygame.display.get_surface()
+            self.print_text("pause (press spacebar to play)", s.get_width()/2, s.get_height()/2)
 
 
 class TRacesGame:
     def __init__(self, args):
         self.args = args
         self.logger = setup_logging("gonki")
+        self.finish_top = 250
+        self.start_time_on_the_road_side = None
+        self.sounds = TSounds(SOUNDS_DIR, not args.silent)
+        self.racing_wheel = TRacingWheel(self.logger, args.wheel_center)
+        self.game_speed = args.speed
+        self.all_sprites = pygame.sprite.Group()
         #assert self.args.mode in {"normal_mode", "gangster_mode"}
-        pygame.display.init()
-        pygame.font.init()
         if args.full_screen:
             self.screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
             pygame.display.toggle_fullscreen()
@@ -300,38 +181,23 @@ class TRacesGame:
             self.width = 1600
             self.height = 1000
             self.screen = pygame.display.set_mode((self.width, self.height))
+        self.stats = TGameRegisters(self.screen)
 
         self.roadside_width = 200
         self.car_width = 160
         self.my_car = TSprite(self.screen, 'my_car.png', pygame.Rect(0, 0, self.car_width, 160))
-
-        self.enemy_car_types = [TSimpleCar, TTruckCar, TractorCar, TSpider, TMosquito]
-        enemy_cars = []
-        for car in self.enemy_car_types:
-            enemy_cars.append(car(self.screen))
-        self.enemy_cars_weights = [car.spawn_weight for car in enemy_cars]
-        del enemy_cars
-
-        self.other_car = None
-        self.game_over = False
-        self.score = 0
-        self.finish_top = 250
-        self.start_time_on_the_road_side = None
-        self.other_car_sound = None
-        self.other_car_spawn_x = 0
-        self.sounds = TSounds(not args.silent)
-        self.paused = False
-
-        self.game_speed = 10
         self.my_car_horizontal_speed = 10
         self.my_car_horizontal_speed_increase_with_get_speed = True
-        self.racing_wheel = TRacingWheel(args.wheel_center)
-        self.font = pygame.font.SysFont(None, 30)
-        self.puddle = None
-        self.broken = False
-        self.repair_point = None
-        self.missed_count =0
 
+        #moving obstacles
+        self.other_car: TCar
+        self.other_car = None
+        self.puddle: TPuddle
+        self.puddle = None
+        self.repair_point: TRepairPoint
+        self.repair_point = None
+        self.broken = None
+        
     def message(self, mess, colour, size, x, y):
         font = pygame.font.SysFont(None, size)
         screen_text = font.render(mess, True, colour)
@@ -366,8 +232,8 @@ class TRacesGame:
         pygame.draw.line(self.screen, TColors.white, (self.roadside_width, self.finish_top), (self.width - self.roadside_width, self.finish_top))
 
     def check_finish(self):
-        win = self.finish_top > self.my_car.top
-        loose = self.my_car.top > self.height - 100
+        win = self.finish_top > self.my_car.rect.top
+        loose = self.my_car.rect.top > self.height - 100
         if win or loose:
             font = pygame.font.SysFont(None, 100)
             if win:
@@ -387,32 +253,28 @@ class TRacesGame:
     def redraw(self):
         self.screen.fill(TColors.gray)
         self.draw_background()
-        if self.puddle is not None:
-            self.puddle.sprite.draw()
-        if self.repair_point is not None:
-            self.repair_point.sprite.draw()
-        self.my_car.draw()
-        self.other_car.sprite.draw()
+        self.all_sprites.draw(self.screen)
+        pygame.display.flip()
 
-    def puddle_collision(self):
-        if self.puddle is None:
+    def check_puddle_collision(self):
+        if self.puddle is None or not self.puddle.is_new():
             return
-        if not self.my_car.intersect(self.puddle.sprite):
-            return
-        if not self.puddle.collided:
+        group = pygame.sprite.Group([self.puddle])
+        if len(pygame.sprite.spritecollide(self.my_car, group, False)) > 0:
             self.logger.debug("puddle collision")
             self.sounds.switch_music(self.puddle.collision_sound, loops=0)
             time.sleep(1)
-            self.puddle.collided = True
-            self.puddle_collision_count += 1
-            self.score -= 1
+            self.puddle.save_collision()
+            self.stats.check_puddle_collision_count += 1
+            self.stats.score -= 1
             self.broken = True
             self.switch_music()
 
-    def repair_collision(self):
+    def check_repair_collision(self):
         if self.repair_point is None:
             return
-        if not self.my_car.intersect(self.repair_point.sprite):
+        group = pygame.sprite.Group([self.repair_point])
+        if len(pygame.sprite.spritecollide(self.my_car, group, False)) == 0:
             return
         if self.broken:
             self.logger.debug("repair collision")
@@ -426,8 +288,8 @@ class TRacesGame:
         self.sounds.switch_music(self.other_car.accident_sound, loops=0)
         if self.other_car.retreat_after_crash:
             for x in range(20):
-                self.other_car.sprite.top -= 30
-                self.other_car.sprite.left += random.randint(1, 30) - 15
+                self.other_car.top -= 30
+                self.other_car.left += random.randint(1, 30) - 15
                 self.redraw()
                 pygame.display.update()
                 time.sleep(0.1)
@@ -437,37 +299,27 @@ class TRacesGame:
 
         if self.args.mode == "normal_mode":
             if isinstance(self.other_car, TSpider) or isinstance(self.other_car, TMosquito):
-                self.my_car.top -= 20
+                self.my_car.rect.top -= 20
             else:
-                self.my_car.top += 20
+                self.my_car.rect.top += 20
         elif self.args.mode == "gangster_mode":
             if isinstance(self.other_car, TTruckCar):
-                self.my_car.top -= 40
+                self.my_car.rect.top -= 40
             else:
-                self.my_car.top -= 20
+                self.my_car.rect.top -= 20
             if not  self.is_broken_driving():
-                self.score += 1
+                self.stats.score += 1
         self.init_new_other_car()
         pygame.display.update()
 
+    def check_car_collision(self):
+        group = pygame.sprite.Group([self.other_car])
+        if len(pygame.sprite.spritecollide(self.my_car, group, False)) == 0:
+            return
+        self.car_crash()
+
     def is_on_the_roadside(self):
-        return self.my_car.left < self.roadside_width or self.my_car.right() > self.width - self.roadside_width
-
-    def print_text(self, text, x, y):
-        screen_text = self.font.render(text, True, TColors.white)
-        self.screen.blit(screen_text, (x, y))
-
-    def draw_params(self):
-        self.print_text('score: {}'.format(self.score), 30, 0)
-        self.print_text('speed: {}'.format(self.game_speed), 30, 40)
-        self.print_text('position: {}'.format(self.my_car.top), 30, 80)
-        self.print_text('broken: {}'.format(self.is_broken_driving()), 30, 120)
-        self.print_text('puddles: {}'.format(self.puddle_collision_count), 30, 160)
-        self.print_text('missed: {}'.format(self.missed_count), 30, 200)
-        if self.paused:
-            self.print_text("pause (press spacebar to play)", self.width/2, self.height/2)
-
-        pygame.display.update()
+        return self.my_car.rect.left < self.roadside_width or self.my_car.rect.right > self.width - self.roadside_width
 
     def game_intro(self):
         def draw_button(x, y, message, color,  func):
@@ -487,7 +339,7 @@ class TRacesGame:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     game_intro = True
-                    self.game_over = True
+                    self.stats.game_over = True
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_F1:
                         self.racing_wheel.save_wheel_center()
@@ -503,20 +355,27 @@ class TRacesGame:
         pygame.display.update()
 
     def set_other_car_random_position(self, sprite: TSprite, padding):
-        sprite.top = 0
-        sprite.left = random.randrange(self.roadside_width + padding, self.width - self.roadside_width - self.car_width - padding)
+        sprite.rect.top = 0
+        sprite.rect.left = random.randrange(self.roadside_width + padding, self.width - self.roadside_width - self.car_width - padding)
 
     def is_broken_driving(self):
-        return self.broken
+        return self.stats.broken
 
     def init_new_other_car(self):
         self.logger.debug("init_new_other_car")
-        other_car_type = random.choices(population=self.enemy_car_types, weights=self.enemy_cars_weights, k=1)[0]
+        if self.other_car is not None:
+            self.other_car.kill()
+            self.other_car = None
+
+        enemy_car_types = [TSimpleCar, TTruckCar, TractorCar, TSpider, TMosquito]
+        enemy_cars_weights = [2,           1.5,     1,           1,     1]
+        other_car_type = random.choices(population=enemy_car_types, weights=enemy_cars_weights, k=1)[0]
         self.other_car = other_car_type(self.screen)
         padding = 0
         if other_car_type == TractorCar:
             padding += self.other_car.ampl
-        self.set_other_car_random_position(self.other_car.sprite, padding)
+        self.set_other_car_random_position(self.other_car, padding)
+        self.all_sprites.add(self.other_car)
         self.switch_music()
 
     def get_speed(self):
@@ -534,45 +393,48 @@ class TRacesGame:
             return self.game_speed
 
     def is_obstacle_finish(self, sprite: TSprite):
-        return sprite.top > min(self.height - 100, self.my_car.bottom() + 200)
+        return sprite.rect.top > min(self.height - 100, self.my_car.rect.bottom + 200)
 
     def change_obstacle_positions(self):
         self.other_car.change_spite_position(self.get_speed())
         if self.puddle is not None:
             self.puddle.change_spite_position(self.get_speed())
-            if self.is_obstacle_finish(self.puddle.sprite):
+            if self.is_obstacle_finish(self.puddle):
+                self.puddle.kill()
                 self.puddle = None
 
         if self.repair_point is not None:
             self.repair_point.change_spite_position(self.get_speed())
-            if self.is_obstacle_finish(self.repair_point.sprite):
+            if self.is_obstacle_finish(self.repair_point):
+                self.repair_point.kill()
                 self.repair_point = None
 
-        if self.is_obstacle_finish(self.other_car.sprite):
+        if self.is_obstacle_finish(self.other_car):
             if not self.is_on_the_roadside():
                 if self.args.mode == "normal_mode":
-                    self.score += 1
+                    self.stats.score += 1
             if self.args.mode == "normal_mode":
                 if isinstance(self.other_car, TSpider) or isinstance(self.other_car, TMosquito):
-                    self.my_car.top += 10
+                    self.my_car.rect.top += 10
                 else:
-                    self.my_car.top -= 20
+                    self.my_car.rect.top -= 20
             if self.args.mode == "gangster_mode":
-                self.missed_count += 1
-                self.score -= 1
+                self.stats.missed_count += 1
+                self.stats.score -= 1
             self.init_new_other_car()
 
     def init_puddle(self):
-        if self.puddle is not None or self.paused:
+        if self.puddle is not None or self.stats.paused:
             return
         if random.random() > 0.9:
             return
         self.logger.debug("init_puddle")
         self.puddle = TPuddle(self.screen)
-        self.set_other_car_random_position(self.puddle.image, 0)
+        self.set_other_car_random_position(self.puddle, 0)
+        self.all_sprites.add(self.puddle)
 
     def init_repair_point(self):
-        if self.repair_point is not None or self.paused:
+        if self.repair_point is not None or self.stats.paused:
             return
         if random.random() > 0.9:
             return
@@ -581,9 +443,10 @@ class TRacesGame:
         self.repair_point = TRepairPoint(self.screen)
         self.repair_point.top = 0
         if random.random() > 0.5:
-            self.repair_point.image.left = 0
+            self.repair_point.rect.left = 0
         else:
-            self.repair_point.image.left = self.width - self.roadside_width
+            self.repair_point.rect.left = self.width - self.roadside_width
+        self.all_sprites.add(self.repair_point)
 
     def process_keyboard_and_wheel_events(self, x_change):
         wheel_angle = self.racing_wheel.get_angle()
@@ -592,7 +455,7 @@ class TRacesGame:
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                self.game_over = True
+                self.stats.game_over = True
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_LEFT:
                     x_change = -self.my_car_horizontal_speed
@@ -603,11 +466,11 @@ class TRacesGame:
                 elif event.key == pygame.K_DOWN:
                     self.game_speed = max(self.game_speed - 1, 1)
                 elif event.key == pygame.K_ESCAPE:
-                        self.game_intro()
+                    self.game_intro()
                 elif event.key == pygame.K_SPACE:
-                    self.paused = not self.paused
+                    self.stats.paused = not self.stats.paused
                 elif event.key == pygame.K_F1:
-                    self.save_wheel_center()
+                    self.racing_wheel.save_wheel_center()
 
             if event.type == pygame.KEYUP:
                 if event.key == pygame.K_LEFT or event.key == pygame.K_RIGHT:
@@ -615,15 +478,15 @@ class TRacesGame:
         if self.my_car_horizontal_speed_increase_with_get_speed:
             x_change += 0.01 * x_change * math.sqrt(self.get_speed())
 
-        self.my_car.left += x_change
-        if self.my_car.left < 0:
-            self.my_car.left = 0
-        if self.my_car.left > self.width - 50:
-            self.my_car.left = self.width - 50
+        self.my_car.rect.left += x_change
+        if self.my_car.rect.left < 0:
+            self.my_car.rect.left = 0
+        if self.my_car.rect.left > self.width - 50:
+            self.my_car.rect.left = self.width - 50
         return x_change
 
     def process_wheel_pedals(self):
-        if self.paused:
+        if self.stats.paused:
             return
         if self.racing_wheel.is_left_pedal_pressed():
             self.sounds.play_sound(TSounds.car_honk_left)
@@ -650,31 +513,28 @@ class TRacesGame:
                 self.sounds.play_sound(self.sounds.broken_driving)
 
     def game_loop(self):
-        self.my_car.left = self.width / 2
-        self.my_car.top = self.height - 250
-        self.game_over = False
-        self.score = 0
-        self.missed_count = 0
-        self.puddle_collision_count = 0
+        self.all_sprites.empty()
+        self.all_sprites.add(self.my_car)
+        self.my_car.rect.left = self.width / 2
+        self.my_car.rect.top = self.height - 250
+        self.stats = TGameRegisters(self.screen)
         self.init_new_other_car()
         save_is_on_road_side = False
         self.sounds.switch_music(self.other_car.sound)
         x_change = 0
-        self.broken = False
-        while not self.game_over:
+        while not self.stats.game_over:
             self.init_puddle()
             self.init_repair_point()
             self.process_wheel_pedals()
             x_change = self.process_keyboard_and_wheel_events(x_change)
-            if not self.paused:
+            if not self.stats.paused:
                 self.change_obstacle_positions()
             self.redraw()
             self.check_finish()
-            if self.my_car.intersect(self.other_car.sprite):
-                self.car_crash()
-            self.puddle_collision()
-            self.repair_collision()
-            self.draw_params()
+            self.check_car_collision()
+            self.check_puddle_collision()
+            self.check_repair_collision()
+            self.stats.draw_params(self.my_car.rect.top, self.game_speed)
             if save_is_on_road_side != self.is_on_the_roadside():
                 save_is_on_road_side = self.is_on_the_roadside()
                 if self.is_on_the_roadside():
@@ -684,8 +544,8 @@ class TRacesGame:
                 self.switch_music()
 
             clock.tick(30)
-            if self.my_car.top + 30 > self.height:
-                self.my_car.top = self.height - 30
+            if self.my_car.rect.top + 30 > self.height:
+                self.my_car.rect.top = self.height - 30
             pygame.display.update()
 
 
@@ -693,6 +553,7 @@ def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--silent", dest='silent', default=False, action="store_true")
     parser.add_argument("--wheel-center", dest='wheel_center', default=300, type=int)
+    parser.add_argument("--speed", dest='speed', default=6, type=int)
     parser.add_argument("--full-screen", dest='full_screen', default=False, action="store_true")
     parser.add_argument("--mode", dest='mode', default="normal_mode", required=False, help="can be normal_mode,gangster_mode")
     return parser.parse_args()
@@ -701,6 +562,8 @@ def parse_args():
 if __name__ == "__main__":
     clock = pygame.time.Clock()
     args = parse_args()
+    pygame.display.init()
+    pygame.font.init()
     game = TRacesGame(args)
     game.game_intro()
     game.quit()

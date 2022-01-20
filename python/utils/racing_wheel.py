@@ -1,0 +1,70 @@
+from evdev import list_devices, InputDevice, ecodes
+
+
+class TRacingWheel:
+    left_button = 295
+    right_button = 294
+    left_pedal =  10
+    right_pedal = 9
+
+    def __init__(self, logger, center):
+        self.logger = logger
+        self.raw_angle = None
+        self.center = center
+        self.pressed_buttons = set()
+        joysticks = list_devices()
+        if len(joysticks) > 0:
+            self.device = InputDevice(joysticks[0])
+            self.read_events()
+        else:
+            self.logger.error("no racing wheel found")
+            self.device = None
+
+    def save_wheel_center(self):
+        if self.raw_angle is not None:
+            self.logger.debug("set wheel center to {}".format(self.raw_angle))
+            self.center = self.raw_angle
+
+    def forget_buttons(self):
+        self.pressed_buttons.clear()
+
+    def read_events(self):
+        if self.device is None:
+            return
+        event = self.device.read_one()
+        while event is not None:
+            if event.code == ecodes.ABS_WHEEL:
+                self.raw_angle = event.value
+                self.logger.info("abs_wheel value={}, center={}".format(self.raw_angle, self.center))
+            if event.code == TRacingWheel.left_button:
+                self.logger.debug("left_button")
+                self.pressed_buttons.add(TRacingWheel.left_button)
+            elif event.code == TRacingWheel.right_button:
+                self.logger.debug("right_button")
+                self.pressed_buttons.add(TRacingWheel.right_button)
+            elif event.code == TRacingWheel.left_pedal:
+                if event.value > 120:
+                    self.pressed_buttons.add(TRacingWheel.left_pedal)
+                else:
+                    if TRacingWheel.left_pedal in self.pressed_buttons:
+                        self.pressed_buttons.remove(TRacingWheel.left_pedal)
+                self.logger.debug("left_pedal value={} {}".format(event.value, self.pressed_buttons))
+            elif event.code == TRacingWheel.right_pedal:
+                self.logger.debug("right_pedal")
+                if event.value > 120:
+                    self.pressed_buttons.add(TRacingWheel.right_pedal)
+                else:
+                    if TRacingWheel.right_pedal in self.pressed_buttons:
+                        self.pressed_buttons.remove(TRacingWheel.right_pedal)
+            event = self.device.read_one()
+
+    def is_left_pedal_pressed(self):
+        return TRacingWheel.left_pedal in self.pressed_buttons
+
+    def is_right_pedal_pressed(self):
+        return TRacingWheel.right_pedal in self.pressed_buttons
+
+    def get_angle(self):
+        self.read_events()
+        if self.raw_angle is not None:
+            return int((self.raw_angle - self.center) / 50)
