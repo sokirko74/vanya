@@ -47,10 +47,10 @@ class Player(pygame.sprite.Sprite):
 
     def collision_check(self, obstacles):
         collided = pygame.sprite.spritecollideany(self, obstacles, collided=pygame.sprite.collide_mask)
-        return collided is not None
+        return collided
 
-    def check_all_collisions(self):
-        if self.collision_check(self.parent.target_tiles):
+    def check_all_collisions(self, play_sound=True):
+        if self.collision_check(self.parent.target_tiles) is not None:
             pygame.mixer.music.stop()
             time.sleep(0.1)
             if not self.parent.chan_2.get_busy():
@@ -63,15 +63,18 @@ class Player(pygame.sprite.Sprite):
                 f.kill()
             self.parent.print_victory = True
             return True
-        elif self.collision_check(self.parent.walls):
-            if not self.parent.chan_2.get_busy():
-                self.parent.chan_2.play(self.sound_crash)
-            return False
         else:
-            collided_objects = pygame.sprite.spritecollideany(self, self.parent.objects, collided=pygame.sprite.collide_mask)
-            if collided_objects is not None:
-                collided_objects.contact_object()
-            return True
+            wall_collision = self.collision_check(self.parent.walls)
+            if wall_collision is not None:
+                if play_sound:
+                    if not self.parent.chan_2.get_busy():
+                        self.parent.chan_2.play(self.sound_crash)
+                return False
+            else:
+                collided_objects = pygame.sprite.spritecollideany(self, self.parent.objects, collided=pygame.sprite.collide_mask)
+                if collided_objects is not None:
+                    collided_objects.contact_object()
+                return True
 
     def set_initial_position(self, pos):
         self.rect.center = Vector2(self.parent.maze_rect.topleft) + Vector2(pos)

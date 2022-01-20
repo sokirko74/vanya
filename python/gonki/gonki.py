@@ -357,6 +357,7 @@ class TRacesGame:
         self.puddle = None
         self.broken = False
         self.repair_point = None
+        self.missed_count =0
 
     def message(self, mess, colour, size, x, y):
         font = pygame.font.SysFont(None, size)
@@ -431,6 +432,7 @@ class TRacesGame:
             time.sleep(1)
             self.puddle.collided = True
             self.puddle_collision_count += 1
+            self.score -= 1
             self.broken = True
             self.switch_music()
 
@@ -470,7 +472,8 @@ class TRacesGame:
                 self.my_car.top -= 40
             else:
                 self.my_car.top -= 20
-            self.score += 1
+            if not  self.is_broken_driving():
+                self.score += 1
         self.init_new_other_car()
         pygame.display.update()
 
@@ -482,13 +485,12 @@ class TRacesGame:
         self.gd.blit(screen_text, (x, y))
 
     def draw_params(self):
-        font = pygame.font.SysFont(None, 30)
         self.print_text('score: {}'.format(self.score), 30, 0)
         self.print_text('speed: {}'.format(self.game_speed), 30, 40)
         self.print_text('position: {}'.format(self.my_car.top), 30, 80)
         self.print_text('broken: {}'.format(self.is_broken_driving()), 30, 120)
         self.print_text('puddles: {}'.format(self.puddle_collision_count), 30, 160)
-
+        self.print_text('missed: {}'.format(self.missed_count), 30, 200)
         if self.paused:
             self.print_text("pause (press spacebar to play)", self.width/2, self.height/2)
 
@@ -582,6 +584,9 @@ class TRacesGame:
                     self.my_car.top += 10
                 else:
                     self.my_car.top -= 20
+            if self.args.mode == "gangster_mode":
+                self.missed_count += 1
+                self.score -= 1
             self.init_new_other_car()
 
     def init_puddle(self):
@@ -676,6 +681,7 @@ class TRacesGame:
         self.my_car.top = self.height - 250
         self.game_over = False
         self.score = 0
+        self.missed_count = 0
         self.puddle_collision_count = 0
         self.init_new_other_car()
         save_is_on_road_side = False

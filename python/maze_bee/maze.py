@@ -102,7 +102,7 @@ class Bee(Player):
         #if s.center != self.rect.center:
         #    self.image
         #self.image.get_rect()
-        if not self.check_all_collisions():
+        if not self.check_all_collisions(play_sound=False):
             self.image = save_image
             if not self.check_all_collisions():
                 # bee is not a rect
@@ -350,7 +350,7 @@ class TMaze:
                         self.player.handle_event(e)
                 else:
                    self.check_game_events(event)
-                self.player.handle_event(event)
+                   self.player.handle_event(event)
                 if joystick_direction[0] != 0 or joystick_direction[1] != 0:
                     self.logger.info("joystick_direction = {}".format(joystick_direction))
 
@@ -364,8 +364,8 @@ class TMaze:
                 screen_text = font.render('ПОБЕДА!', True, (0, 200, 0))
                 self.screen.blit(screen_text, (250, 280))
 
-            pygame.draw.rect(self.screen, BLACK, self.player.rect, width=1)
-            pygame.draw.rect(self.screen, BLACK, self.player.image.get_rect(), width=1)
+            #   pygame.draw.rect(self.screen, BLACK, self.player.rect, width=1)
+            #pygame.draw.rect(self.screen, BLACK, self.player.image.get_rect(), width=1)
             pygame.display.flip()
             clock.tick(25)
 
