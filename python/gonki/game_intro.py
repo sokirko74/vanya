@@ -46,7 +46,7 @@ class TGameIntro:
     def set_start_game_action(self):
         self.action = TGameIntro.start_game_action
 
-    def get_next_action(self):
+    def get_next_action(self, prev_score=None):
         self.screen.blit(self.image, (0, 0))
         pygame.display.update()
         self.action = None
@@ -69,6 +69,8 @@ class TGameIntro:
                         self.action = TGameIntro.exit_game_action
                         break
 
+            if prev_score is not None:
+                self.message("Очки: {}".format(prev_score), TColors.black, 150, 100, 100)
             button_y = 300
             self.draw_intro_button(200, button_y, 'GO!', TColors.bright_red, self.set_start_game_action )
             self.draw_intro_button(self.screen.get_width() - 200, button_y, 'QUIT', TColors.bright_green, self.set_exit_action)
