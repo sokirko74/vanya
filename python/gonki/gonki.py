@@ -1,6 +1,8 @@
 from utils.logging_wrapper import setup_logging
 from utils.racing_wheel import TRacingWheel
+from utils.colors import TColors
 from game_sounds import TSounds
+from game_intro import TGameIntro
 
 import pygame
 import time
@@ -13,15 +15,6 @@ ASSETS_DIR = "assets"
 SPRITES_DIR = os.path.join(ASSETS_DIR, 'sprites')
 SOUNDS_DIR = os.path.join(ASSETS_DIR, 'sounds')
 
-
-class TColors:
-    gray = (119, 118, 110)
-    white = (255, 255, 255)
-    black = (0, 0, 0)
-    red = (200, 0, 0)
-    green = (0, 200, 0)
-    bright_red = (255, 0, 0)
-    bright_green = (0, 255, 0)
 
 
 class TSprite(pygame.sprite.Sprite):
@@ -182,8 +175,13 @@ class TRacesGame:
             self.height = 1000
             self.screen = pygame.display.set_mode((self.width, self.height))
         self.stats = TGameRegisters(self.screen)
+        self.game_intro = TGameIntro(self.screen, SPRITES_DIR,  self.racing_wheel)
 
         self.roadside_width = 200
+        blue_strip = pygame.image.load(os.path.join(SPRITES_DIR, 'border.jpg'))
+        self.border_img = pygame.transform.scale(blue_strip, (self.roadside_width, self.height))
+
+
         self.car_width = 160
         self.my_car = TSprite(self.screen, 'my_car.png', pygame.Rect(0, 0, self.car_width, 160))
         self.my_car_horizontal_speed = 10
@@ -204,32 +202,9 @@ class TRacesGame:
         self.screen.blit(screen_text, (x, y))
         pygame.display.update()
 
-    def button(self, x, y, w, h, mess, mess_color, actc, noc, size, tx, ty, func):
-        mouse = pygame.mouse.get_pos()
-        click = pygame.mouse.get_pressed()
-        if x + w > mouse[0] > x and y + h > mouse[1] > y:
-            pygame.draw.rect(self.screen, actc, [x, y, w, h])
-            self.message(mess, mess_color, size, tx, ty)
-            pygame.display.update()
-            if click == (1, 0, 0):
-                func()
-        else:
-            pygame.draw.rect(self.screen, noc, [x, y, w, h])
-            self.message(mess, mess_color, size, tx, ty)
-            pygame.display.update()
-        pygame.display.update()
-
     def quit(self):
         pygame.quit()
         exit()
-
-    def draw_background(self):
-        blue_strip = pygame.image.load(os.path.join(SPRITES_DIR, 'border.jpg'))
-
-        img = pygame.transform.scale(blue_strip, (self.roadside_width, self.height))
-        self.screen.blit(img, (0, 0))
-        self.screen.blit(img, (self.width - self.roadside_width, 0))
-        pygame.draw.line(self.screen, TColors.white, (self.roadside_width, self.finish_top), (self.width - self.roadside_width, self.finish_top))
 
     def check_finish(self):
         win = self.finish_top > self.my_car.rect.top
@@ -244,17 +219,14 @@ class TRacesGame:
             self.screen.blit(screen_text, (250, 280))
             pygame.display.update()
             time.sleep(3)
-            self.game_intro()
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    self.quit()
-            pygame.display.update()
+            self.game_intro.get_next_action()
 
-    def redraw(self):
+    def redraw_background(self):
         self.screen.fill(TColors.gray)
-        self.draw_background()
-        self.all_sprites.draw(self.screen)
-        pygame.display.flip()
+        self.screen.blit(self.border_img, (0, 0))
+        self.screen.blit(self.border_img, (self.width - self.roadside_width, 0))
+        pygame.draw.line(self.screen, TColors.white, (self.roadside_width, self.finish_top),
+                         (self.width - self.roadside_width, self.finish_top))
 
     def check_puddle_collision(self):
         if self.puddle is None or not self.puddle.is_new():
@@ -287,10 +259,9 @@ class TRacesGame:
         self.logger.debug("car_crash")
         self.sounds.switch_music(self.other_car.accident_sound, loops=0)
         if self.other_car.retreat_after_crash:
-            for x in range(20):
-                self.other_car.top -= 30
-                self.other_car.left += random.randint(1, 30) - 15
-                self.redraw()
+            while self.other_car.rect.top > 0:
+                self.other_car.rect.top -= 30
+                self.other_car.rect.left += random.randint(1, 30) - 15
                 pygame.display.update()
                 time.sleep(0.1)
         else:
@@ -321,38 +292,15 @@ class TRacesGame:
     def is_on_the_roadside(self):
         return self.my_car.rect.left < self.roadside_width or self.my_car.rect.right > self.width - self.roadside_width
 
-    def game_intro(self):
-        def draw_button(x, y, message, color,  func):
-            self.button(x, y, 70, 30, message, TColors.white, color, TColors.red, 25, x + 6,
-                        y + 6, func)
-
+    def draw_game_intro(self):
         self.sounds.stop_sounds()
-        v = pygame.transform.scale(pygame.image.load(os.path.join(SPRITES_DIR, 'background1.jpg')), (self.width, self.height))
-        self.screen.blit(v, (0, 0))
-        pygame.display.update()
-        game_intro = False
-        while not game_intro:
-            self.racing_wheel.forget_buttons()
-            self.racing_wheel.read_events()
-            if TRacingWheel.left_button in self.racing_wheel.pressed_buttons:
-                self.game_loop()
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    game_intro = True
-                    self.stats.game_over = True
-                if event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_F1:
-                        self.racing_wheel.save_wheel_center()
-                    if event.key == pygame.K_ESCAPE:
-                        self.quit()
-
-            self.message('MAIN MENU', TColors.green, 100, (self.width / 2 - 220), 100)
-            button_y = 300
-            draw_button(200, button_y, 'GO!', TColors.bright_red, self.game_loop)
-            draw_button(self.width - 200, button_y, 'QUIT', TColors.bright_green, self.quit)
-            pygame.display.update()
-
-        pygame.display.update()
+        self.game_intro.get_next_action()
+        if self.game_intro.action == TGameIntro.exit_game_action:
+            self.quit()
+        elif self.game_intro.action == TGameIntro.start_game_action:
+            self.game_loop()
+        else:
+            raise Exception("unknown action")
 
     def set_other_car_random_position(self, sprite: TSprite, padding):
         sprite.rect.top = 0
@@ -368,7 +316,8 @@ class TRacesGame:
             self.other_car = None
 
         enemy_car_types = [TSimpleCar, TTruckCar, TractorCar, TSpider, TMosquito]
-        enemy_cars_weights = [2,           1.5,     1,           1,     1]
+        #enemy_cars_weights = [2,           1.5,     1,           1,     1]
+        enemy_cars_weights = [0, 0, 0, 0, 1]
         other_car_type = random.choices(population=enemy_car_types, weights=enemy_cars_weights, k=1)[0]
         self.other_car = other_car_type(self.screen)
         padding = 0
@@ -466,7 +415,7 @@ class TRacesGame:
                 elif event.key == pygame.K_DOWN:
                     self.game_speed = max(self.game_speed - 1, 1)
                 elif event.key == pygame.K_ESCAPE:
-                    self.game_intro()
+                    self.draw_game_intro()
                 elif event.key == pygame.K_SPACE:
                     self.stats.paused = not self.stats.paused
                 elif event.key == pygame.K_F1:
@@ -518,6 +467,7 @@ class TRacesGame:
         self.my_car.rect.left = self.width / 2
         self.my_car.rect.top = self.height - 250
         self.stats = TGameRegisters(self.screen)
+        self.redraw_background()
         self.init_new_other_car()
         save_is_on_road_side = False
         self.sounds.switch_music(self.other_car.sound)
@@ -529,12 +479,10 @@ class TRacesGame:
             x_change = self.process_keyboard_and_wheel_events(x_change)
             if not self.stats.paused:
                 self.change_obstacle_positions()
-            self.redraw()
             self.check_finish()
             self.check_car_collision()
             self.check_puddle_collision()
             self.check_repair_collision()
-            self.stats.draw_params(self.my_car.rect.top, self.game_speed)
             if save_is_on_road_side != self.is_on_the_roadside():
                 save_is_on_road_side = self.is_on_the_roadside()
                 if self.is_on_the_roadside():
@@ -543,10 +491,15 @@ class TRacesGame:
                     self.start_time_on_the_road_side = None
                 self.switch_music()
 
+            self.redraw_background()
+            self.stats.draw_params(self.my_car.rect.top, self.game_speed)
+            self.all_sprites.draw(self.screen)
+            pygame.display.flip()
+
             clock.tick(30)
+
             if self.my_car.rect.top + 30 > self.height:
                 self.my_car.rect.top = self.height - 30
-            pygame.display.update()
 
 
 def parse_args():
@@ -565,5 +518,5 @@ if __name__ == "__main__":
     pygame.display.init()
     pygame.font.init()
     game = TRacesGame(args)
-    game.game_intro()
+    game.draw_game_intro()
     game.quit()
