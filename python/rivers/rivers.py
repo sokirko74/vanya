@@ -3,7 +3,7 @@ from utils.racing_wheel import TRacingWheel
 from utils.colors import TColors
 from utils.game_sounds import TSounds
 from utils.game_intro import TGameIntro
-
+from engine_sound import TEngineSound
 import pygame
 import time
 import argparse
@@ -44,10 +44,10 @@ class TRiver(TSprite):
 
 
 class TBridge(TSprite):
-    def __init__(self, parent, top=0, left=0):
+    def __init__(self, parent, top=0, left=0, width=300):
         super().__init__(parent,
                               'bridge.png',
-                              pygame.Rect(0, top, 300, 200))
+                              pygame.Rect(0, top, width, 200))
         self.used = False
 
 
@@ -87,7 +87,10 @@ class TRiverGame:
         self.start_time_on_the_road_side = None
         self.sounds = TSounds(SOUNDS_DIR, not args.silent)
         self.racing_wheel = TRacingWheel(self.logger, args.wheel_center)
-        self.game_speed = args.speed
+        self.max_game_speed = 10
+        self.engine_sound = TEngineSound(self.max_game_speed, self.args.engine_audio_folder)
+        self.engine_sound.start_engine()
+
         self.river_sprites = pygame.sprite.Group()
         self.bridge_sprites = pygame.sprite.Group()
         self.my_car_sprites = pygame.sprite.Group()
@@ -109,7 +112,7 @@ class TRiverGame:
         self.my_car_horizontal_speed_increase_with_get_speed = True
         self.my_car_sprites.add(self.my_car)
 
-        self.bridge_width = 200
+        self.bridge_width = self.args.bridge_width
 
         self.river = None
         self.bridge = None
@@ -154,30 +157,12 @@ class TRiverGame:
             return
         self.logger.info("river collision")
         self.sounds.play_sound("river_accident", loops=0)
-        self.set_game_speed(1)
+        self.engine_sound.stop_engine()
         river_sprite.used = True
         self.stats.river_accident_count += 1
 
-    def set_game_speed(self, speed):
-        if speed > 0 and self.game_speed == 0:
-            self.sounds.stop_sounds()
-            self.sounds.play_sound("engine_start")
-            time.sleep(1)
-        if speed == 0 and self.game_speed > 0:
-            self.sounds.stop_sounds()
-            self.sounds.play_sound("engine_stop")
-        self.game_speed = speed
-        if self.game_speed > 0:
-            music_id = "speed{}".format(max(1, min(10, self.game_speed)))
-            for k,v in self.sounds.sounds.items():
-                if k != music_id:
-                    v.stop()
-                else:
-                    self.logger.info("music {}".format(music_id))
-                    v.play(loops=1000)
-
     def get_speed(self):
-        return self.game_speed
+        return self.engine_sound.get_current_speed()
 
     def check_bridge_collision(self,  bridge_sprite):
         if not bridge_sprite.alive() or bridge_sprite.used:
@@ -207,7 +192,7 @@ class TRiverGame:
             self.river = None
 
         self.river = TRiver(self.screen)
-        self.bridge = TBridge(self.screen)
+        self.bridge = TBridge(self.screen, width=self.bridge_width)
         self.bridge.rect.top = 0
         self.bridge.rect.left = random.randrange(0, self.width - self.bridge_width )
         self.river_sprites.add(self.river)
@@ -241,10 +226,9 @@ class TRiverGame:
                 elif event.key == pygame.K_RIGHT:
                     x_change = +self.my_car_horizontal_speed
                 elif event.key == pygame.K_UP:
-                    self.set_game_speed(self.get_speed() + 1)
+                    self.engine_sound.increase_speed()
                 elif event.key == pygame.K_DOWN:
-                    if self.game_speed > 0:
-                        self.set_game_speed(self.get_speed() - 1)
+                    self.engine_sound.decrease_speed()
                 elif event.key == pygame.K_ESCAPE:
                     self.draw_game_intro()
                 elif event.key == pygame.K_SPACE:
@@ -284,19 +268,10 @@ class TRiverGame:
         self.my_car_sprites.draw(self.screen)
         pygame.display.flip()
 
-    def set_normal_driving(self):
-        self.logger.info("free driving")
-        if self.get_speed() > 0:
-            music_id = "speed{}".format(max(1, min(10, self.game_speed)))
-            self.logger.info("music {}".format(music_id))
-            self.sounds.play_sound(music_id, loops=1000)
-
     def check_all_collisions(self):
         bridge = pygame.sprite.spritecollideany(self.my_car, self.bridge_sprites, collided=pygame.sprite.collide_mask)
         river = pygame.sprite.spritecollideany(self.my_car, self.river_sprites, collided=pygame.sprite.collide_mask)
-        if bridge is None and river is None:
-            self.set_normal_driving()
-        elif bridge is not None:
+        if bridge is not None:
             self.check_bridge_collision(bridge)
         elif river is not None:
             self.check_river_collision(river)
@@ -328,11 +303,13 @@ def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--silent", dest='silent', default=False, action="store_true")
     parser.add_argument("--wheel-center", dest='wheel_center', default=300, type=int)
-    parser.add_argument("--speed", dest='speed', default=6, type=int)
     parser.add_argument("--great-victory-level", dest='great_victory_level', default=15, type=int)
     parser.add_argument("--full-screen", dest='full_screen', default=False, action="store_true")
     parser.add_argument("--width", dest='width', default=1600, type=int)
     parser.add_argument("--height", dest='height', default=1000, type=int)
+    parser.add_argument("--bridge-width", dest='bridge_width', default=300, type=int)
+    parser.add_argument("--engine-audio-folder", dest='engine_audio_folder',
+                        default= os.path.join(os.path.dirname(__file__), 'assets/sounds/ford'))
     return parser.parse_args()
 
 

@@ -24,7 +24,7 @@ class TEngineState:
     engine_stable = 3
 
 
-class TSpeedSound(pygame.mixer.Sound):
+class TOneSpeedSound(pygame.mixer.Sound):
     segment_folder = None
 
     def get_state(self):
@@ -40,20 +40,21 @@ class TSpeedSound(pygame.mixer.Sound):
 
     @staticmethod
     def get_file_name(start_speed, last_speed):
-        return os.path.join(TSpeedSound.segment_folder, 'speed_{}_{}.wav'.format(start_speed, last_speed))
+        return os.path.join(TOneSpeedSound.segment_folder, 'speed_{}_{}.wav'.format(start_speed, last_speed))
 
     def __init__(self, start_speed, last_speed):
         self.start_speed = start_speed
         self.last_speed = last_speed
-        filename = TSpeedSound.get_file_name(self.start_speed, self.last_speed)
+        filename = TOneSpeedSound.get_file_name(self.start_speed, self.last_speed)
         super().__init__(filename)
         self.filename = filename
 
 
 class TEngineSound(threading.Thread):
     def __init__(self, max_speed, segment_folder):
-        TSpeedSound.segment_folder = segment_folder
+        TOneSpeedSound.segment_folder = segment_folder
         threading.Thread.__init__(self)
+        self.daemon = True
         self.max_speed = max_speed
         self.sounds = dict()
         self.stop = False
@@ -61,9 +62,9 @@ class TEngineSound(threading.Thread):
 
     def load_sounds(self):
         for i in range(self.max_speed):
-            self.sounds[(i, i+1)] = TSpeedSound(i, i+1)
-            self.sounds[(i+1, i)] = TSpeedSound(i+1, i)
-            self.sounds[(i + 1, i + 1)] = TSpeedSound(i + 1, i + 1)
+            self.sounds[(i, i+1)] = TOneSpeedSound(i, i + 1)
+            self.sounds[(i+1, i)] = TOneSpeedSound(i + 1, i)
+            self.sounds[(i + 1, i + 1)] = TOneSpeedSound(i + 1, i + 1)
 
     def start_engine(self):
         self.load_sounds()
@@ -80,9 +81,13 @@ class TEngineSound(threading.Thread):
     def get_current_speed(self):
         if not self.is_working():
             return 0
-        return self.channel.get_sound().get_speed()
+        snd = self.channel.get_sound()
+        if isinstance(snd, TOneSpeedSound):
+            return snd.get_speed()
+        else:
+            return 0
 
-    def stop_sounds(self):
+    def stop_engine(self):
         self.channel.stop()
 
     def get_increase_sound(self, speed):
@@ -105,7 +110,7 @@ class TEngineSound(threading.Thread):
     def queue_sound_after(self, snd):
         state = snd.get_state()
         speed = snd.get_speed()
-        print  ("state = {}".format(state))
+        print("state = {}".format(state))
         if state == TEngineState.engine_increase:
             if speed != self.max_speed:
                 self.queue_sound(self.get_increase_sound(speed))
@@ -123,7 +128,7 @@ class TEngineSound(threading.Thread):
         while not self.stop:
             if self.channel.get_busy():
                 snd = self.channel.get_sound()
-                print('now playing {}'.format(snd.filename))
+                #print('now playing {}'.format(snd.filename))
                 if self.channel.get_queue() is None:
                     self.queue_sound_after(snd)
 
@@ -142,9 +147,9 @@ class TEngineSound(threading.Thread):
                 self.play_sound(self.get_decrease_sound(speed-1))
 
     def create_sound_segments_from_engine_increasing_file(self, input, segment_time):
-        if not os.path.exists(TSpeedSound.segment_folder):
-            print("create {}".format(TSpeedSound.segment_folder))
-            os.mkdir(TSpeedSound.segment_folder)
+        if not os.path.exists(TOneSpeedSound.segment_folder):
+            print("create {}".format(TOneSpeedSound.segment_folder))
+            os.mkdir(TOneSpeedSound.segment_folder)
 
         format = 'wav'
         assert input.endswith(format)
@@ -153,31 +158,31 @@ class TEngineSound(threading.Thread):
         for speed in range(self.max_speed):
             offset = segment_time * speed
             increasing = song[offset*1000:(offset+segment_time)*1000]
-            increasing.export(TSpeedSound.get_file_name(speed, speed+1), format=format)
+            increasing.export(TOneSpeedSound.get_file_name(speed, speed + 1), format=format)
             decreasing = increasing.reverse().set_channels(1)
-            decreasing.export(TSpeedSound.get_file_name(speed + 1, speed), format=format)
+            decreasing.export(TOneSpeedSound.get_file_name(speed + 1, speed), format=format)
             stable = (increasing[-1500:] + decreasing[:1500]) * 10
             stable = stable.set_channels(1)
-            stable.export(TSpeedSound.get_file_name(speed + 1, speed + 1), format=format)
+            stable.export(TOneSpeedSound.get_file_name(speed + 1, speed + 1), format=format)
         print("all done")
 
     def test_engine(self):
-         self.start_engine()
-         pygame.display.init()
-         screen = pygame.display.set_mode((800, 600))
-         while True:
-             keys = pygame.key.get_pressed()
-             if keys[pygame.K_UP]:
-                 self.increase_speed()
-             elif not keys[pygame.K_UP]:
-                 self.decrease_speed()
-             if keys[pygame.K_ESCAPE]:
-                 print("got escape key")
-                 sound.stop = True
-                 sound.join(2)
-                 break
-             time.sleep(0.2)
-             pygame.event.pump()
+        self.start_engine()
+        pygame.display.init()
+        screen = pygame.display.set_mode((800, 600))
+        while True:
+            keys = pygame.key.get_pressed()
+            if keys[pygame.K_UP]:
+                self.increase_speed()
+            elif not keys[pygame.K_UP]:
+                self.decrease_speed()
+            if keys[pygame.K_ESCAPE]:
+                print("got escape key")
+                self.stop = True
+                self.join(2)
+                break
+            time.sleep(0.2)
+            pygame.event.pump()
 
 
 def parse_args():
