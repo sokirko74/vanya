@@ -108,62 +108,55 @@ URLS = {
   'масами1': ('https://www.youtube.com/watch?v=-gzBqayDmJ8',  240),
     'пыхтелки1': ('https://www.youtube.com/watch?v=-BE476MvO_g', 240),
     'лодка2':('https://www.youtube.com/watch?v=HwF0HbG_wYE', 230),
-
     'лодка3': ('https://www.youtube.com/watch?v=wvr5ESGkYDo', 120),
     'мотособака1':('https://www.youtube.com/watch?v=zpPQKIveCXk',180),
    'миникупер1': ('https://www.youtube.com/watch?v=SLjw4jLf1Kg', 100),
   'бобкет1': ('https://www.youtube.com/watch?v=OJ27XkuW6uw', 180),
   'кировец1':('https://www.youtube.com/watch?v=7NY1c_RrlRE', 120),
   'метеор1': ('https://www.youtube.com/watch?v=7pmx-b336Ik',  60),
-
   'лада2': ('https://www.youtube.com/watch?v=l2rglKquGvw', 120),
   'лада3': ('https://www.youtube.com/watch?v=C5pgJqV-jI0', 100),
   'станок2':('https://www.youtube.com/watch?v=9AlIEDSG_6g',  180),
   'самолет1': ('https://www.youtube.com/watch?v=RXVJxX9gG7g', 120),
-
   'мазда1': ('https://www.youtube.com/watch?v=cdjIF4jYQow', 120),
   'мицубиси1': ('https://www.youtube.com/watch?v=78ZO6Nsj_uk', 180),
   'ока1':('https://www.youtube.com/watch?v=C_lbeii0spk', 120),
   'катер1': ('https://www.youtube.com/watch?v=VWRV3uy87ZU', 120),
-
     'лада21':('https://www.youtube.com/watch?v=Dmgz8yJicCI', 320),
     'лада22':('https://www.youtube.com/watch?v=6pXdEezkk9I', 53),
     'катер2':('https://www.youtube.com/watch?v=XVo15giIU68', 100),
     'лада23': ('https://www.youtube.com/watch?v=luRA6Gtm3PM', 180),
     'шкода2': ('https://www.youtube.com/watch?v=95ijPASWIjU', 75),
-
     'трактор2':('https://www.youtube.com/watch?v=Xevamo7l5D4', 140),
     'трактор3': ('https://www.youtube.com/watch?v=ECEYU579nrU', 180),
     'трактор12': ('https://www.youtube.com/watch?v=QjinY3Q5jcY', 180),
     'белаз2': ('https://www.youtube.com/watch?v=pX8XR0NgNNY', 240),
-
     'альфаромео1':('https://www.youtube.com/watch?v=YPfAV3iGfTA', 120),
     'шахман1':('https://www.youtube.com/watch?v=Tg38pD8Rtyc', 180),
     'транзит1':('https://www.youtube.com/watch?v=1b4c_t6mh-I', 180),
     'крета1': ('https://www.youtube.com/watch?v=EyFpo1iI5eg', 160),
-
     'дизель1': ('https://www.youtube.com/watch?v=xhC4c2tJxtI', 90),
-
     'пежо1': ('https://www.youtube.com/watch?v=-pROqa9HNEA', 110),
     'пежо2': ('https://www.youtube.com/watch?v=-irquE0-vfo',  130),
     'вольво1': ('https://www.youtube.com/watch?v=C1CJJeCMtt0', 110),  #вариатор
    'вольво2': ('https://www.youtube.com/watch?v=WFyxBSLYchQ', 110),
    'вольво3': ('https://www.youtube.com/watch?v=rPHDZ0CuxoY', 240),
-
   'ауди2': ('https://www.youtube.com/watch?v=Xz3_cdlnEo0', 110),
   'ауди3':('https://www.youtube.com/watch?v=t9KbDHavhYw', 70),
   'сааб2': ('https://www.youtube.com/watch?v=tiFxaE6GAOM', 130),
   'ферари1': ('https://www.youtube.com/watch?v=kUXRbHpOM7k',  240),
-
    'иж1': ('https://www.youtube.com/watch?v=dxzS3Zjbsqo', 180),
    'ивеко1': ('https://www.youtube.com/watch?v=m0MDra5ei28', 180),
    'даф2': ('https://www.youtube.com/watch?v=DXb2geQnLKU', 240),
   'большие1':('https://www.youtube.com/watch?v=jDOr6emtqv0', 540),
-  
   'даф3': ('https://www.youtube.com/watch?v=ly7pjLq0EzI', 70),
   'ивеко2': ('https://www.youtube.com/watch?v=v9pa-g2nghs', 130),
  'вольво3': ('https://www.youtube.com/watch?v=uXFzqHxOZTw&t=39s', 180),
- 'скания3': ('https://www.youtube.com/watch?v=KmcWO9EzWjk', 180)	
+ 'скания3': ('https://www.youtube.com/watch?v=KmcWO9EzWjk', 180),
+    'шевроле2': ('https://www.youtube.com/watch?v=GolxWT8wczU', 130),
+    'даф12': ('https://www.youtube.com/watch?v=e9EUmQBO498', 200),
+    'портер': ('https://www.youtube.com/watch?v=tK_NbKKLAd8',140),
+    'самолет2': ('https://www.youtube.com/watch?v=Nf6NkZHCyF8', 120),
 }
 
 

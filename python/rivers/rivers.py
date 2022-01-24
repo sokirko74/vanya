@@ -40,7 +40,7 @@ class TRiver(TSprite):
         super().__init__(parent,
                               'river.png',
                               pygame.Rect(0, top, parent.get_width(), 160))
-        self.used = False
+        self.collided = False
 
 
 class TBridge(TSprite):
@@ -54,7 +54,6 @@ class TBridge(TSprite):
 class TGameRegisters:
     def __init__(self, screen):
         self.screen = screen
-        self.score = 0
         self.game_over = False
         self.river_accident_count = 0
         self.bridge_passing_count = 0
@@ -131,21 +130,24 @@ class TRiverGame:
         win = self.finish_top > self.my_car.rect.top
         loose = self.my_car.rect.top > self.height - 100
         if win or loose:
+            self.engine_sound.stop_engine()
             font = pygame.font.SysFont(None, 100)
             if win:
-                if self.stats.score < self.args.great_victory_level:
+                if self.stats.get_score() < self.args.great_victory_level:
                     font = pygame.font.SysFont(None, 50)
-                    screen_text = font.render('Победа! Очки: {}'.format(self.stats.score), True, TColors.white)
+                    screen_text = font.render('Победа! Очки: {}'.format(self.stats.get_score()), True, TColors.white)
+                    loops = 0
                 else:
                     font = pygame.font.SysFont(None, 150)
-                    screen_text = font.render('Победа! Очки: {}'.format(self.stats.score), True, TColors.green)
-                self.sounds.stop_all_and_play("victory", loops=0)
+                    screen_text = font.render('Победа! Очки: {}'.format(self.stats.get_score()), True, TColors.green)
+                    loops = 1
+                self.sounds.stop_all_and_play("victory", loops=loops)
             else:
                 screen_text = font.render('Проигрыш!', True, TColors.white)
             self.screen.blit(screen_text, (250, 280))
             pygame.display.update()
             time.sleep(5)
-            self.draw_game_intro(self.stats.score)
+            self.draw_game_intro(self.stats.get_score())
 
     def redraw_background(self):
         self.screen.fill(TColors.gray)
@@ -153,12 +155,12 @@ class TRiverGame:
                          (self.width, self.finish_top))
 
     def check_river_collision(self, river_sprite):
-        if not river_sprite.alive() or river_sprite.used:
+        if not river_sprite.alive() or river_sprite.collided:
             return
         self.logger.info("river collision")
         self.sounds.play_sound("river_accident", loops=0)
         self.engine_sound.stop_engine()
-        river_sprite.used = True
+        river_sprite.collided = True
         self.stats.river_accident_count += 1
 
     def get_speed(self):
@@ -188,8 +190,13 @@ class TRiverGame:
     def init_new_river(self):
         self.logger.debug("init_new_river")
         if self.river is not None:
+            if not self.river.collided:
+                self.my_car.rect.top -= 20
             self.river.kill()
             self.river = None
+        if self.bridge is not None:
+            self.bridge.kill()
+            self.bridge = None
 
         self.river = TRiver(self.screen)
         self.bridge = TBridge(self.screen, width=self.bridge_width)
@@ -206,11 +213,12 @@ class TRiverGame:
             self.river.change_spite_position(self.get_speed())
             self.bridge.change_spite_position(self.get_speed())
             if self.is_obstacle_finish(self.river):
-                self.river.kill()
-                self.river = None
-                self.bridge.kill()
-                self.bridge = None
                 self.init_new_river()
+
+    def use_brakes(self):
+        self.logger.info("use brakes")
+        self.sounds.play_sound("brakes", loops=0)
+        self.engine_sound.stop_engine()
 
     def process_keyboard_and_wheel_events(self, x_change):
         wheel_angle = self.racing_wheel.get_angle()
@@ -228,7 +236,7 @@ class TRiverGame:
                 elif event.key == pygame.K_UP:
                     self.engine_sound.increase_speed()
                 elif event.key == pygame.K_DOWN:
-                    self.engine_sound.decrease_speed()
+                    self.use_brakes()
                 elif event.key == pygame.K_ESCAPE:
                     self.draw_game_intro()
                 elif event.key == pygame.K_SPACE:
@@ -239,6 +247,9 @@ class TRiverGame:
             if event.type == pygame.KEYUP:
                 if event.key == pygame.K_LEFT or event.key == pygame.K_RIGHT:
                     x_change = 0
+                if event.key == pygame.K_UP:
+                    self.engine_sound.decrease_speed()
+
         if self.my_car_horizontal_speed_increase_with_get_speed:
             x_change += 0.01 * x_change * math.sqrt(self.get_speed())
 
@@ -253,10 +264,15 @@ class TRiverGame:
         if self.stats.paused:
             return
         if self.racing_wheel.is_left_pedal_pressed():
-            self.sounds.play_sound("car_honk_left")
+            self.logger.info("left pedal is on")
+            self.engine_sound.increase_speed()
+        else:
+            self.logger.info("left pedal is off")
+            self.engine_sound.decrease_speed()
 
         if self.racing_wheel.is_right_pedal_pressed():
-            self.sounds.play_sound("car_honk_right")
+            self.logger.info("right pedal is on")
+            self.use_brakes()
 
     def redraw_all(self):
         self.redraw_background()

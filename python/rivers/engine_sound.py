@@ -73,7 +73,11 @@ class TEngineSound(threading.Thread):
     def get_state(self):
         if not self.channel.get_busy():
             return TEngineState.engine_stable
-        return self.channel.get_sound().get_state()
+        snd = self.channel.get_sound()
+        if isinstance(snd, TOneSpeedSound):
+            return snd.get_state()
+        else:
+            return TEngineState.engine_stable
 
     def is_working(self):
         return self.channel.get_busy()
@@ -128,9 +132,10 @@ class TEngineSound(threading.Thread):
         while not self.stop:
             if self.channel.get_busy():
                 snd = self.channel.get_sound()
-                #print('now playing {}'.format(snd.filename))
-                if self.channel.get_queue() is None:
-                    self.queue_sound_after(snd)
+                if snd is not None and isinstance(snd, TOneSpeedSound):
+                    #print('now playing {}'.format(snd.filename))
+                    if self.channel.get_queue() is None:
+                        self.queue_sound_after(snd)
 
             time.sleep(0.5)
 

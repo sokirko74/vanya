@@ -22,7 +22,7 @@ class TRacingWheel:
 
     def save_wheel_center(self):
         if self.raw_angle is not None:
-            self.logger.debug("set wheel center to {}".format(self.raw_angle))
+            self.logger.info("set wheel center to {}".format(self.raw_angle))
             self.center = self.raw_angle
 
     def forget_buttons(self):

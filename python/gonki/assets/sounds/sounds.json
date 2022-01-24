@@ -1,0 +1,47 @@
+{
+  "roadside": {
+    "volume": 0.3
+  },
+  "normal_driving": {
+    "volume": 0.3
+  },
+  "accident": {
+    "volume": 1
+  },
+  "victory": {
+    "volume": 1
+  },
+  "truck": {
+    "volume": 0.6
+  },
+  "tractor": {
+    "volume": 1
+  },
+  "spider": {
+    "volume": 0.2
+  },
+  "spider_accident": {
+    "volume": 1
+  },
+  "mosquito": {
+    "volume": 0.2
+  },
+  "mosquito_accident": {
+    "volume": 0.2
+  },
+  "car_honk_left": {
+    "volume": 0.3
+  },
+  "car_honk_right": {
+    "volume": 0.3
+  },
+  "puddle_accident": {
+    "volume": 0.3
+  },
+  "broken_driving": {
+    "volume": 0.3
+  },
+  "repair_car": {
+    "volume": 0.3
+  }
+}

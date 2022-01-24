@@ -1,18 +1,17 @@
 from utils.colors import TColors
 from utils.racing_wheel import TRacingWheel
 import pygame
-import os
 
 
 class TGameIntro:
     exit_game_action = 1
     start_game_action = 2
 
-    def __init__(self, screen, sprites_dir, racing_wheel: TRacingWheel):
+    def __init__(self, screen, background_image_path, racing_wheel: TRacingWheel):
         self.screen = screen
         self.racing_wheel = racing_wheel
         self.action = None
-        self.image = pygame.transform.scale(pygame.image.load(os.path.join(sprites_dir, 'background1.jpg')),
+        self.image = pygame.transform.scale(pygame.image.load(background_image_path),
                                    (self.screen.get_width(), self.screen.get_height()))
 
     def message(self, mess, colour, size, x, y):
