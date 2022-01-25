@@ -157,6 +157,10 @@ URLS = {
     'даф12': ('https://www.youtube.com/watch?v=e9EUmQBO498', 200),
     'портер': ('https://www.youtube.com/watch?v=tK_NbKKLAd8',140),
     'самолет2': ('https://www.youtube.com/watch?v=Nf6NkZHCyF8', 120),
+
+    'мицубиси2':('https://www.youtube.com/watch?v=78ZO6Nsj_uk&t=129s', 180),
+    'мицубиси3':('https://www.youtube.com/watch?v=SltgNonnyVw',180),
+    'уаз1': ('https://www.youtube.com/watch?v=MoPK7EK5bF4', 180)
 }
 
 

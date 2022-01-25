@@ -147,9 +147,11 @@ class TEngineSound(threading.Thread):
 
     def decrease_speed(self):
         if self.is_working():
+
             if self.get_state() != TEngineState.engine_decrease:
                 speed = self.get_current_speed()
-                self.play_sound(self.get_decrease_sound(speed-1))
+                if speed > 0:
+                    self.play_sound(self.get_decrease_sound(speed-1))
 
     def create_sound_segments_from_engine_increasing_file(self, input, segment_time):
         if not os.path.exists(TOneSpeedSound.segment_folder):

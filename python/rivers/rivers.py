@@ -86,7 +86,7 @@ class TRiverGame:
         self.start_time_on_the_road_side = None
         self.sounds = TSounds(SOUNDS_DIR, not args.silent)
         self.racing_wheel = TRacingWheel(self.logger, args.wheel_center)
-        self.max_game_speed = 10
+        self.max_game_speed = args.speed_count
         self.engine_sound = TEngineSound(self.max_game_speed, self.args.engine_audio_folder)
         self.engine_sound.start_engine()
 
@@ -323,6 +323,7 @@ def parse_args():
     parser.add_argument("--full-screen", dest='full_screen', default=False, action="store_true")
     parser.add_argument("--width", dest='width', default=1600, type=int)
     parser.add_argument("--height", dest='height', default=1000, type=int)
+    parser.add_argument("--speed-count", dest='speed_count', default=10, type=int)
     parser.add_argument("--bridge-width", dest='bridge_width', default=300, type=int)
     parser.add_argument("--engine-audio-folder", dest='engine_audio_folder',
                         default= os.path.join(os.path.dirname(__file__), 'assets/sounds/ford'))

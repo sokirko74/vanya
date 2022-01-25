@@ -9,12 +9,12 @@
     "volume": 0.5
   },
   "river_accident": {
-    "volume": 1
+    "volume": 0.1
   },
   "victory": {
     "volume": 1
   },
   "brakes": {
-    "volume": 1
+    "volume": 0.2
   }
 }

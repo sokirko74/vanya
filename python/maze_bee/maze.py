@@ -107,7 +107,7 @@ class Bee(Player):
             if not self.check_all_collisions():
                 # bee is not a rect
                 self.rect = save_rect
-
+        
 
 class Tile(pygame.sprite.Sprite):
     def __init__(self, parent, pos, tile_type=-1, color=BLACK):
