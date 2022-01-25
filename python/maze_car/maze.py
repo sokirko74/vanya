@@ -1,14 +1,29 @@
+# this game was not released yet
 from utils.joystick import init_joystick
 import utils.maze_generator as generator
-from utils.maze_player import Player
+from utils.maze_player import MazePlayer
 from utils.logging_wrapper import setup_logging
 
+import pygame
+import argparse
+import logging
+from pygame.math import Vector2
+import os
 import random
 
-class Car(Player):
+
+BLACK = (0, 0, 0)
+WHITE = (255, 255, 255)
+
+RED = (255, 0, 0)
+GREEN = (0, 255, 0)
+BLUE = (0, 0, 255)
+
+
+class Car(MazePlayer):
     def __init__(self, parent, speed=4):
         super().__init__(parent,
-                         image=os.path.join('assets', 'sprites', 'truck.png'),
+                         image=pygame.image.load(os.path.join('assets', 'sprites', 'truck.png')),
                          height=3,
                          width=2,
                          max_speed=speed,
@@ -85,19 +100,6 @@ class Car(Player):
             pass
 
 
-import pygame
-import argparse
-import logging
-from pygame.math import Vector2
-import os
-
-
-BLACK = (0, 0, 0)
-WHITE = (255, 255, 255)
-
-RED = (255, 0, 0)
-GREEN = (0, 255, 0)
-BLUE = (0, 0, 255)
 
 
 ColorMap = {
@@ -226,8 +228,6 @@ class TMaze:
         self.walls = []
         self.target_tiles = []
         self.text_surfaces = []
-        self.playable_types = Player.__subclasses__()
-        self.playable_types_buttons = []
         self.score = 0
         self.is_running = True
         self.is_paused = False

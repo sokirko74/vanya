@@ -1,7 +1,8 @@
 from utils.joystick import init_joystick
 import utils.maze_generator as generator
-from utils.maze_player import Player
+from utils.maze_player import MazePlayer
 from utils.logging_wrapper import setup_logging
+from utils.colors import TColors
 
 import random
 import os
@@ -10,38 +11,40 @@ import argparse
 from pygame.math import Vector2
 
 
-BLACK = (0, 0, 0)
-WHITE = (255, 255, 255)
-
-RED = (255, 0, 0)
-GREEN = (0, 255, 0)
-BLUE = (0, 0, 255)
-
-
 ColorMap = {
-    generator.WALKABLE_TILE: WHITE,
-    generator.WALL_TILE: RED,
-    generator.TARGET_TILE: GREEN,
+    generator.WALKABLE_TILE: TColors.white,
+    generator.WALL_TILE: TColors.red,
+    generator.TARGET_TILE: TColors.green,
 }
 
 
-class Bee(Player):
-    def __init__(self, parent, speed=3):
+def create_circle():
+    surface = pygame.Surface((100, 100),  pygame.SRCALPHA, 32)
+    pygame.draw.circle(surface, TColors.blue, (50, 50), 50, 1)
+    return surface
+
+
+class Bee(MazePlayer):
+    def __init__(self, parent, speed=3, width=2, height=2):
         super().__init__(parent,
-                         image=os.path.join('assets', 'sprites', 'bee.png'),
-                         height=2,
-                         width=2,
+                         image=create_circle(),
+                         height=height,
+                         width=width,
                          max_speed=speed,
                          sound_moving=os.path.join('assets', 'sounds', 'bee_moving.wav'))
+
         self.direction_vector = Vector2(0, -1)
         self.move_player = False
         self.rotate_player = False
 
+        self.shadow = pygame.sprite.Sprite()
+        self.shadow.image = pygame.image.load(os.path.join('assets', 'sprites', 'bee.png'))
+        w, h = self.rect.size
+        self.shadow.image = pygame.transform.scale(self.shadow.image, (w+30, h+30))
+        self.orig_shadow_image = self.shadow.image.copy()
+
     def get_sound_success(self):
-        paths = list([os.path.join('assets', 'sounds', 'success.wav')])
-        self.parent.logger.info("choice out of {} sounds".format(len(paths)))
-        path = random.choice(paths)
-        return pygame.mixer.Sound(path)
+        return pygame.mixer.Sound(os.path.join('assets', 'sounds', 'success.wav'))
 
     def set_move_x(self, x):
         self.direction_vector.x = x
@@ -81,36 +84,33 @@ class Bee(Player):
             elif event.key == pygame.K_DOWN:
                 self.direction_vector.y = 0
 
+    def draw_shadow(self):
+        rect = self.shadow.image.get_rect(center=self.rect.center)
+        self.parent.screen.blit(self.shadow.image, rect)
+
     def update(self):
         if not self.move_player and not self.rotate_player:
             return
         angle = Vector2(0, 0).angle_to(self.direction_vector) + 270
 
         save_rect = self.rect.copy()
-        save_image = self.image
-        print(self.rect.center)
-        self.image = pygame.transform.rotate(self.orig_image, -angle)
+        save_shadow_image = self.shadow.image
+        #print(self.rect.center)
+        self.shadow.image = pygame.transform.rotate(self.orig_shadow_image, -angle)
 
-        #https://stackoverflow.com/questions/47645155/pygame-sprite-rotation-not-staying-centered
+        #https://stackoverflow.com/questions/47645155/pygame-sprite-rotation-not-staying-centeTColors.red
         self.rect = self.image.get_rect(center=self.rect.center)
 
         if self.move_player:
             self.rect.center += self.direction_vector * self.max_speed
 
-        s = self.image.get_rect(topleft=self.rect.topleft)
-        #print(self.rect.center, s.center)
-        #if s.center != self.rect.center:
-        #    self.image
-        #self.image.get_rect()
-        if not self.check_all_collisions(play_sound=False):
-            self.image = save_image
-            if not self.check_all_collisions():
-                # bee is not a rect
-                self.rect = save_rect
-        
+        if not self.check_all_collisions():
+            self.shadow.image = save_shadow_image
+            self.rect = save_rect
+
 
 class Tile(pygame.sprite.Sprite):
-    def __init__(self, parent, pos, tile_type=-1, color=BLACK):
+    def __init__(self, parent, pos, tile_type=-1, color=TColors.black):
         pygame.sprite.Sprite.__init__(self)
         self.parent = parent
         if tile_type in ColorMap:
@@ -210,8 +210,6 @@ class TMaze:
         self.walls = []
         self.target_tiles = []
         self.text_surfaces = []
-        self.playable_types = Player.__subclasses__()
-        self.playable_types_buttons = []
         self.score = 0
         self.is_running = True
         self.is_paused = False
@@ -240,7 +238,8 @@ class TMaze:
         self.block_size = block_size
         self.chan_2 = pygame.mixer.Channel(2)
         self.font = pygame.font.SysFont('Impact', 20, italic=False, bold=True)
-        self.player = Bee(self, speed=speed)
+        self.player = Bee(self, speed=speed, width=2, height=2)
+        #self.shadow_player =
         self.joystick = None
         if use_joystick:
             self.joystick = init_joystick(self.logger)
@@ -248,7 +247,7 @@ class TMaze:
     def clear_map(self):
         self.tiles.clear()
         self.walls.clear()
-        self.screen.fill(BLACK)
+        self.screen.fill(TColors.black)
 
     def grid_to_screen(self, pos):
         x = pos[0] * self.block_size
@@ -282,9 +281,19 @@ class TMaze:
         self.gen.open_closed_rooms()
         self.draw_rooms()
 
+    def set_player_initial(self):
+        pos = self.grid_to_screen(self.gen.start_pos)
+        self.player.set_initial_position(pos)
+
+    def set_player_sprites_to_groups(self):
+        self.all_sprites.add(self.player)
+
+    def handle_player_events(self, e):
+        self.player.handle_event(e)
+
     def setup_map(self):
         self.gen.generate_maze(int(self.maze_width / self.block_size), int(self.maze_height / self.block_size))
-        self.player.set_initial_position(self.grid_to_screen(self.gen.start_pos))
+        self.set_player_initial()
         self.all_sprites = pygame.sprite.Group()
         self.objects = pygame.sprite.Group()
 
@@ -297,8 +306,7 @@ class TMaze:
             frog = TFrog(self, self.grid_to_screen(frog_place))
             self.all_sprites.add(frog)
             self.objects.add(frog)
-
-        self.all_sprites.add(self.player)
+        self.set_player_sprites_to_groups()
         self.draw_rooms()
 
     def toggle_pause(self):
@@ -312,16 +320,17 @@ class TMaze:
         self.print_victory  = False
         self.clear_map()
         self.setup_map()
-        self.player.set_initial_position(self.grid_to_screen(self.gen.start_pos))
+        self.set_player_initial()
 
     def start_game(self):
-        self.screen.fill(BLACK)
+        self.screen.fill(TColors.black)
         self.setup_map()
         self.logger.info("start_game")
         pygame.display.flip()
 
     def check_game_events(self, event):
         if event.type == pygame.QUIT:
+            self.player.stop_playing()
             self.is_running = False
         elif event.type == pygame.KEYDOWN:
             if event.key == pygame.K_SPACE:
@@ -347,14 +356,14 @@ class TMaze:
                 elif event.type == pygame.JOYAXISMOTION:
                     joystick_direction[event.axis] = int(event.value)
                     for e in TKeyEventType.from_joystick_event(event):
-                        self.player.handle_event(e)
+                        self.handle_player_events(e)
                 else:
                    self.check_game_events(event)
-                   self.player.handle_event(event)
+                   self.handle_player_events(event)
                 if joystick_direction[0] != 0 or joystick_direction[1] != 0:
                     self.logger.info("joystick_direction = {}".format(joystick_direction))
 
-            self.screen.fill(WHITE)
+            self.screen.fill(TColors.white)
             self.all_sprites.update()
             self.all_sprites.draw(self.screen)
 
@@ -364,8 +373,9 @@ class TMaze:
                 screen_text = font.render('ПОБЕДА!', True, (0, 200, 0))
                 self.screen.blit(screen_text, (250, 280))
 
-            #   pygame.draw.rect(self.screen, BLACK, self.player.rect, width=1)
-            #pygame.draw.rect(self.screen, BLACK, self.player.image.get_rect(), width=1)
+            #   pygame.draw.rect(self.screen, TColors.black, self.player.rect, width=1)
+            #pygame.draw.rect(self.screen, TColors.black, self.player.image.get_rect(), width=1)
+            self.player.draw_shadow()
             pygame.display.flip()
             clock.tick(25)
 
