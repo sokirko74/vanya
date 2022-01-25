@@ -26,11 +26,11 @@ ColorMap = {
 
 
 class Bee(Player):
-    def __init__(self, parent, speed=3):
+    def __init__(self, parent, speed=3, width=2, height=2):
         super().__init__(parent,
                          image=os.path.join('assets', 'sprites', 'bee.png'),
-                         height=2,
-                         width=2,
+                         height=height,
+                         width=width,
                          max_speed=speed,
                          sound_moving=os.path.join('assets', 'sounds', 'bee_moving.wav'))
         self.direction_vector = Vector2(0, -1)
@@ -38,10 +38,7 @@ class Bee(Player):
         self.rotate_player = False
 
     def get_sound_success(self):
-        paths = list([os.path.join('assets', 'sounds', 'success.wav')])
-        self.parent.logger.info("choice out of {} sounds".format(len(paths)))
-        path = random.choice(paths)
-        return pygame.mixer.Sound(path)
+        return pygame.mixer.Sound(os.path.join('assets', 'sounds', 'success.wav'))
 
     def set_move_x(self, x):
         self.direction_vector.x = x
@@ -210,8 +207,6 @@ class TMaze:
         self.walls = []
         self.target_tiles = []
         self.text_surfaces = []
-        self.playable_types = Player.__subclasses__()
-        self.playable_types_buttons = []
         self.score = 0
         self.is_running = True
         self.is_paused = False
@@ -240,7 +235,8 @@ class TMaze:
         self.block_size = block_size
         self.chan_2 = pygame.mixer.Channel(2)
         self.font = pygame.font.SysFont('Impact', 20, italic=False, bold=True)
-        self.player = Bee(self, speed=speed)
+        self.player = Bee(self, speed=speed, width=2, height=2)
+        #self.shadow_player =
         self.joystick = None
         if use_joystick:
             self.joystick = init_joystick(self.logger)
@@ -282,9 +278,19 @@ class TMaze:
         self.gen.open_closed_rooms()
         self.draw_rooms()
 
+    def set_player_initial(self):
+        pos = self.grid_to_screen(self.gen.start_pos)
+        self.player.set_initial_position(pos)
+
+    def set_player_sprites_to_groups(self):
+        self.all_sprites.add(self.player)
+
+    def handle_player_events(self, e):
+        self.player.handle_event(e)
+
     def setup_map(self):
         self.gen.generate_maze(int(self.maze_width / self.block_size), int(self.maze_height / self.block_size))
-        self.player.set_initial_position(self.grid_to_screen(self.gen.start_pos))
+        self.set_player_initial()
         self.all_sprites = pygame.sprite.Group()
         self.objects = pygame.sprite.Group()
 
@@ -297,8 +303,7 @@ class TMaze:
             frog = TFrog(self, self.grid_to_screen(frog_place))
             self.all_sprites.add(frog)
             self.objects.add(frog)
-
-        self.all_sprites.add(self.player)
+        self.set_player_sprites_to_groups()
         self.draw_rooms()
 
     def toggle_pause(self):
@@ -312,7 +317,7 @@ class TMaze:
         self.print_victory  = False
         self.clear_map()
         self.setup_map()
-        self.player.set_initial_position(self.grid_to_screen(self.gen.start_pos))
+        self.set_player_initial()
 
     def start_game(self):
         self.screen.fill(BLACK)
@@ -347,10 +352,10 @@ class TMaze:
                 elif event.type == pygame.JOYAXISMOTION:
                     joystick_direction[event.axis] = int(event.value)
                     for e in TKeyEventType.from_joystick_event(event):
-                        self.player.handle_event(e)
+                        self.handle_player_events(e)
                 else:
                    self.check_game_events(event)
-                   self.player.handle_event(event)
+                   self.handle_player_events(event)
                 if joystick_direction[0] != 0 or joystick_direction[1] != 0:
                     self.logger.info("joystick_direction = {}".format(joystick_direction))
 
