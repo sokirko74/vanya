@@ -21,7 +21,7 @@ class TSounds:
         for k in self.sounds.values():
             k.stop()
 
-    def play_sound(self, sound_type, loops=0):
+    def play_sound(self, sound_type, loops=0, volume=None):
         if self.enable_sounds:
             self.sounds[sound_type].play(loops=loops)
 

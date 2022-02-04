@@ -160,7 +160,21 @@ URLS = {
 
     'мицубиси2':('https://www.youtube.com/watch?v=78ZO6Nsj_uk&t=129s', 180),
     'мицубиси3':('https://www.youtube.com/watch?v=SltgNonnyVw',180),
-    'уаз1': ('https://www.youtube.com/watch?v=MoPK7EK5bF4', 180)
+    'уаз1': ('https://www.youtube.com/watch?v=MoPK7EK5bF4', 180),
+
+    'шахман2': ('https://www.youtube.com/watch?v=H7PmOwnWqK0', 120),
+    'ман2': ('https://www.youtube.com/watch?v=C12kOxoewtw', 80),
+    'скания12':('https://www.youtube.com/watch?v=88BFzhefRs0', 120),
+
+    'баргузин1': ('https://youtu.be/VRNU-Hxkvsw', 140),
+    'дастер1': ('https://www.youtube.com/watch?v=ru8UIwSHzhA', 170),
+    'баргузин2': ('https://www.youtube.com/watch?v=FdbCTbtIL9k', 60),
+
+    'шахман3': ('https://www.youtube.com/watch?v=KPX3lQGYk00', 200),
+    'баргузин3': ('https://www.youtube.com/watch?v=yUHaXpJy8g8', 220),
+    'газон1': ('https://www.youtube.com/watch?v=KPX3lQGYk00', 180),
+    'зил2': ('https://www.youtube.com/watch?v=KPX3lQGYk00', 70),
+    'гонка2':('https://www.youtube.com/watch?v=TGfvGrL1KsM', 240)
 }
 
 

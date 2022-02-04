@@ -1,6 +1,6 @@
 {
   "bridge_passing": {
-    "volume": 0.3
+    "volume": 0.1
   },
   "engine_start": {
     "volume": 0.5

@@ -69,7 +69,7 @@ class TGameIntro:
                         break
 
             if prev_score is not None:
-                self.message("Очки: {}".format(prev_score), TColors.black, 150, 100, 100)
+                self.message("Очки: {}".format(prev_score), TColors.black, 250, 100, 100)
             button_y = 300
             self.draw_intro_button(200, button_y, 'GO!', TColors.bright_red, self.set_start_game_action )
             self.draw_intro_button(self.screen.get_width() - 200, button_y, 'QUIT', TColors.bright_green, self.set_exit_action)

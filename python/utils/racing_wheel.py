@@ -1,10 +1,12 @@
 from evdev import list_devices, InputDevice, ecodes
-
+from utils.logging_wrapper import setup_logging
+import pygame
+import time
 
 class TRacingWheel:
     left_button = 295
     right_button = 294
-    left_pedal =  10
+    left_pedal = 10
     right_pedal = 9
 
     def __init__(self, logger, center):
@@ -28,6 +30,9 @@ class TRacingWheel:
     def forget_buttons(self):
         self.pressed_buttons.clear()
 
+    def is_attached(self):
+        return self.device is not None
+
     def read_events(self):
         if self.device is None:
             return
@@ -48,7 +53,7 @@ class TRacingWheel:
                 else:
                     if TRacingWheel.left_pedal in self.pressed_buttons:
                         self.pressed_buttons.remove(TRacingWheel.left_pedal)
-                self.logger.debug("left_pedal value={} {}".format(event.value, self.pressed_buttons))
+                self.logger.info("left_pedal value={} {}".format(event.value, self.pressed_buttons))
             elif event.code == TRacingWheel.right_pedal:
                 self.logger.debug("right_pedal")
                 if event.value > 120:
@@ -56,6 +61,7 @@ class TRacingWheel:
                 else:
                     if TRacingWheel.right_pedal in self.pressed_buttons:
                         self.pressed_buttons.remove(TRacingWheel.right_pedal)
+                self.logger.info("right_pedal value={} {}".format(event.value, self.pressed_buttons))
             event = self.device.read_one()
 
     def is_left_pedal_pressed(self):
@@ -68,3 +74,21 @@ class TRacingWheel:
         self.read_events()
         if self.raw_angle is not None:
             return int((self.raw_angle - self.center) / 50)
+
+    def test(self):
+        run = False
+        while run:
+            self.process_wheel_pedals()
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    run = False
+                if event.type == pygame.K_ESCAPE:
+                    run = False
+            time.sleep(0.2)
+            pygame.event.pump()
+
+
+if __name__ == "__main__":
+    logger = setup_logging("test_wheel")
+    wheel = TRacingWheel(logger, 1000)
+    wheel.test()

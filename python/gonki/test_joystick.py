@@ -70,4 +70,4 @@ for event in dev.read_loop():
                     print('foreward')
                 else:
                     print('backward')
-                print( value )
+                print(value)

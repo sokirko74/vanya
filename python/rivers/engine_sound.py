@@ -51,7 +51,7 @@ class TOneSpeedSound(pygame.mixer.Sound):
 
 
 class TEngineSound(threading.Thread):
-    def __init__(self, max_speed, segment_folder):
+    def __init__(self, max_speed, segment_folder, max_volume=None):
         TOneSpeedSound.segment_folder = segment_folder
         threading.Thread.__init__(self)
         self.daemon = True
@@ -59,6 +59,9 @@ class TEngineSound(threading.Thread):
         self.sounds = dict()
         self.stop = False
         self.channel = pygame.mixer.Channel(0)
+        self.max_volume = max_volume
+        if self.max_volume is not None:
+            self.channel.set_volume(self.max_volume)
 
     def load_sounds(self):
         for i in range(self.max_speed):
