@@ -1,0 +1,237 @@
+diff --git a/instruments b/instruments
+--- a/instruments
++++ b/instruments
+@@ -1 +1 @@
+-Subproject commit c5c912131b31df5fdf372d2f06a25aaf2375837f
++Subproject commit c5c912131b31df5fdf372d2f06a25aaf2375837f-dirty
+diff --git a/rtosc b/rtosc
+--- a/rtosc
++++ b/rtosc
+@@ -1 +1 @@
+-Subproject commit 2aec26327e0139131c9bd7439c9928370fccf1ce
++Subproject commit 2aec26327e0139131c9bd7439c9928370fccf1ce-dirty
+diff --git a/src/CMakeLists.txt b/src/CMakeLists.txt
+index 8348df70..b012d9d9 100644
+--- a/src/CMakeLists.txt
++++ b/src/CMakeLists.txt
+@@ -195,7 +195,13 @@ option (ExtendedWarnings "Enable all useful warnings" OFF)
+ option (IncludeWhatYouUse "Check for useless includes" OFF)
+ mark_as_advanced(IncludeWhatYouUse)
+ 
+-set(CMAKE_BUILD_TYPE "Release")
++#set(CMAKE_BUILD_TYPE "Release")
++
++#added by sokirko
++set(BuildForDebug, "ON")
++set(CMAKE_BUILD_TYPE "Debug")
++
++
+ 
+ set (BuildOptions_ExtendedWarnings "")
+ if (ExtendedWarnings)
+@@ -457,6 +463,9 @@ if(FltkGui)
+ 
+ 	message(STATUS ${FLTK_LDFLAGS})
+ 
++	if(X11_FOUND AND X11_Xpm_FOUND)
++	     set(GUI_LIBRARIES ${GUI_LIBRARIES} ${X11_LIBRARIES} -lXpm)
++	endif()
+ 
+ 	set(GUI_LIBRARIES zynaddsubfx_gui ${FLTK_LIBRARIES} ${FLTK_LIBRARIES} ${OPENGL_LIBRARIES})
+ 
+@@ -533,7 +542,7 @@ set(NONGUI_LIBRARIES
+ 	zynaddsubfx_params
+ 	zynaddsubfx_dsp
+ 	zynaddsubfx_nio
+-	)
++	)   
+ 
+ add_subdirectory(Misc)
+ add_subdirectory(Synth)
+diff --git a/src/Misc/MiddleWare.cpp b/src/Misc/MiddleWare.cpp
+index 48552aab..31f2d158 100644
+--- a/src/Misc/MiddleWare.cpp
++++ b/src/Misc/MiddleWare.cpp
+@@ -99,7 +99,7 @@ static void monotonic_clock_gettime(struct timespec *ts) {
+  ******************************************************************************/
+ static void liblo_error_cb(int i, const char *m, const char *loc)
+ {
+-    fprintf(stderr, "liblo :-( %d-%s@%s\n",i,m,loc);
++    fprintf(stderr, "111liblo :-( %d-%s@%s\n",i,m,loc);
+ }
+ 
+ // we need to access this before the definitions
+@@ -2344,6 +2344,7 @@ void MiddleWareImpl::kitEnable(int part, int kit, int type)
+  */
+ void MiddleWareImpl::handleMsg(const char *msg, bool msg_comes_from_realtime)
+ {
++    //fprintf(stdout, "=?=? %s\n", msg);
+     //Check for known bugs
+     assert(msg && *msg && strrchr(msg, '/')[1]);
+     assert(strstr(msg,"free") == NULL || strstr(rtosc_argument_string(msg), "b") == NULL);
+diff --git a/src/Misc/Part.cpp b/src/Misc/Part.cpp
+index c62af581..134c21c1 100644
+--- a/src/Misc/Part.cpp
++++ b/src/Misc/Part.cpp
+@@ -1256,8 +1256,11 @@ int Part::saveXML(const char *filename)
+ 
+ int Part::loadXMLinstrument(const char *filename)
+ {
++    printf ("Part::loadXMLinstrument %s\n", filename);
+     XMLwrapper xml;
+-    if(xml.loadXMLfile(filename) < 0) {
++    int res =   xml.loadXMLfile(filename);
++    if(res < 0) {
++        printf ("xml.loadXMLfile returned %i", res);
+         return -1;
+     }
+ 
+diff --git a/src/UI/MasterUI.fl b/src/UI/MasterUI.fl
+index c19e2676..a0f15337 100644
+--- a/src/UI/MasterUI.fl
++++ b/src/UI/MasterUI.fl
+@@ -1597,13 +1597,13 @@ make_window();
+ fl_open_display();
+ 
+ \#if !defined(PLUGINVERSION) && defined(FLTK_GUI)
+-Fl_Pixmap *pixmap = new Fl_Pixmap(zynaddsubfx_xpm);
+-Fl_RGB_Image *p = new Fl_RGB_Image(pixmap, FL_GRAY);
+-masterwindow->icon(p);
++//Fl_Pixmap *pixmap = new Fl_Pixmap(zynaddsubfx_xpm);
++//Fl_RGB_Image *p = new Fl_RGB_Image(pixmap, FL_GRAY);
++//masterwindow->icon(p);
+ \#endif
+ \#if !defined(PLUGINVERSION) && defined(NTK_GUI)
+ Pixmap p, mask;
+-XCreatePixmapFromData(fl_display, DefaultRootWindow(fl_display),
++  XCreatePixmapFromData(fl_display, DefaultRootWindow(fl_display),
+                       (char**)zynaddsubfx_xpm, &p, &mask, NULL);
+ masterwindow->icon((char *)p);
+ \#endif
+diff --git a/src/main.cpp b/src/main.cpp
+index d87a9ac2..f66bb77f 100644
+--- a/src/main.cpp
++++ b/src/main.cpp
+@@ -139,6 +139,7 @@ void exitprogram(const Config& config)
+     FFT_cleanup();
+ }
+ 
++
+ //Windows MIDI OH WHAT A HACK...
+ #ifdef WIN32
+ #include <windows.h>
+@@ -220,6 +221,104 @@ void InitWinMidi(int midi)
+ void InitWinMidi(int) {}
+ #endif
+ 
++static inline void ltrim(std::string &s) {
++    s.erase(s.begin(), std::find_if(s.begin(), s.end(), [](unsigned char ch) {
++        return !std::isspace(ch);
++    }));
++}
++
++// trim from end (in place)
++inline void rtrim(std::string &s) {
++    s.erase(std::find_if(s.rbegin(), s.rend(), [](unsigned char ch) {
++        return !std::isspace(ch);
++    }).base(), s.end());
++}
++
++// trim from both ends (in place)
++static inline void trim(std::string &s) {
++    ltrim(s);
++    rtrim(s);
++}
++
++std::string read_vanya_command()
++{
++    try {
++        FILE *file;
++        const char* fname = "vanya_commands.txt"; 
++        if ((file = fopen(fname, "r")))
++        {
++            char buffer[1024];
++            char* res = fgets(buffer, 1024, file);
++            res = res;
++            fclose(file);
++            remove(fname);
++            std::string cmd  = std::string (buffer);
++            trim(cmd);
++            return cmd;
++        }
++    } catch (std::runtime_error& e) {
++        std::cerr << "read_vanya_command failed: " <<  e.what() << "\n";
++    }
++    
++    return std::string();
++}
++
++void load_instrument(std::string path) {
++    std::cout << "load  \"" << path << "\"\n";
++    int loadtopart = 0;
++    int tmp = master->part[loadtopart]->loadXMLinstrument(
++        path.c_str());
++    if(tmp < 0) {
++        cerr << "ERROR: Could not load instrument file "
++                << path << ". Result exit code=" << tmp  << endl;
++    } else {
++        master->part[loadtopart]->applyparameters();
++        master->part[loadtopart]->initialize_rt();
++        cout << "Instrument file loaded." << endl;
++    }
++}
++
++void add_volume(zyn::Master   *master, float delta) {
++    master->part[0]->Volume += delta;
++    if (master->part[0]->Volume < 0) {
++        master->part[0]->Volume = 0;
++    }
++    std::cout << "volume = " << master->part[0]->Volume << "\n";
++}
++
++void run_vanya_command(zyn::Master   *master) {
++    std::string cmdline = read_vanya_command();
++    if (cmdline.empty())  {
++        return;
++    }
++    std::cout << "vanya command: " << cmdline << "\n";
++    
++    std::string args;
++    std::string command =  cmdline;
++    size_t space_index = cmdline.find(' ');
++    if  (space_index != std::string::npos) {
++        command  = cmdline.substr(0, space_index);;
++        args  = cmdline.substr(space_index);
++        trim(args);
++    }
++    if (command == "load_instrument") {
++        load_instrument(args);
++    }
++    else if (command == "volume_up") {
++        add_volume(master, +3.0);
++    }
++    else if (command == "volume_down") {
++        add_volume(master, -3.0);
++    }
++    else if (command == "dummy") {
++        cout << "do nothing\n";
++    }
++    else  
++    {
++        std::cout << "unknown command:" << cmdline.c_str() << "\n";
++    }
++
++}
+ 
+ int main(int argc, char *argv[])
+ {
+@@ -772,6 +871,9 @@ int main(int argc, char *argv[])
+     printf("[INFO] Main Loop...\n");
+     bool already_exited = false;
+     while(Pexitprogram == 0) {
++        run_vanya_command(master);
++
++
+ #ifndef WIN32
+ #if USE_NSM
+         if(nsm) {

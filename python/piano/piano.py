@@ -236,7 +236,7 @@ class TApplication(tk.Frame):
         cmd += "  >>binary_spawn_log.txt 2>&1 &"
         os.system(cmd)
 
-        logging.debug('use instrument {}'.format(instrument))
+        #logging.debug('use instrument {}'.format(instrument))
 
     def motion_handler(self, event):
         cur_x = event.x

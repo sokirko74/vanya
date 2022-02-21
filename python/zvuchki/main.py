@@ -174,7 +174,18 @@ URLS = {
     'баргузин3': ('https://www.youtube.com/watch?v=yUHaXpJy8g8', 220),
     'газон1': ('https://www.youtube.com/watch?v=KPX3lQGYk00', 180),
     'зил2': ('https://www.youtube.com/watch?v=KPX3lQGYk00', 70),
-    'гонка2':('https://www.youtube.com/watch?v=TGfvGrL1KsM', 240)
+    'гонка2':('https://www.youtube.com/watch?v=TGfvGrL1KsM', 240),
+
+   'понтиак1': ('https://www.youtube.com/watch?v=duYFWCgCMNo',80),
+   'понтиак2': ('https://www.youtube.com/watch?v=fw1QwiY9IFk', 80),
+   'плимут1': ('https://www.youtube.com/watch?v=RXX-VurBU1o', 90),
+  'ферари2': ('https://www.youtube.com/watch?v=1LogBufE0Ms', 240),
+
+  'багги1': ('https://www.youtube.com/watch?v=M_VZOFzCaXw', 180),
+  'нива2': ('https://www.youtube.com/watch?v=DZsTATJB6og', 300),
+  'нива3': ('https://www.youtube.com/watch?v=hkXcvofU8MQ', 240),
+  'лада31': ('https://www.youtube.com/watch?v=tCqhCSJWTic', 240)
+
 }
 
 
