@@ -1,0 +1,6 @@
+﻿tk  
+pyglet
+pillow
+pygame
+
+

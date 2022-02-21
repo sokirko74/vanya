@@ -1,4 +1,4 @@
-0. sudo apt-get install python3-tk
+0. sudo apt-get install python3-tk libportaudio2 libsndio-dev
 
 1. connect bluetooth
 sudo apt-get install bluetooth libbluetooth-dev

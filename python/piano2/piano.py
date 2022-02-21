@@ -70,11 +70,11 @@ class TApplication(tk.Frame):
         self.main_wnd_height = self.master.winfo_screenheight()
         self.volume = self.get_volume()
 
-        self.master.bind('<F1>', self.next_bank)
-        self.master.bind('<F2>', self.next_instrument)
-        self.master.bind('<F3>', self.prev_instrument)
-        self.master.bind('<F4>', self.volume_up)
-        self.master.bind('<F5>', self.volume_down)
+        self.master.bind('<F1>', self.next_instrument)
+        self.master.bind('<F2>', self.prev_instrument)
+        self.master.bind('<F4>', self.next_bank)
+        self.master.bind('<F5>', self.volume_up)
+        self.master.bind('<F6>', self.volume_down)
         self.instrument_banks =  load_banks(args.banks_folder)
         self.bank_index = 0
         self.instrument_index = 0
@@ -125,7 +125,7 @@ class TApplication(tk.Frame):
         self.now = tk.StringVar()
         tk.Frame.__init__(self, self.master)
         self.pack()
-        text = "F1-next bank, F2-next instrument, F3-prev instrument, F4-volume up, F5-volume down"
+        text = "F1-next instrument, F2-prev instrument, F4-next bank, F5-volume up, F6-volume down"
         self.time = tk.Label(self, text=text, font=('Helvetica', 12))
         self.time.pack(side=tk.TOP)
 
@@ -190,6 +190,7 @@ class TApplication(tk.Frame):
         return "vanya_commands.txt"
 
     def send_command_to_zynaddsubfx(self, cmd):
+        self.logger.info("send_command_to_zynaddsubfx: {}".format(cmd))
         with open (self.get_command_path(), "w") as outp:
             outp.write(cmd)
         time.sleep(1)
@@ -232,7 +233,8 @@ class TApplication(tk.Frame):
         self.run_cmd(cmd)
         time.sleep(2)
         assert self.send_command_to_zynaddsubfx("dummy")
-        self.connect_keyboard()
+        if self.args.connect_keyboard:
+            self.connect_keyboard()
 
     def kill_zynaddsubfx(self):
         self.run_cmd("pkill ffplay")
@@ -251,6 +253,7 @@ def parse_args():
     parser.add_argument("--bank-folder", dest='banks_folder',
                         default="/usr/share/zynaddsubfx/banks")
     parser.add_argument("--zynaddsubfx-path", dest='zynaddsubfx_path')
+    parser.add_argument("--skip-keyboard-connect", dest='connect_keyboard',  action="store_false", default=True)
     return parser.parse_args()
 
 
