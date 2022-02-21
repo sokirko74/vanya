@@ -231,7 +231,8 @@ class TApplication(tk.Frame):
 
         cmd = "{} {} >>binary_spawn_log.txt 2>&1 &".format(binary_path, self.args.zynaddsubfx_args)
         self.run_cmd(cmd)
-        time.sleep(2)
+        self.logger.info("sleep for {} seconds".format(self.args.zynaddsubfx_starting_timeout))
+        time.sleep(self.args.zynaddsubfx_starting_timeout)
         assert self.send_command_to_zynaddsubfx("dummy")
         if self.args.connect_keyboard:
             self.connect_keyboard()
@@ -254,6 +255,7 @@ def parse_args():
                         default="/usr/share/zynaddsubfx/banks")
     parser.add_argument("--zynaddsubfx-path", dest='zynaddsubfx_path')
     parser.add_argument("--zynaddsubfx-args", dest='zynaddsubfx_args', default="-a -U")
+    parser.add_argument("--zynaddsubfx-starting-timeout", dest='zynaddsubfx_starting_timeout', default=2, type=int)
     parser.add_argument("--skip-keyboard-connect", dest='connect_keyboard',  action="store_false", default=True)
     return parser.parse_args()
 
