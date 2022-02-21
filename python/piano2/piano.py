@@ -68,6 +68,7 @@ class TApplication(tk.Frame):
         self.master.geometry("900x600")
         self.main_wnd_width = self.master.winfo_screenwidth()
         self.main_wnd_height = self.master.winfo_screenheight()
+        self.run_zynaddsubfx()
         self.volume = self.get_volume()
 
         self.master.bind('<F1>', self.next_instrument)
@@ -75,7 +76,7 @@ class TApplication(tk.Frame):
         self.master.bind('<F4>', self.next_bank)
         self.master.bind('<F5>', self.volume_up)
         self.master.bind('<F6>', self.volume_down)
-        self.instrument_banks =  load_banks(args.banks_folder)
+        self.instrument_banks = load_banks(args.banks_folder)
         self.bank_index = 0
         self.instrument_index = 0
         self.CollectionWidget = None
@@ -83,7 +84,6 @@ class TApplication(tk.Frame):
         self.InstrumentIndexWidget = None
         self.VolumeWidget = None
         self.create_widgets()
-        self.run_zynaddsubfx()
         self.master.wm_protocol("WM_DELETE_WINDOW", self.quit)
         self.print_to_widget(self.VolumeWidget, self.volume)
 
@@ -131,7 +131,7 @@ class TApplication(tk.Frame):
 
         tk.Button(master=self, text='Exit', command=self.quit).pack(side=tk.TOP)
         fontsize = 20
-        if  self.main_wnd_width > 900:
+        if self.main_wnd_width > 900:
             fontsize = 60
         self.CollectionWidget = tk.Text(self, width=self.main_wnd_width-10, height=1, font=("Helvetica", fontsize))
         self.CollectionWidget.pack(side=tk.TOP)
@@ -191,7 +191,7 @@ class TApplication(tk.Frame):
 
     def send_command_to_zynaddsubfx(self, cmd):
         self.logger.info("send_command_to_zynaddsubfx: {}".format(cmd))
-        with open (self.get_command_path(), "w") as outp:
+        with open(self.get_command_path(), "w") as outp:
             outp.write(cmd)
         time.sleep(1)
         if os.path.exists(self.get_command_path()):
@@ -224,12 +224,12 @@ class TApplication(tk.Frame):
     def run_zynaddsubfx(self):
         self.kill_zynaddsubfx()
 
-        binary_path = self.zynaddsubfx_path
+        binary_path = self.args.zynaddsubfx_path
         if not os.path.exists(binary_path):
             raise Exception("could not find {}".format(binary_path))
         assert binary_path.endswith(ZYNADDSUBFX_BINARY)
 
-        cmd = "{} -a >>binary_spawn_log.txt 2>&1 &".format(binary_path)
+        cmd = "{} {} >>binary_spawn_log.txt 2>&1 &".format(binary_path, self.args.zynaddsubfx_args)
         self.run_cmd(cmd)
         time.sleep(2)
         assert self.send_command_to_zynaddsubfx("dummy")
@@ -253,6 +253,7 @@ def parse_args():
     parser.add_argument("--bank-folder", dest='banks_folder',
                         default="/usr/share/zynaddsubfx/banks")
     parser.add_argument("--zynaddsubfx-path", dest='zynaddsubfx_path')
+    parser.add_argument("--zynaddsubfx-args", dest='zynaddsubfx_args', default="-a -U")
     parser.add_argument("--skip-keyboard-connect", dest='connect_keyboard',  action="store_false", default=True)
     return parser.parse_args()
 
