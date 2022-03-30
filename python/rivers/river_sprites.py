@@ -1,17 +1,24 @@
+from draw_road import draw_road
+from utils.colors import TColors
+
 import pygame
 import os
 import random
-
+import math
 
 class TSprite(pygame.sprite.Sprite):
     SPRITES_DIR = os.path.join(os.path.dirname(__file__), "assets", 'sprites')
 
-    def __init__(self, parent, image_file_name, rect):
+    def __init__(self, parent, image_file_name, rect, surface=None):
         super().__init__()
         self.parent = parent
         self.rect = rect
-        img = pygame.image.load(os.path.join(TSprite.SPRITES_DIR, image_file_name))
-        self.image = pygame.transform.scale(img, (rect.width, rect.height))
+        if image_file_name is not None:
+            img = pygame.image.load(os.path.join(TSprite.SPRITES_DIR, image_file_name))
+            self.image = pygame.transform.scale(img, (rect.width, rect.height))
+        else:
+            assert surface is not None
+            self.image = surface
 
         self.angle = 0
         self.speed_modifier = 1.0
@@ -40,23 +47,42 @@ class TBridge(TSprite):
         self.used = False
 
 
-class TRiverAndBridge:
-    def __init__(self, parent, top, bridge_width):
+class TRoadSprite(TSprite):
+    def __init__(self, parent, start_point, end_point, road_width=30):
+        x1, y1 = start_point[0], start_point[1]
+        x2, y2 = end_point[0], end_point[1]
+        rct = pygame.Rect(min(x1, x2), y1, abs(x2-x1)+road_width, y2-y1)
+        srf = pygame.Surface((rct.width, rct.height))
+        srf.fill(TColors.gray)
+        #pygame.draw.rect(srf, TColors.white,     pygame.Rect(1,1, rct.width-2, rct.top-2), width=1 )
+        draw_road(srf, x1-rct.left, y1-rct.top, x2-rct.left, y2-rct.top, width=road_width)
+        super().__init__(parent, None, rct, surface=srf)
+
+
+class TRiverGroup:
+    def __init__(self,   parent, top, bridge_width, road_width, prev_bridge_rect):
         self.bridge_width = bridge_width
+        self.road_width = road_width
         self.river = TRiver(parent, top=top)
         self.bridge = TBridge(parent, top=top, width=self.bridge_width)
         self.bridge.rect.top = top
         self.bridge.rect.left = random.randrange(0, parent.get_width() - self.bridge_width)
+        anchor1 = (self.bridge.rect.left + bridge_width/2 - road_width, self.bridge.rect.bottom)
+        anchor2 = (prev_bridge_rect.left + bridge_width / 2 - road_width, prev_bridge_rect.top)
+        self.road = TRoadSprite(parent, anchor1, anchor2)
 
     def destroy_sprites(self):
         self.river.kill()
         self.river = None
         self.bridge.kill()
         self.bridge = None
+        self.road.kill()
+        self.road = None
 
     def change_spite_position(self, delta):
         self.river.change_spite_position(delta)
         self.bridge.change_spite_position(delta)
+        self.road.change_spite_position(delta)
 
 
 class TMyCar(TSprite):
@@ -69,3 +95,5 @@ class TMyCar(TSprite):
         super().__init__(parent, image_file_name, rct)
         self.horizontal_speed = horizontal_speed
         self.horizontal_speed_increase_with_get_speed = True
+
+

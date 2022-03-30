@@ -4,7 +4,7 @@ from utils.colors import TColors
 from utils.game_sounds import TSounds
 from utils.game_intro import TGameIntro
 from engine_sound import TEngineSound
-from river_sprites import TSprite, TMyCar, TRiverAndBridge
+from river_sprites import TSprite, TMyCar, TRiverGroup
 from river_registers import TGameRegisters
 import pygame
 import time
@@ -20,6 +20,7 @@ class TRiverGame:
         self.args = args
         self.logger = setup_logging("rivers")
         self.finish_top = 300
+        self.road_width = 30
         self.start_time_on_the_road_side = None
         self.sounds = TSounds(SOUNDS_DIR, not args.silent)
         self.racing_wheel = TRacingWheel(self.logger, args.wheel_center)
@@ -30,6 +31,7 @@ class TRiverGame:
         self.river_sprites = pygame.sprite.Group()
         self.bridge_sprites = pygame.sprite.Group()
         self.my_car_sprites = pygame.sprite.Group()
+        self.road_sprites = pygame.sprite.Group()
         if args.full_screen:
             self.screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
             pygame.display.toggle_fullscreen()
@@ -44,8 +46,8 @@ class TRiverGame:
 
         self.my_car = TMyCar(self.screen, self.args.my_sprite)
         self.my_car_sprites.add(self.my_car)
-        self.river_and_bridge = None
-        self.river_and_bridge_next = None
+        self.river_group = None
+        self.river_group_next = None
 
     def message(self, mess, colour, size, x, y):
         font = pygame.font.SysFont(None, size)
@@ -82,8 +84,6 @@ class TRiverGame:
 
     def redraw_background(self):
         self.screen.fill(TColors.gray)
-        pygame.draw.line(self.screen, TColors.white, (0, self.finish_top),
-                         (self.width, self.finish_top))
 
     def check_river_collision(self, river_sprite):
         if not river_sprite.alive() or river_sprite.collided:
@@ -122,31 +122,38 @@ class TRiverGame:
 
     def init_new_river(self):
         self.logger.debug("init_new_river")
-        if self.river_and_bridge is not None:
-            if not self.river_and_bridge.river.collided:
+        if self.river_group is not None:
+            if not self.river_group.river.collided:
                 self.car_bridge_success_event()
-            self.river_and_bridge.destroy_sprites()
-            self.river_and_bridge = self.river_and_bridge_next
+            self.river_group.destroy_sprites()
+            self.river_group = self.river_group_next
         else:
             #first time
-            self.river_and_bridge = TRiverAndBridge(self.screen, 0, self.args.bridge_width)
+            dummy_rct = pygame.Rect(self.my_car.rect.center[0] - self.args.bridge_width/2,
+                                    self.my_car.rect.top, self.args.bridge_width, 10)
+            self.river_group = TRiverGroup(self.screen, 0, self.args.bridge_width, self.road_width, dummy_rct)
+            self.logger.info("prev rect {}".format(dummy_rct))
+            self.logger.info("car rect {}".format(self.my_car.rect))
+            pygame.draw.rect(self.screen, TColors.white, dummy_rct)
 
-        self.river_and_bridge_next = TRiverAndBridge(self.screen, -self.height, self.args.bridge_width)
-        self.river_sprites.add(self.river_and_bridge.river)
-        self.bridge_sprites.add(self.river_and_bridge.bridge)
+        self.river_group_next = TRiverGroup(self.screen, -self.height, self.args.bridge_width, self.road_width,
+                                            self.river_group.bridge.rect)
+        self.river_sprites.add(self.river_group.river)
+        self.bridge_sprites.add(self.river_group.bridge)
+        self.road_sprites.add(self.river_group.road, self.river_group_next.road)
 
     def is_obstacle_finish(self, sprite: TSprite):
         return sprite.rect.top > min(self.height - 100, self.my_car.rect.bottom + 200)
 
     def change_obstacle_positions(self):
-        if self.river_and_bridge is not None:
+        if self.river_group is not None:
             speed = self.get_speed()
             if speed > 0:
-                self.river_and_bridge.change_spite_position(speed)
-                self.river_and_bridge_next.change_spite_position(speed)
+                self.river_group.change_spite_position(speed)
+                self.river_group_next.change_spite_position(speed)
                 self.logger.info("next_bridge.top={}, next_river.top={}".format(
-                    self.river_and_bridge_next.bridge.rect.top, self.river_and_bridge_next.river.rect.top))
-            if self.is_obstacle_finish(self.river_and_bridge.river):
+                    self.river_group_next.bridge.rect.top, self.river_group_next.river.rect.top))
+            if self.is_obstacle_finish(self.river_group.river):
                 self.init_new_river()
 
     def use_brakes(self):
@@ -212,11 +219,15 @@ class TRiverGame:
 
     def redraw_all(self):
         self.redraw_background()
+        self.river_sprites.draw(self.screen)
+        self.bridge_sprites.draw(self.screen)
+        self.road_sprites.draw(self.screen)
+        pygame.draw.line(self.screen, TColors.white, (0, self.finish_top),
+                         (self.width, self.finish_top))
+
         self.stats.draw_params(self.my_car.rect.top, self.get_speed())
         #pygame.draw.rect(self.screen, TColors.black, self.other_car.rect, width=1)
         #pygame.draw.rect(self.screen, TColors.black, self.my_car.rect, width=1)
-        self.river_sprites.draw(self.screen)
-        self.bridge_sprites.draw(self.screen)
         self.my_car_sprites.draw(self.screen)
         pygame.display.flip()
 
@@ -231,8 +242,12 @@ class TRiverGame:
     def game_loop(self):
         self.river_sprites.empty()
         self.bridge_sprites.empty()
+        self.road_sprites.empty()
         self.my_car.rect.left = self.width / 2
         self.my_car.rect.top = self.height - 250
+        if self.river_group is not None:
+            self.river_group.destroy_sprites()
+            self.river_group = None
         #self.my_car.rect.top = self.height - 650
         self.stats = TGameRegisters(self.screen)
         self.redraw_background()
