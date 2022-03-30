@@ -16,5 +16,14 @@
   },
   "brakes": {
     "volume": 0.2
+  },
+  "door_open": {
+    "volume": 0.2
+  },
+  "wrong_stop": {
+    "volume": 0.6
+  },
+  "thank": {
+    "volume": 0.4
   }
 }
