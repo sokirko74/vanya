@@ -4,78 +4,15 @@ from utils.colors import TColors
 from utils.game_sounds import TSounds
 from utils.game_intro import TGameIntro
 from engine_sound import TEngineSound
+from river_sprites import TSprite, TMyCar, TRiverAndBridge
+from river_registers import TGameRegisters
 import pygame
 import time
 import argparse
 import os
 import math
-import random
 
-ASSETS_DIR = os.path.join(os.path.dirname(__file__), "assets")
-SPRITES_DIR = os.path.join(ASSETS_DIR, 'sprites')
-SOUNDS_DIR = os.path.join(ASSETS_DIR, 'sounds')
-
-
-class TSprite(pygame.sprite.Sprite):
-    def __init__(self, parent, image_file_name, rect):
-        super().__init__()
-        self.parent = parent
-        self.rect = rect
-        img = pygame.image.load(os.path.join(SPRITES_DIR, image_file_name))
-        self.image = pygame.transform.scale(img, (rect.width, rect.height))
-
-        self.angle = 0
-        self.speed_modifier = 1.0
-
-        self.retreat_after_crash = False
-        self.sound = None
-        self.sound_volume = 0
-
-    def change_spite_position(self, speed):
-        self.rect.top += self.speed_modifier * speed
-
-
-class TRiver(TSprite):
-    def __init__(self, parent, top=0, left=0):
-        super().__init__(parent,
-                              'river.png',
-                              pygame.Rect(0, top, parent.get_width(), 160))
-        self.collided = False
-
-
-class TBridge(TSprite):
-    def __init__(self, parent, top=0, left=0, width=300):
-        super().__init__(parent,
-                              'bridge.png',
-                              pygame.Rect(0, top, width, 200))
-        self.used = False
-
-
-class TGameRegisters:
-    def __init__(self, screen):
-        self.screen = screen
-        self.game_over = False
-        self.river_accident_count = 0
-        self.bridge_passing_count = 0
-        self.paused = False
-        self.font = pygame.font.SysFont(None, 30)
-
-    def print_text(self, text, x, y):
-        screen_text = self.font.render(text, True, TColors.white)
-        self.screen.blit(screen_text, (x, y))
-
-    def get_score(self):
-        return self.bridge_passing_count - self.river_accident_count
-
-    def draw_params(self, my_car_top, game_speed):
-        self.print_text('score: {}'.format(self.get_score()), 30, 0)
-        self.print_text('speed: {}'.format(game_speed), 30, 40)
-        self.print_text('position: {}'.format(my_car_top), 30, 80)
-        self.print_text('rivers: {}'.format(self.river_accident_count), 30, 120)
-        self.print_text('bridges: {}'.format(self.bridge_passing_count), 30, 160)
-        if self.paused:
-            s = pygame.display.get_surface()
-            self.print_text("pause (press spacebar to play)", s.get_width()/2, s.get_height()/2)
+SOUNDS_DIR = os.path.join(os.path.dirname(__file__), "assets", 'sounds')
 
 
 class TRiverGame:
@@ -103,21 +40,12 @@ class TRiverGame:
             self.height = self.args.height
             self.screen = pygame.display.set_mode((self.width, self.height))
         self.stats = TGameRegisters(self.screen)
-        self.game_intro = TGameIntro(self.screen, os.path.join(SPRITES_DIR, 'background1.jpg'),  self.racing_wheel)
+        self.game_intro = TGameIntro(self.screen, os.path.join(TSprite.SPRITES_DIR, 'background1.jpg'),  self.racing_wheel)
 
-        self.car_width = 160
-        self.car_height = 160
-        if self.args.my_sprite.startswith('truck'):
-            self.car_height = 200
-        self.my_car = TSprite(self.screen, self.args.my_sprite, pygame.Rect(0, 0, self.car_width, self.car_height))
-        self.my_car_horizontal_speed = 10
-        self.my_car_horizontal_speed_increase_with_get_speed = True
+        self.my_car = TMyCar(self.screen, self.args.my_sprite)
         self.my_car_sprites.add(self.my_car)
-
-        self.bridge_width = self.args.bridge_width
-
-        self.river = None
-        self.bridge = None
+        self.river_and_bridge = None
+        self.river_and_bridge_next = None
 
     def message(self, mess, colour, size, x, y):
         font = pygame.font.SysFont(None, size)
@@ -172,7 +100,7 @@ class TRiverGame:
     def check_bridge_collision(self,  bridge_sprite):
         if not bridge_sprite.alive() or bridge_sprite.used:
             return
-        self.logger.info("bridge collision")
+        #self.logger.info("bridge collision")
         #self.stats.bridge_passing_count += 1
         #bridge_sprite.used = True
         #self.sounds.play_sound("bridge_passing", loops=0)
@@ -187,36 +115,38 @@ class TRiverGame:
         else:
             raise Exception("unknown action")
 
-    def destroy_obstacles(self):
-        if not self.river.collided:
-            self.my_car.rect.top -= 20
-            self.stats.bridge_passing_count += 1
-            self.sounds.play_sound("bridge_passing", loops=0)
-        self.river.kill()
-        self.river = None
-        self.bridge.kill()
-        self.bridge = None
+    def car_bridge_success_event(self):
+        self.my_car.rect.top -= 20
+        self.stats.bridge_passing_count += 1
+        self.sounds.play_sound("bridge_passing", loops=0)
 
     def init_new_river(self):
         self.logger.debug("init_new_river")
-        if self.river is not None:
-            self.destroy_obstacles()
+        if self.river_and_bridge is not None:
+            if not self.river_and_bridge.river.collided:
+                self.car_bridge_success_event()
+            self.river_and_bridge.destroy_sprites()
+            self.river_and_bridge = self.river_and_bridge_next
+        else:
+            #first time
+            self.river_and_bridge = TRiverAndBridge(self.screen, 0, self.args.bridge_width)
 
-        self.river = TRiver(self.screen)
-        self.bridge = TBridge(self.screen, width=self.bridge_width)
-        self.bridge.rect.top = 0
-        self.bridge.rect.left = random.randrange(0, self.width - self.bridge_width )
-        self.river_sprites.add(self.river)
-        self.bridge_sprites.add(self.bridge)
+        self.river_and_bridge_next = TRiverAndBridge(self.screen, -self.height, self.args.bridge_width)
+        self.river_sprites.add(self.river_and_bridge.river)
+        self.bridge_sprites.add(self.river_and_bridge.bridge)
 
     def is_obstacle_finish(self, sprite: TSprite):
         return sprite.rect.top > min(self.height - 100, self.my_car.rect.bottom + 200)
 
     def change_obstacle_positions(self):
-        if self.river is not None:
-            self.river.change_spite_position(self.get_speed())
-            self.bridge.change_spite_position(self.get_speed())
-            if self.is_obstacle_finish(self.river):
+        if self.river_and_bridge is not None:
+            speed = self.get_speed()
+            if speed > 0:
+                self.river_and_bridge.change_spite_position(speed)
+                self.river_and_bridge_next.change_spite_position(speed)
+                self.logger.info("next_bridge.top={}, next_river.top={}".format(
+                    self.river_and_bridge_next.bridge.rect.top, self.river_and_bridge_next.river.rect.top))
+            if self.is_obstacle_finish(self.river_and_bridge.river):
                 self.init_new_river()
 
     def use_brakes(self):
@@ -234,9 +164,9 @@ class TRiverGame:
                 self.stats.game_over = True
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_LEFT:
-                    x_change = -self.my_car_horizontal_speed
+                    x_change = -self.my_car.horizontal_speed
                 elif event.key == pygame.K_RIGHT:
-                    x_change = +self.my_car_horizontal_speed
+                    x_change = +self.my_car.horizontal_speed
                 elif event.key == pygame.K_UP:
                     self.engine_sound.increase_speed()
                 elif event.key == pygame.K_DOWN:
@@ -254,7 +184,7 @@ class TRiverGame:
                 if event.key == pygame.K_UP:
                     self.engine_sound.decrease_speed()
 
-        if self.my_car_horizontal_speed_increase_with_get_speed:
+        if self.my_car.horizontal_speed_increase_with_get_speed:
             x_change += 0.01 * x_change * math.sqrt(self.get_speed())
 
         self.my_car.rect.left += x_change

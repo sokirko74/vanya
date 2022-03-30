@@ -107,17 +107,17 @@ class TEngineSound(threading.Thread):
         return self.sounds[(speed, speed)]
 
     def queue_sound(self, snd):
-        print("queue sound {} {} ".format(snd.start_speed, snd.last_speed))
+        #print("queue sound {} {} ".format(snd.start_speed, snd.last_speed))
         self.channel.queue(snd)
 
     def play_sound(self, snd):
-        print("play sound {} {} ".format(snd.start_speed, snd.last_speed))
+        #print("play sound {} {} ".format(snd.start_speed, snd.last_speed))
         self.channel.play(snd)
 
     def queue_sound_after(self, snd):
         state = snd.get_state()
         speed = snd.get_speed()
-        print("state = {}".format(state))
+        #print("state = {}".format(state))
         if state == TEngineState.engine_increase:
             if speed != self.max_speed:
                 self.queue_sound(self.get_increase_sound(speed))
