@@ -8,3 +8,4 @@ class TColors:
     bright_red = (255, 0, 0)
     bright_green = (0, 255, 0)
     blue = (0, 0, 255)
+    yellow = (255, 211, 0)

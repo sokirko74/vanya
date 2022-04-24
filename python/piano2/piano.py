@@ -70,8 +70,10 @@ class TApplication(tk.Frame):
         self.main_wnd_height = self.master.winfo_screenheight()
         self.run_zynaddsubfx()
         self.volume = self.get_volume()
+        self.last_change_instrument_time = time.time()
 
         self.master.bind('<F1>', self.next_instrument)
+        self.master.bind('<F12>', self.next_instrument)
         self.master.bind('<F2>', self.prev_instrument)
         self.master.bind('<F4>', self.next_bank)
         self.master.bind('<F5>', self.volume_up)
@@ -157,20 +159,32 @@ class TApplication(tk.Frame):
     def get_bank(self) -> TInstrumentBank :
         return self.instrument_banks[self.bank_index]
 
+    def check_time(self):
+        self.logger.info("check time")
+        if time.time() - self.last_change_instrument_time < 1:
+            self.logger.info("skip change instrument (timeout)")
+            return False
+        self.last_change_instrument_time = time.time()
+        return True
+
     def next_instrument(self, event):
-        self.get_bank().increment_instrument_index(+1)
-        self.on_change_instrument()
+        if self.check_time():
+            self.get_bank().increment_instrument_index(+1)
+            self.on_change_instrument()
 
     def prev_instrument(self, event):
-        self.get_bank().increment_instrument_index(-1)
-        self.on_change_instrument()
+        if self.check_time():
+            self.get_bank().increment_instrument_index(-1)
+            self.on_change_instrument()
 
     def next_bank(self, event):
-        if self.bank_index  + 1 == len(self.instrument_banks):
-            self.bank_index = 0
-        else:
-            self.bank_index  += 1
-        self.on_change_instrument()
+        self.logger.info("next_bank")
+        if self.check_time():
+            if self.bank_index  + 1 == len(self.instrument_banks):
+                self.bank_index = 0
+            else:
+                self.bank_index  += 1
+            self.on_change_instrument()
 
     def on_update(self):
         self.now.set(current_iso8601())

@@ -50,6 +50,8 @@ for event in dev.read_loop():
     elif event.type == ecodes.EV_ABS:
         if event.code == ecodes.ABS_WHEEL:
             print("abs_whell value={}".format(event.value))
+        elif event.code == ecodes.ABS_HAT0X or event.code == ecodes.ABS_HAT0Y:
+            print("left hat button")
         elif axis[ event.code] in [ 'ls_x', 'ls_y', 'rs_x', 'rs_y' ]:
             last[ axis[ event.code ] ] = event.value
 
