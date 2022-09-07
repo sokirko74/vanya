@@ -72,22 +72,23 @@ class TApplication(tk.Frame):
         self.volume = self.get_volume()
         self.last_change_instrument_time = time.time()
 
-        self.master.bind('<F1>', self.next_instrument)
-        self.master.bind('<F12>', self.next_instrument)
-        self.master.bind('<F2>', self.prev_instrument)
-        self.master.bind('<F4>', self.next_bank)
-        self.master.bind('<F5>', self.volume_up)
-        self.master.bind('<F6>', self.volume_down)
+        self.master.bind('<F10>', self.next_bank)
+        self.master.bind('<F8>', self.prev_bank)
+        self.master.bind('<F6>', self.next_instrument)
+        self.master.bind('<F4>', self.prev_instrument)
+        #self.master.bind('<F5>', self.volume_up)
+        #self.master.bind('<F6>', self.volume_down)
         self.instrument_banks = load_banks(args.banks_folder)
         self.bank_index = 0
         self.instrument_index = 0
         self.CollectionWidget = None
         self.InstrumentWidget = None
         self.InstrumentIndexWidget = None
+        self.BankIndexWidget = None
         self.VolumeWidget = None
         self.create_widgets()
         self.master.wm_protocol("WM_DELETE_WINDOW", self.quit)
-        self.print_to_widget(self.VolumeWidget, self.volume)
+        #self.print_to_widget(self.VolumeWidget, self.volume)
 
     def set_volume(self):
         cmd = "amixer -D pulse sset Master {}%".format(self.volume)
@@ -127,22 +128,29 @@ class TApplication(tk.Frame):
         self.now = tk.StringVar()
         tk.Frame.__init__(self, self.master)
         self.pack()
-        text = "F1-next instrument, F2-prev instrument, F4-next bank, F5-volume up, F6-volume down"
+        text = "F4-prev instrument, F6-next instrument, F8-prev bank, F10 - next bank"
         self.time = tk.Label(self, text=text, font=('Helvetica', 12))
         self.time.pack(side=tk.TOP)
 
         tk.Button(master=self, text='Exit', command=self.quit).pack(side=tk.TOP)
         fontsize = 20
         if self.main_wnd_width > 900:
-            fontsize = 60
+            fontsize = 100
         self.CollectionWidget = tk.Text(self, width=self.main_wnd_width-10, height=1, font=("Helvetica", fontsize))
         self.CollectionWidget.pack(side=tk.TOP)
         self.InstrumentWidget = tk.Text(self, width=self.main_wnd_width-10, height=1, font=("Helvetica", fontsize))
         self.InstrumentWidget.pack(side=tk.TOP)
-        self.InstrumentIndexWidget = tk.Text(self, width=3, height=1, font=("Helvetica", 48))
-        self.VolumeWidget = tk.Text(self, width=3, height=1, font=("Helvetica", 48))
-        self.VolumeWidget.pack(side=tk.RIGHT)
-        self.InstrumentIndexWidget.pack(side=tk.TOP)
+
+        self.InstrumentIndexWidget = tk.Text(self, width=3, height=1, font=("Helvetica", 300), bg="green")
+        self.BankIndexWidget = tk.Text(self, width=3, height=1, font=("Helvetica", 300), bg="red")
+        #self.VolumeWidget = tk.Text(self, width=3, height=1, font=("Helvetica", 48))
+        #self.VolumeWidget.pack(side=tk.RIGHT)
+
+        #tk.Label(text="Коллекция:", font=("Helvetica", 30)).pack(side=tk.LEFT)
+        self.BankIndexWidget.pack(side=tk.LEFT)
+
+        #tk.Label(text="Инструмент:", font=("Helvetica", 30)).pack(side=tk.TOP)
+        self.InstrumentIndexWidget.pack(side=tk.RIGHT)
 
         # initial time display
         self.slide_switch = os.path.join(os.path.dirname(os.path.realpath(__file__)), "sound", "slide_switch.wav")
@@ -184,6 +192,17 @@ class TApplication(tk.Frame):
                 self.bank_index = 0
             else:
                 self.bank_index  += 1
+            self.get_bank().instrument_index = 0
+            self.on_change_instrument()
+
+    def prev_bank(self, event):
+        self.logger.info("prev_bank")
+        if self.check_time():
+            if self.bank_index > 0:
+                self.bank_index -= 1
+            else:
+                self.bank_index = len(self.instrument_banks) - 1
+            self.get_bank().instrument_index = 0
             self.on_change_instrument()
 
     def on_update(self):
@@ -195,6 +214,7 @@ class TApplication(tk.Frame):
         self.print_to_widget(self.CollectionWidget, self.get_bank().name)
         self.print_to_widget(self.InstrumentWidget, self.get_bank().get_instrument_name())
         self.print_to_widget(self.InstrumentIndexWidget, "{}".format(self.get_bank().instrument_index))
+        self.print_to_widget(self.BankIndexWidget, "{}".format(self.bank_index))
         self.send_command_to_zynaddsubfx("load_instrument {}".format(self.get_bank().get_instrument_path()))
         self.on_update()
         time.sleep(1)
@@ -210,6 +230,7 @@ class TApplication(tk.Frame):
         time.sleep(1)
         if os.path.exists(self.get_command_path()):
             self.logger.error("zynaddsubfx is down? command {} failed".format(cmd))
+            self.run_zynaddsubfx()
             return False
         return True
 
