@@ -1,3 +1,5 @@
+import sys
+
 from selenium import webdriver
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.common.by import By
@@ -11,6 +13,8 @@ import tkinter.font as tkFont
 import time
 import vlc
 from functools import partial
+
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 from utils.logging_wrapper import setup_logging
 
 BLACK = (0, 0, 0)
@@ -42,7 +46,7 @@ URLS = {
     'лиаз1': ('https://www.youtube.com/watch?v=Tvrtn_47bGA', 70),
     'ситроен1': ('https://www.youtube.com/watch?v=xrkoVUDsoBQ', 36),
     'пила1': ('https://www.youtube.com/watch?v=qHKfd-vRdOI', 70),
-    'форд1': ('https://www.youtube.com/watch?v=Gt2VJEOuGKY', 100),
+    'форд1': ('https://www.youtube.com/watch?v=Gt2VJEOuGKY', 1080),
     'порш1': ('https://www.youtube.com/watch?v=_JaBoMgM4Y4', 80),
     'шевроле1': ('https://www.youtube.com/watch?v=6-GQFNC83DA', 130),
     'кот1': ('https://www.youtube.com/watch?v=TjmOWZ3y9gg', 60),
@@ -107,7 +111,7 @@ URLS = {
   'лодка1': ('https://www.youtube.com/watch?v=BmbSMZbgkOg', 180),
   'масами1': ('https://www.youtube.com/watch?v=-gzBqayDmJ8',  240),
     'пыхтелки1': ('https://www.youtube.com/watch?v=-BE476MvO_g', 240),
-    'лодка2':('https://www.youtube.com/watch?v=HwF0HbG_wYE', 230),
+    'лодка2':('https://www.youtube.com/watch?v=HwF0HbG_wYE', 180),
     'лодка3': ('https://www.youtube.com/watch?v=wvr5ESGkYDo', 120),
     'мотособака1':('https://www.youtube.com/watch?v=zpPQKIveCXk',180),
    'миникупер1': ('https://www.youtube.com/watch?v=SLjw4jLf1Kg', 100),
@@ -233,7 +237,7 @@ class TZvuchki(tk.Frame):
         self.left_queries = set(URLS.keys())
 
     def init_abc_keyboard(self):
-        self.add_keyboard_row(1, "123БХЦ" + TChars.PLAY + TChars.BACKSPACE )
+        self.add_keyboard_row(1, "БЦХ123" + TChars.PLAY + TChars.BACKSPACE )
         self.add_keyboard_row(2, "ИКТЗГУРДСФЖ")
         self.add_keyboard_row(3, "МПАВЯЛОНЕШЬ")
 
@@ -267,17 +271,25 @@ class TZvuchki(tk.Frame):
             browser = webdriver.Chrome()
             browser.get(url)
 
+            #WebDriverWait(browser, 15).until(EC.element_to_be_clickable(
+            #    (By.XPATH, "//button[@aria-label='Play']"))).click()
             WebDriverWait(browser, 15).until(EC.element_to_be_clickable(
-                (By.XPATH, "//button[@aria-label='Play']"))).click()
+                    (By.XPATH, "//button[@aria-label='Смотреть']"))).click()
             browser.maximize_window()
+            print ("sleep 1 sec")
             time.sleep(1)
             element = browser.switch_to.active_element
+            print ("send f")
             element.send_keys("f")
+            #print ("send к")
+            #element.send_keys("k")
+            print("max_duration = {}".format(max_duration))
             time.sleep(max_duration)
             browser.close()
             time.sleep(1)
             browser.quit()
         except WebDriverException as exp:
+            print ("exception: {}".format(exp))
             pass
 
     def play_word(self, w):

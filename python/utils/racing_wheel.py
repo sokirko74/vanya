@@ -2,7 +2,7 @@ from evdev import list_devices, InputDevice, ecodes
 from utils.logging_wrapper import setup_logging
 import pygame
 import time
-
+import os
 
 class TRacingWheel:
     left_button = 295
@@ -11,12 +11,14 @@ class TRacingWheel:
     right_pedal = 9
     left_hat_button = 17
 
-    def __init__(self, logger, center):
+    def __init__(self, logger, center, level=120, sound_pedals=False):
         self.logger = logger
         self.raw_angle = None
         self.center = center
+        self.level = level
         self.pressed_buttons = set()
         self.last_left_hat_button_time = 0
+        self.sound_pedals = sound_pedals
         joysticks = list_devices()
         if len(joysticks) > 0:
             self.device = InputDevice(joysticks[0])
@@ -41,6 +43,7 @@ class TRacingWheel:
             return
         event = self.device.read_one()
         while event is not None:
+            #print(event)
             if event.type == ecodes.EV_ABS and event.code == ecodes.ABS_HAT0X or event.code == ecodes.ABS_HAT0Y:
                 tm = time.time()
                 if tm - self.last_left_hat_button_time > 6:
@@ -57,16 +60,25 @@ class TRacingWheel:
                 self.logger.debug("right_button")
                 self.pressed_buttons.add(TRacingWheel.right_button)
             elif event.code == TRacingWheel.left_pedal:
-                if event.value > 120:
+                if event.value > self.level:
+                    self.logger.info("left pedal")
                     self.pressed_buttons.add(TRacingWheel.left_pedal)
+                    if self.sound_pedals:
+                        print ("aaaasss")
+                        pygame.mixer.music.load('beeps/nolik.wav')
+                        pygame.mixer.music.play()
                 else:
                     if TRacingWheel.left_pedal in self.pressed_buttons:
                         self.pressed_buttons.remove(TRacingWheel.left_pedal)
                 #self.logger.info("left_pedal value={} {}".format(event.value, self.pressed_buttons))
             elif event.code == TRacingWheel.right_pedal:
-                self.logger.debug("right_pedal")
-                if event.value > 120:
+                if event.value > self.level:
+                    self.logger.info("right_pedal")
                     self.pressed_buttons.add(TRacingWheel.right_pedal)
+                    if self.sound_pedals:
+                        print ("aaaasss")
+                        pygame.mixer.music.load('beeps/krestik.wav')
+                        pygame.mixer.music.play()
                 else:
                     if TRacingWheel.right_pedal in self.pressed_buttons:
                         self.pressed_buttons.remove(TRacingWheel.right_pedal)
@@ -85,9 +97,15 @@ class TRacingWheel:
             return int((self.raw_angle - self.center) / 50)
 
     def test(self):
-        run = False
+        run = True
+        self.sound_pedals = True
+        self.level = 30
+        print("aaa")
+        pygame.display.init()
+        pygame.mixer.init()
         while run:
-            self.process_wheel_pedals()
+            self.read_events()
+            #   print ("aaa")
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     run = False
@@ -99,5 +117,5 @@ class TRacingWheel:
 
 if __name__ == "__main__":
     logger = setup_logging("test_wheel")
-    wheel = TRacingWheel(logger, 1000)
+    wheel = TRacingWheel(logger, 1000, sound_pedals=True)
     wheel.test()

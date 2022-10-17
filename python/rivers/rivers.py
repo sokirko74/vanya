@@ -284,14 +284,14 @@ class TRiverGame:
         if not self.racing_wheel.is_attached():
             return
         if self.racing_wheel.is_left_pedal_pressed():
-            self.logger.info("left pedal is on")
+            #self.logger.info("left pedal is on")
             self.engine_sound.increase_speed()
         else:
-            #self.logger.info("left pedal is off")
+            #self.logger.info("left pedal is off    ")
             self.engine_sound.decrease_speed()
 
         if self.racing_wheel.is_right_pedal_pressed():
-            self.logger.info("right pedal is on")
+            #self.logger.info("right pedal is on")
             self.use_brakes()
 
     def redraw_all(self):

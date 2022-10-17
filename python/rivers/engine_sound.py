@@ -1,7 +1,7 @@
 #we have to create separate files since pygame.mixer.music.set_pos  does not work on our wav files
 # ppygame.error: set_pos unsupported for this codec
 #snd = pygame.mixer.music.load('assets/sounds/engine_increase.wav')
-#pygame.mixer.music.play()
+        #pygame.mixer.music.play()
 #pygame.mixer.music.set_pos(10)
 
 #Use this script:
