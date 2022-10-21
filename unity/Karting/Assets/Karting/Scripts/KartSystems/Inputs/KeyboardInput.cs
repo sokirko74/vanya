@@ -18,7 +18,8 @@ namespace KartGame.KartSystems {
             }
             print(info);*/
             bool accelerate = Input.GetButton(AccelerateButtonName);
-            if (Input.GetAxis("Accelerate") > 0)
+            float vertical = Input.GetAxis("Vertical");
+            if (vertical > -0.98 && vertical != 0)
             {
                 accelerate = true;
             }
