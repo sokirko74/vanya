@@ -30,12 +30,18 @@ namespace KartGame.KartSystems
                 accelerate = true;
             }
             //accelerate = false;
-            var axis = new string[] { "Horizontal", "Vertical", "Accelerate", "Axis 1", "Axis 2", "Axis 3" };
             string info = "";
+            var axis = new string[] { "Horizontal", "Vertical", "Accelerate", "Axis 1", "Axis 2", "Axis 3"};
             foreach (string a in axis)
             {
 
                 info += string.Format("{0}={1},", a, Input.GetAxis(a));
+            }
+            var btns = new string[] { "LeftWheelButton" };
+            foreach (string a in btns)
+            {
+
+                info += string.Format("{0}={1},", a, Input.GetButton(a));
             }
 
             info += string.Format("=>pedal={0},", accelerate);
