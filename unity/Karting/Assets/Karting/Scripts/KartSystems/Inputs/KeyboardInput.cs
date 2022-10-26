@@ -37,13 +37,6 @@ namespace KartGame.KartSystems
 
                 info += string.Format("{0}={1},", a, Input.GetAxis(a));
             }
-            var btns = new string[] { "LeftWheelButton" };
-            foreach (string a in btns)
-            {
-
-                info += string.Format("{0}={1},", a, Input.GetButton(a));
-            }
-
             info += string.Format("=>pedal={0},", accelerate);
             info += string.Format(",GlobalStarted={0},", GlobalStarted);
 
