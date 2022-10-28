@@ -25,7 +25,7 @@ namespace KartGame.KartSystems
                     axis2 = -1;
                 }
             }
-            if (axis2 > -0.98)
+            if (axis2 > -0.95)
             {
                 accelerate = true;
             }
@@ -39,6 +39,16 @@ namespace KartGame.KartSystems
             }
             info += string.Format("=>pedal={0},", accelerate);
             info += string.Format(",GlobalStarted={0},", GlobalStarted);
+            var turnInput = Input.GetAxis("Horizontal") * 2;
+            if (turnInput < -1)
+            {
+                turnInput = -1;
+            }
+            if (turnInput > 1)
+            {
+                turnInput = 1;
+            }
+            info += string.Format(",turnInput={0},", turnInput);
 
             print(info);
 
@@ -47,7 +57,7 @@ namespace KartGame.KartSystems
                 Accelerate = accelerate,
                 //Brake = Input.GetButton(BrakeButtonName),
                 Brake = false,
-                TurnInput = Input.GetAxis("Horizontal")
+                TurnInput = turnInput
 
             };
         }
