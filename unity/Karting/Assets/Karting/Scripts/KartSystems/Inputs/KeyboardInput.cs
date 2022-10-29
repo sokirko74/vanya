@@ -12,7 +12,9 @@ namespace KartGame.KartSystems
 
         public override InputData GenerateInput()
         {
+            string info = "";
             bool accelerate = Input.GetButton(AccelerateButtonName);
+            info += string.Format("accelerate btn={0},", accelerate);
             float axis2 = Input.GetAxis("Axis 2");
             if (!GlobalStarted)
             {
@@ -30,14 +32,13 @@ namespace KartGame.KartSystems
                 accelerate = true;
             }
             //accelerate = false;
-            string info = "";
             var axis = new string[] { "Horizontal", "Vertical", "Accelerate", "Axis 1", "Axis 2", "Axis 3"};
             foreach (string a in axis)
             {
 
                 info += string.Format("{0}={1},", a, Input.GetAxis(a));
             }
-            info += string.Format("=>pedal={0},", accelerate);
+            info += string.Format("=>accelerate={0},", accelerate);
             info += string.Format(",GlobalStarted={0},", GlobalStarted);
             var turnInput = Input.GetAxis("Horizontal") * 2;
             if (turnInput < -1)
@@ -55,8 +56,8 @@ namespace KartGame.KartSystems
             return new InputData
             {
                 Accelerate = accelerate,
-                //Brake = Input.GetButton(BrakeButtonName),
-                Brake = false,
+                Brake = Input.GetButton(BrakeButtonName),
+                //Brake = false,
                 TurnInput = turnInput
 
             };
