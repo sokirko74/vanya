@@ -1,5 +1,5 @@
 sceneSetups:
-- path: Assets/Tarbo-CITY-TrafficLights/Demo/TrafficLights.unity
+- path: Assets/Karting/Scenes/MainScene.unity
   isLoaded: 1
   isActive: 1
   isSubScene: 0
