@@ -1,3 +1,7 @@
+import sys
+import os
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+
 from utils.logging_wrapper import setup_logging
 from utils.racing_wheel import TRacingWheel
 from utils.colors import TColors
