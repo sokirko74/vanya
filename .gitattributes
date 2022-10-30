@@ -1,1 +1,8 @@
-**/unity/** text eol=crlf
+**/unity/** text eol=auto
+*.fbx binary
+*.png binary
+*.ogg binary
+*.mov binary
+*.pdf binary
+*.wav binary
+*.mp3 binary
