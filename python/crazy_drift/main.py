@@ -43,7 +43,7 @@ class TCrazeDriftWrapper:
         assert len(joysticks) > 0
         self.racing_wheel = InputDevice(joysticks[0])
         self.wheel_center = args.wheel_center
-        self.wheel_angle_long_press_level = 400
+        self.wheel_angle_long_press_level = 800
         self.wheel_angle_short_press_level = 200
         self.pedal_level = 90
         self.pedal_state = TPedalState.no_change

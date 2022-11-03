@@ -1,180 +1,21 @@
+import sys
+import os
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+
 from utils.joystick import init_joystick
 import utils.maze_generator as generator
-from utils.maze_player import MazePlayer
 from utils.logging_wrapper import setup_logging
 from utils.colors import TColors
+from bee import TBee
+from tile import TTile
+from flower import TFlower
+from frog import TFrog
+
 
 import random
-import os
 import pygame
 import argparse
-from pygame.math import Vector2
 
-
-ColorMap = {
-    generator.WALKABLE_TILE: TColors.white,
-    generator.WALL_TILE: TColors.red,
-    generator.TARGET_TILE: TColors.green,
-}
-
-
-def create_circle():
-    surface = pygame.Surface((100, 100),  pygame.SRCALPHA, 32)
-    pygame.draw.circle(surface, TColors.blue, (50, 50), 50, 1)
-    return surface
-
-
-class Bee(MazePlayer):
-    def __init__(self, parent, speed=3, width=2, height=2):
-        super().__init__(parent,
-                         image=create_circle(),
-                         height=height,
-                         width=width,
-                         max_speed=speed,
-                         sound_moving=os.path.join('assets', 'sounds', 'bee_moving.wav'))
-
-        self.direction_vector = Vector2(0, -1)
-        self.move_player = False
-        self.rotate_player = False
-
-        self.shadow = pygame.sprite.Sprite()
-        self.shadow.image = pygame.image.load(os.path.join('assets', 'sprites', 'bee.png'))
-        w, h = self.rect.size
-        self.shadow.image = pygame.transform.scale(self.shadow.image, (w+30, h+30))
-        self.orig_shadow_image = self.shadow.image.copy()
-
-    def get_sound_success(self):
-        return pygame.mixer.Sound(os.path.join('assets', 'sounds', 'success.wav'))
-
-    def set_move_x(self, x):
-        self.direction_vector.x = x
-        self.move_player = True
-
-    def set_move_y(self, y):
-        self.direction_vector.y = y
-        self.move_player = True
-
-    def rotate(self):
-        self.direction_vector = self.direction_vector.rotate(45)
-        self.rotate_player = True
-
-    def handle_event(self, event):
-        self.move_player = False
-        self.rotate_player = False
-
-        if event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_LEFT:
-                self.set_move_x(-1)
-            elif event.key == pygame.K_RIGHT:
-                self.set_move_x(1)
-            elif event.key == pygame.K_UP:
-                self.set_move_y(-1)
-            elif event.key == pygame.K_DOWN:
-                self.set_move_y(1)
-            elif event.key == pygame.K_a:
-                self.rotate()
-                self.update()
-        elif event.type == pygame.KEYUP:
-            if event.key == pygame.K_LEFT:
-                self.direction_vector.x = 0
-            elif event.key == pygame.K_RIGHT:
-                self.direction_vector.x = 0
-            elif event.key == pygame.K_UP:
-                self.direction_vector.y = 0
-            elif event.key == pygame.K_DOWN:
-                self.direction_vector.y = 0
-
-    def draw_shadow(self):
-        rect = self.shadow.image.get_rect(center=self.rect.center)
-        self.parent.screen.blit(self.shadow.image, rect)
-
-    def update(self):
-        if not self.move_player and not self.rotate_player:
-            return
-        angle = Vector2(0, 0).angle_to(self.direction_vector) + 270
-
-        save_rect = self.rect.copy()
-        save_shadow_image = self.shadow.image
-        #print(self.rect.center)
-        self.shadow.image = pygame.transform.rotate(self.orig_shadow_image, -angle)
-
-        #https://stackoverflow.com/questions/47645155/pygame-sprite-rotation-not-staying-centeTColors.red
-        self.rect = self.image.get_rect(center=self.rect.center)
-
-        if self.move_player:
-            self.rect.center += self.direction_vector * self.max_speed
-
-        if not self.check_all_collisions():
-            self.shadow.image = save_shadow_image
-            self.rect = save_rect
-
-
-class Tile(pygame.sprite.Sprite):
-    def __init__(self, parent, pos, tile_type=-1, color=TColors.black):
-        pygame.sprite.Sprite.__init__(self)
-        self.parent = parent
-        if tile_type in ColorMap:
-            color = ColorMap[tile_type]
-        self.tile_type = tile_type
-        self.image = pygame.Surface((self.parent.block_size, self.parent.block_size))
-        self.wall = False
-        self.image.fill(color)
-        self.rect = self.image.get_rect()
-        self.rect.topleft = Vector2(self.parent.maze_rect.topleft) + pos
-
-    def draw(self):
-        self.parent.screen.blit(self.image, self.rect)
-
-
-class TFlower(pygame.sprite.Sprite):
-    sprites = [
-        ('flower.png', 'sound_flower.wav'),
-        ('flower1.png', 'sound_flower1.wav'),
-        ('flower2.png', 'sound_flower2.wav'),
-        ('flower3.png', 'sound_flower3.wav'),
-    ]
-
-    def __init__(self, parent, pos):
-        pygame.sprite.Sprite.__init__(self)
-        self.parent = parent
-        sprite_basename, sound_basename = random.choice(self.sprites)
-        self.image = pygame.image.load(os.path.join('assets', 'sprites', sprite_basename))
-        self.sound_flower = pygame.mixer.Sound(os.path.join('assets', 'sounds', sound_basename))
-        self.image = pygame.transform.scale(self.image,
-                                            (100,
-                                             100))
-        self.rect = self.image.get_rect()
-        self.rect.topleft = Vector2(self.parent.maze_rect.topleft) + pos
-
-    def contact_object(self):
-        if not self.parent.chan_2.get_busy():
-            self.parent.chan_2.play(self.sound_flower)
-        self.kill()
-
-
-class TFrog(pygame.sprite.Sprite):
-    sprites = [
-        ('frog.png', 'sound_frog.wav'),
-    ]
-
-    def __init__(self, parent, pos):
-        pygame.sprite.Sprite.__init__(self)
-        self.parent = parent
-        sprite_basename, sound_basename = random.choice(self.sprites)
-        self.image = pygame.image.load(os.path.join('assets', 'sprites', sprite_basename))
-        self.sound_frog = pygame.mixer.Sound(os.path.join('assets', 'sounds', sound_basename))
-        self.sound_frog.set_volume(0.2)
-        self.image = pygame.transform.scale(self.image, (50, 50))
-        self.rect = self.image.get_rect()
-        self.rect.topleft = Vector2(self.parent.maze_rect.topleft) + pos
-        self.contacted = False
-
-    def contact_object(self):
-        if not self.contacted:
-            if not self.parent.chan_2.get_busy():
-                self.parent.chan_2.play(self.sound_frog)
-        self.contacted = True
-        self.parent.open_closed_rooms()
 
 
 class TKeyEventType:
@@ -238,7 +79,7 @@ class TMaze:
         self.block_size = block_size
         self.chan_2 = pygame.mixer.Channel(2)
         self.font = pygame.font.SysFont('Impact', 20, italic=False, bold=True)
-        self.player = Bee(self, speed=speed, width=2, height=2)
+        self.player = TBee(self, speed=speed, width=2, height=2)
         #self.shadow_player =
         self.joystick = None
         if use_joystick:
@@ -258,7 +99,7 @@ class TMaze:
         self.tiles.clear()
         sprites_wo_tiles = list()
         for sprite in self.all_sprites:
-            if not isinstance(sprite, Tile):
+            if not isinstance(sprite, TTile):
                 sprites_wo_tiles.append(sprite)
         self.all_sprites.empty()
 
@@ -266,7 +107,7 @@ class TMaze:
             for y in range(self.gen.grid_height):
                 tile_type = self.gen.grid[x][y]
                 if tile_type != generator.WALKABLE_TILE:
-                    tile = Tile(self, self.grid_to_screen((x, y)), tile_type)
+                    tile = TTile(self, self.grid_to_screen((x, y)), tile_type)
                     self.tiles.append(tile)
                     self.all_sprites.add(tile)
 
