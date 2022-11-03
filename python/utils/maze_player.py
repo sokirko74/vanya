@@ -41,6 +41,9 @@ class MazePlayer(pygame.sprite.Sprite):
         self.score = 0
         self.set_scale(size)
 
+    def change_music(self, new_music):
+        pygame.mixer.music.load(new_music)
+
     def watch_moving(self):
         while self.run:
             if self.last_move_time_stamp is not None:

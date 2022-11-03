@@ -10,13 +10,13 @@ from bee import TBee
 from tile import TTile
 from flower import TFlower
 from frog import TFrog
+from cat import TCat
+from milk import TMilk
 
 
 import random
 import pygame
 import argparse
-
-
 
 class TKeyEventType:
     def __init__(self, type, key_code):
@@ -80,7 +80,7 @@ class TMaze:
         self.chan_2 = pygame.mixer.Channel(2)
         self.font = pygame.font.SysFont('Impact', 20, italic=False, bold=True)
         self.player = TBee(self, speed=speed, width=2, height=2)
-        #self.shadow_player =
+        self.cat = None
         self.joystick = None
         if use_joystick:
             self.joystick = init_joystick(self.logger)
@@ -132,21 +132,40 @@ class TMaze:
     def handle_player_events(self, e):
         self.player.handle_event(e)
 
+    def add_sprite(self, sp):
+        self.all_sprites.add(sp)
+        self.objects.add(sp)
+
     def setup_map(self):
         self.gen.generate_maze(int(self.maze_width / self.block_size), int(self.maze_height / self.block_size))
         self.set_player_initial()
         self.all_sprites = pygame.sprite.Group()
         self.objects = pygame.sprite.Group()
 
-        for x,y in self.gen.room_centers_except_start_room:
-            flower = TFlower(self, self.grid_to_screen((x, y)))
-            self.all_sprites.add(flower)
-            self.objects.add(flower)
-        if len(self.gen.room_corners_except_start_room) >  0:
-            frog_place = random.choice(self.gen.room_corners_except_start_room)
-            frog = TFrog(self, self.grid_to_screen(frog_place))
-            self.all_sprites.add(frog)
-            self.objects.add(frog)
+        while True:
+            center = self.gen.get_new_place("center_place", False, True)
+            if center is None:
+                break
+            flower = TFlower(self, self.grid_to_screen(center))
+            self.add_sprite(flower)
+
+        frog_place = self.gen.get_new_place("corner_place", False, False)
+        if frog_place is not None:
+            self.logger.info("add frog to {}".format(frog_place))
+            self.add_sprite(TFrog(self, self.grid_to_screen(frog_place)))
+
+        cat_place = self.gen.get_new_place("corner_place", True, True)
+        if cat_place is not None:
+            self.logger.info("add cat to {}".format(cat_place))
+            cat = TCat(self, self.grid_to_screen(cat_place))
+            self.add_sprite(cat)
+
+        milk_place = self.gen.get_new_place("corner_place", True, True)
+        if milk_place is not None:
+            self.logger.info("add milk to {}".format(milk_place))
+            milk = TMilk(self, self.grid_to_screen(milk_place))
+            self.add_sprite(milk)
+
         self.set_player_sprites_to_groups()
         self.draw_rooms()
 

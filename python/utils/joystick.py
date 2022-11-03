@@ -1,5 +1,5 @@
 import pygame
-from logging_wrapper import setup_logging
+from utils.logging_wrapper import setup_logging
 
 def init_joystick(logger):
     pygame.joystick.init()

@@ -25,6 +25,19 @@ def get_rect_intersection(rect1, rect2):
     height = min(rect1.bottom, rect2.bottom) - top
     return pygame.Rect(left, top, width, height)
 
+class TRoomPlace:
+    def __init__(self, parent, room_index, coord: Vector2, type="corner_place"):
+        self.parent = parent
+        self.room_index = room_index
+        self.coord = coord
+        self.type = type # can be center or corner
+
+    def is_in_closed_room(self):
+        return self.parent.room_to_doors[self.room_index] == 0
+    def is_in_start_room(self):
+        return self.parent.start_room_index == self.room_index
+
+
 
 class Generator:
     def __init__(self,  logger, rooms=2, door_width=8):
@@ -37,12 +50,24 @@ class Generator:
         self.maze_rooms = []
         self.main_room = None
         self.start_pos = None
-        self.room_centers_except_start_room = None
-        self.room_corners_except_start_room = None
+        self.room_places = None
         self.adjacent_rooms = None
         self.start_room_index = None
         self.exit_room_index = None
         self.room_to_doors = defaultdict(int)
+
+    def get_new_place(self, type, can_be_start_room=True, can_be_closed=True):
+        random.shuffle(self.room_places)
+        i: TRoomPlace
+        for i in self.room_places:
+            if i.is_in_start_room() and not can_be_start_room:
+                continue
+            if type != i.type:
+                continue
+            if not can_be_closed  and i.is_in_closed_room():
+                continue
+            self.room_places.remove(i)
+            return i.coord
 
     def _find_room_by_point(self, x, y):
         for index, room in enumerate(self.maze_rooms):
@@ -173,23 +198,40 @@ class Generator:
         for room_index, room in enumerate(self.maze_rooms):
             if self.room_to_doors[room_index] == 0 and room_index != self.exit_room_index:
                 self._build_path_to_exit(room_index)
+    def check_wall(self, x, y):
+        return x == self.grid_width or y == self.grid_height or self.grid[x][y] == WALL_TILE
 
-    def check_dead_top_left_corner(self, x, y):
-        return self.grid[x-1][y] == WALL_TILE and self.grid[x][y - 1] == WALL_TILE
+    def check_dead_top_left_corner(self, rect: pygame.Rect):
+        return self.check_wall(rect.left - 1, rect.top) and self.check_wall(rect.left, rect.top - 1)
+    def check_dead_top_right_corner(self, rect: pygame.Rect):
+        return self.check_wall(rect.right + 1, rect.top) and self.check_wall(rect.right, rect.top - 1)
+    def check_dead_bottom_left_corner(self, rect: pygame.Rect):
+        return self.check_wall(rect.left - 1, rect.bottom) and self.check_wall(rect.left, rect.bottom + 1)
+    def check_dead_bottom_right_corner(self, rect: pygame.Rect):
+        return self.check_wall(rect.right + 1, rect.bottom) and self.check_wall(rect.right, rect.bottom + 1)
 
     def _build_start(self):
         self.start_room_index = random.randint(0, self.inner_rooms_count - 1)
         self.start_pos = self.maze_rooms[self.start_room_index].center
 
+    def generate_dead_room_corners(self, room_index):
+        rect: pygame.Rect
+        rect = self.maze_rooms[room_index]
+        if self.check_dead_top_left_corner(rect):
+            yield Vector2(rect.topleft) + (1, 1)
+        if self.check_dead_top_right_corner(rect):
+            yield Vector2(rect.topright) + (-3, 1)
+        if self.check_dead_bottom_left_corner(rect):
+            yield Vector2(rect.bottomleft) + (1, -3)
+        if self.check_dead_bottom_right_corner(rect):
+            yield Vector2(rect.bottomright) + (-4, -3)
+
     def _build_possible_locations(self):
-        self.room_centers_except_start_room = list()
-        self.room_corners_except_start_room = list()
+        self.room_places = list()
         for i in range(len(self.maze_rooms)):
-            if i != self.start_room_index:
-                self.room_centers_except_start_room.append(self.maze_rooms[i].center)
-                if self.check_dead_top_left_corner(self.maze_rooms[i].left, self.maze_rooms[i].top) and \
-                    self.room_to_doors[i] > 0:
-                    self.room_corners_except_start_room.append(Vector2(self.maze_rooms[i].topleft) + (1, 1))
+            for coord in self.generate_dead_room_corners(i):
+                self.room_places.append(TRoomPlace(self, i, coord))
+            self.room_places.append(TRoomPlace(self, i, self.maze_rooms[i].center, "center_place"))
 
     def get_main_walls(self):
         return [pygame.Rect(0,  0, self.grid_width, 1),
