@@ -14,6 +14,7 @@ def create_circle():
 normal_sound = os.path.join('assets', 'sounds', 'bee_moving.wav')
 loaded_sound = os.path.join('assets', 'sounds', 'bee_moving_loaded.wav')
 
+
 class TBee(MazePlayer):
     def __init__(self, parent, speed=3, width=2, height=2):
         super().__init__(parent,
@@ -27,6 +28,7 @@ class TBee(MazePlayer):
         self.move_player = False
         self.rotate_player = False
         self.loaded_with_milk = False
+        self.loaded_with_bone = False
 
         self.shadow = pygame.sprite.Sprite()
         self.shadow.image = pygame.image.load(os.path.join('assets', 'sprites', 'bee.png'))
@@ -41,6 +43,17 @@ class TBee(MazePlayer):
     def unload_milk(self):
         self.change_music(normal_sound)
         self.loaded_with_milk = False
+
+    def load_bone(self):
+        self.change_music(loaded_sound)
+        self.loaded_with_bone = True
+
+    def unload_bone(self):
+        self.change_music(normal_sound)
+        self.loaded_with_bone = False
+
+    def is_loaded(self):
+        return self.loaded_with_bone or self.loaded_with_milk
 
     def get_sound_success(self):
         return pygame.mixer.Sound(os.path.join('assets', 'sounds', 'success.wav'))

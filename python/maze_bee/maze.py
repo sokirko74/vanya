@@ -12,9 +12,10 @@ from flower import TFlower
 from frog import TFrog
 from cat import TCat
 from milk import TMilk
+from dog import TDog
+from bone import TBone
 
 
-import random
 import pygame
 import argparse
 
@@ -80,7 +81,6 @@ class TMaze:
         self.chan_2 = pygame.mixer.Channel(2)
         self.font = pygame.font.SysFont('Impact', 20, italic=False, bold=True)
         self.player = TBee(self, speed=speed, width=2, height=2)
-        self.cat = None
         self.joystick = None
         if use_joystick:
             self.joystick = init_joystick(self.logger)
@@ -125,6 +125,8 @@ class TMaze:
     def set_player_initial(self):
         pos = self.grid_to_screen(self.gen.start_pos)
         self.player.set_initial_position(pos)
+        self.player.loaded_with_milk = False
+        self.player.loaded_with_bone = False
 
     def set_player_sprites_to_groups(self):
         self.all_sprites.add(self.player)
@@ -165,6 +167,18 @@ class TMaze:
             self.logger.info("add milk to {}".format(milk_place))
             milk = TMilk(self, self.grid_to_screen(milk_place))
             self.add_sprite(milk)
+
+        dog_place = self.gen.get_new_place("corner_place", True, True)
+        if dog_place is not None:
+            self.logger.info("add dog to {}".format(dog_place))
+            dog = TDog(self, self.grid_to_screen(dog_place))
+            self.add_sprite(dog)
+
+        bone_place = self.gen.get_new_place("corner_place", True, True)
+        if bone_place is not None:
+            self.logger.info("add milk to {}".format(bone_place))
+            bone = TBone(self, self.grid_to_screen(bone_place))
+            self.add_sprite(bone)
 
         self.set_player_sprites_to_groups()
         self.draw_rooms()
@@ -233,7 +247,7 @@ class TMaze:
                 screen_text = font.render('ПОБЕДА!', True, (0, 200, 0))
                 self.screen.blit(screen_text, (250, 280))
 
-            #   pygame.draw.rect(self.screen, TColors.black, self.player.rect, width=1)
+            #   pygame.draw.rect(self.screen, TColors.black, self.player            .rect, width=1)
             #pygame.draw.rect(self.screen, TColors.black, self.player.image.get_rect(), width=1)
             self.player.draw_shadow()
             pygame.display.flip()

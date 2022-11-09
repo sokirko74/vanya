@@ -26,3 +26,4 @@ class TFrog(pygame.sprite.Sprite):
                 self.parent.chan_2.play(self.sound_frog)
         self.contacted = True
         self.parent.open_closed_rooms()
+        self.kill()
