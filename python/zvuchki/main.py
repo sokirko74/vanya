@@ -268,30 +268,41 @@ class TZvuchki(tk.Frame):
 
     def play_youtube(self, url, max_duration):
         try:
+            print("play {}".format(url))
             browser = webdriver.Chrome()
+            browser.set_page_load_timeout(3)
             browser.get(url)
-
+        except WebDriverException as exp:
+            print("exception: {}".format(exp))
+            pass
+        try:
+            print ("sleep 0.2 sec")
+            time.sleep(0.2)
             #WebDriverWait(browser, 15).until(EC.element_to_be_clickable(
-            #    (By.XPATH, "//button[@aria-label='Play']"))).click()
-            WebDriverWait(browser, 15).until(EC.element_to_be_clickable(
-                    (By.XPATH, "//button[@aria-label='Смотреть']"))).click()
-            browser.maximize_window()
-            print ("sleep 1 sec")
-            time.sleep(1)
+            #    (By.XPATH, "//button[@aria-label='Pla2y']"))).click()
+            #№WebDriverWait(browser, 15).until(EC.element_to_be_clickable(
+            #        (By.XPATH, "//button[@aria-label='Смотреть']"))).click()
+
+            #browser.maximize_window()
+            #print ("sleep 1 sec")
+            #time.sleep(1)
             element = browser.switch_to.active_element
+            print ("send к")
+            element.send_keys("k")
+            time.sleep(0.3)
+
             print ("send f")
             element.send_keys("f")
-            #print ("send к")
-            #element.send_keys("k")
+
+
             print("max_duration = {}".format(max_duration))
             time.sleep(max_duration)
             browser.close()
             time.sleep(1)
             browser.quit()
         except WebDriverException as exp:
-            print ("exception: {}".format(exp))
+            print("exception: {}".format(exp))
             pass
-
     def play_word(self, w):
         key = w.lower()
         u, t = URLS.get(key, (None, None))
@@ -345,11 +356,11 @@ class TZvuchki(tk.Frame):
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--not-fullscreen", dest='fullscreen', default=True, action="store_false")
+    parser.add_argument("--fullscreen", dest='fullscreen', default=False, action="store_true")
     parser.add_argument("--row1", dest='row1', default='')
     parser.add_argument("--row2", dest='row2', default='МПАВЯЛОНЕ𝄞 ')
-    parser.add_argument("--font-size", dest='font_size', default=40, type=int)
-    parser.add_argument("--max-play-seconds", dest='max_play_seconds', default=120, type=int)
+    parser.add_argument("--font-size", dest='font_size', default=100, type=int)
+    parser.add_argument("--max-play-seconds", dest='max_play_seconds', default=240, type=int)
     return parser.parse_args()
 
 
