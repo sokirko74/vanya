@@ -188,7 +188,23 @@ URLS = {
   'багги1': ('https://www.youtube.com/watch?v=M_VZOFzCaXw', 180),
   'нива2': ('https://www.youtube.com/watch?v=DZsTATJB6og', 300),
   'нива3': ('https://www.youtube.com/watch?v=hkXcvofU8MQ', 240),
-  'лада31': ('https://www.youtube.com/watch?v=tCqhCSJWTic', 240)
+  'лада31': ('https://www.youtube.com/watch?v=tCqhCSJWTic', 240),
+
+  'победа1': ('https://www.youtube.com/watch?v=Pb8Y63qQ6Qo', 83),
+  'фиат2': ('https://www.youtube.com/watch?v=J_ALQl2MEkg', 240),
+   'брутус1': ('https://www.youtube.com/watch?v=_3bcwTeCMNM', 240),
+    'старики1': ('https://www.youtube.com/watch?v=K72dKFcDTAw', 340),
+
+# не слушал
+    'старики2': ('https://www.youtube.com/watch?v=9PSw4UsDv-I', 340),
+    'старики3': ('https://www.youtube.com/watch?v=m1hlBO02Akk', 240),
+   'дизель1': ('https://www.youtube.com/watch?v=gTVc-9bMxOE', 200),
+    'дизель2': ('https://www.youtube.com/watch?v=AdAiVIs0VZk', 360),
+
+    'дизель3': ('https://www.youtube.com/watch?v=_lJyaAhn2gA', 360),
+    'дизель21': ('https://www.youtube.com/watch?v=T3gFDP3-xDI', 360),
+    'начало1': ('https://www.youtube.com/watch?v=C3p55J-VA5k', 250),
+    'трактор21': ('https://www.youtube.com/watch?v=Y-2H642XA-o', 180)
 
 }
 
@@ -347,7 +363,9 @@ class TZvuchki(tk.Frame):
         self.player.play()
 
     def print_tasks(self):
-        print(">>>> " + str(self.left_queries))
+        s = list(self.left_queries)
+        s.sort()
+        print(">>>> " + str(s))
 
     def main_loop(self):
         self.print_tasks()
@@ -360,7 +378,7 @@ def parse_args():
     parser.add_argument("--row1", dest='row1', default='')
     parser.add_argument("--row2", dest='row2', default='МПАВЯЛОНЕ𝄞 ')
     parser.add_argument("--font-size", dest='font_size', default=100, type=int)
-    parser.add_argument("--max-play-seconds", dest='max_play_seconds', default=240, type=int)
+    parser.add_argument("--max-play-seconds", dest='max_play_seconds', default=540, type=int)
     return parser.parse_args()
 
 
@@ -370,7 +388,5 @@ if __name__ == "__main__":
 
 
 
-#  максимизация экрана
-# backspace  на 3 линию
-#  не менять размер кнопок
-#жигули, кия,лада
+
+#победа и еще что-то, подумать о лайках и свободном поиске.
