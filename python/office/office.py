@@ -3,10 +3,12 @@ import sys
 import argparse
 import tkinter as tk
 import tkinter.font as tkFont
+from tkinter import ttk
 import time
 import vlc
+import random
 from functools import partial
-sys.path.append(os.path.join(os.path.dirname(__file__), '../common'))
+sys.path.append(os.path.join(os.path.dirname(__file__), '../utils'))
 from logging_wrapper import setup_logging
 
 BLACK = (0, 0, 0)
@@ -16,7 +18,11 @@ GREEN = (0, 255, 0)
 BLUE = (0, 0, 255)
 YELLOW = (228, 155, 0)
 
-
+GOAL_WORDS = [
+    "МАМА",
+    "ПАПА",
+    "ВАНЯ"
+]
 
 class TVanyaOffice(tk.Frame):
     def __init__(self, master=None):
@@ -41,71 +47,83 @@ class TVanyaOffice(tk.Frame):
             self.main_wnd_width = 1200
             self.main_wnd_height = 800
             self.master.geometry("{}x{}".format(self.main_wnd_width, self.main_wnd_height))
-        self.player = None
+        self.audioplayer = None
         self.editor_font = ("DejaVu Sans Mono", self.args.font_size+20)
-        self.key_font =  tkFont.Font(family="DejaVu Sans Mono", size=self.args.font_size)
+        self.goal_word = tk.StringVar()
+        self.goal_words_combobox = tk.ttk.Combobox(
+            self.master, width=10, textvariable=self.goal_word, font=self.editor_font)
+        self.goal_words_combobox['values'] = tuple(GOAL_WORDS)
+        self.new_game()
+        self.last_word = ""
+        self.fail_count = 0
+        self.victory_count = 0
+        self.goal_words_combobox.pack(side=tk.TOP)
         self.text_widget = tk.Text(self.master,
-                                   width=100,
+                                   width=20,
                                    height=1,
                                    font=self.editor_font)
         self.text_widget.pack(side=tk.TOP)
+        self.text_widget.focus_set()
 
-        self.keys = dict()
-        self.last_char = None
-        self.last_char_timestamp = time.time()
-        if len(self.args.row2) > 0:
-            self.add_keyboard_row(self.args.row2 + "𝄞")
-        if len(self.args.row1) > 0:
-            self.add_keyboard_row(self.args.row1)
+        self.log_widget = tk.Text(self.master , width=100, height=3)
+        self.log_widget.pack(side=tk.BOTTOM)
+        self.master.bind('<KeyPress>', self.keyboard_click)
 
-    def add_keyboard_row(self, chars):
-        char_list = list(c for c in chars)
-        key_width = 1
-        keyboard_row = tk.PanedWindow(self.master)
-        self.last_char_timestamp = time.time()
-        for c in char_list:
-            button = tk.Button(keyboard_row,
-                               #background="black",
-                               text=c, width=key_width, relief="raised", height=1,
-                               font=self.key_font,
-                               command=partial(self.keyboard_click, c))
-            self.keys[c] = button
-            button.pack(side=tk.BOTTOM, expand=False)
-            keyboard_row.add(button)
+    def new_game(self):
+        last_goal = self.goal_word.get()
+        words = list(GOAL_WORDS)
+        if last_goal in words:
+            words.remove(last_goal)
+        w = random.choice(words)
+        self.goal_words_combobox.set(w)
+        self.goal_word.set(w)
+        self.goal_words_combobox.update()
 
-        keyboard_row.pack(fill=tk.BOTH, side=tk.BOTTOM, expand=False)
+        self.fail_count = 0
 
-    def play_word(self, w):
-        if w.lower() == "камаз":
-            self.play_file("kamaz01.mp3")
+    def print_to_log(self, m):
+        self.log_widget.insert(tk.END, m)
+        self.log_widget.see(tk.END)
+        self.logger.info(m)
 
-    def keyboard_click(self, char):
-        if char == '𝄞':
-            s = self.text_widget.get(1.0, tk.END).strip("\n")
-            self.play_word(s)
-        elif char == ' ':  #backspace
-            s = self.text_widget.get(1.0, tk.END).strip("\n")
-            if len(s) > 0:
-                #self.text_widget.delete(float(len(s)), tk.END)
-                self.text_widget.delete(1.0, tk.END)
-                self.text_widget.insert(tk.END, s[:-1])
-                s1 = self.text_widget.get(1.0, tk.END).strip("\n")
+    def keyboard_click(self, event):
+        ch = event.char.upper()
+        new_word = self.text_widget.get(1.0, tk.END).strip().upper()
+        if event.char == '\r':
+            self.play_file("delete_all.wav")
+            self.text_widget.delete('1.0', tk.END)
+            self.fail_count = 0
+            return
+        
+        if self.last_word == new_word:
+            return
+        self.last_word = new_word
+        if new_word == "":
+            return
+        goal_word = self.goal_word.get()
+        if goal_word == new_word:
+            self.text_widget.update()
+            self.victory_count += 1
+            self.print_to_log("victory count = {}\n".format(self.victory_count))
+            self.play_file("victory.wav")
+            time.sleep(5)
+            self.text_widget.delete('1.0', tk.END)
+            self.new_game()
+        elif goal_word.startswith(new_word):
+            #self.text_widget.insert('end', ch)
             self.play_file("key_sound.wav")
         else:
-            ts = time.time()
-            if ts - self.last_char_timestamp < 1 and char == self.last_char:
-                return
-            self.last_char_timestamp = ts
-            self.last_char = char
-            self.text_widget.insert(tk.END, char)
-            self.play_file("key_sound.wav")
+            if len(ch) == 1 and ord(ch) >= 32:
+                self.fail_count += 1
+                self.play_file("key_fail.wav")
+                self.print_to_log("fail count = {}\n".format(self.fail_count))
 
     def play_file(self, file_path):
         file_path = os.path.join(os.path.dirname(__file__), "sound", file_path)
-        if self.player is not None:
-            self.player.stop()
-        self.player = vlc.MediaPlayer(file_path)
-        self.player.play()
+        if self.audioplayer is not None:
+            self.audioplayer.stop()
+        self.audioplayer = vlc.MediaPlayer(file_path)
+        self.audioplayer.play()
 
     def main_loop(self):
         self.master.mainloop()
@@ -114,9 +132,7 @@ class TVanyaOffice(tk.Frame):
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--not-fullscreen", dest='fullscreen', default=True, action="store_false")
-    parser.add_argument("--row1", dest='row1', default='')
-    parser.add_argument("--row2", dest='row2', default='МПАВЯЛОНЕ𝄞 ')
-    parser.add_argument("--font-size", dest='font_size', default=40, type=int)
+    parser.add_argument("--font-size", dest='font_size', default=100, type=int)
     return parser.parse_args()
 
 
