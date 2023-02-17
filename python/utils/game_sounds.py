@@ -23,9 +23,11 @@ class TSounds:
 
     def play_sound(self, sound_type, loops=0, volume=None):
         if self.enable_sounds:
+            if volume is not None:
+                self.sounds[sound_type].set_volume(volume)
             self.sounds[sound_type].play(loops=loops)
 
-    def stop_all_and_play(self, sound_type, loops=1000):
+    def stop_all_and_play(self, sound_type, loops=1000, volume=None):
         self.stop_sounds()
-        self.play_sound(sound_type, loops)
+        self.play_sound(sound_type, loops=loops, volume=volume)
 

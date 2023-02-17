@@ -5,6 +5,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import WebDriverException
+from selenium.webdriver.common.keys import Keys
 
 import os
 import argparse
@@ -16,6 +17,7 @@ from functools import partial
 
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 from utils.logging_wrapper import setup_logging
+
 
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
@@ -34,6 +36,12 @@ class TChars:
     BACKSPACE = '⌫'
     PLAY = '𝄞'
 
+CARS =  { "зил", "камаз", "урал", "газ", "даф", "скания", "лиаз", "нива", "ситроен",
+          "форд", "порш", "авео", "круз", "лачети", "ваз4", "лада", "ауди", "мерседес",
+         "танк", "субару","буханка", "смарт", "мазда", "тойота", "сааб", "волга", "москвич",
+         "хонда", "плимут", "ока", "туарег", "мицубиси", "ферари", "иж", "ивеко", "щшхман",
+          "кия", "портер", "уаз", "победа", "понтиак"
+}
 
 URLS = {
     'зил1': ('https://www.youtube.com/watch?v=DyiqVFVJbYg', 70),
@@ -230,6 +238,68 @@ URLS = {
 
 }
 
+class TBrowser:
+    def __init__(self):
+        self.browser = None
+
+    def start_browser(self):
+        try:
+            self.browser = webdriver.Chrome()
+            self.browser.set_page_load_timeout(5)
+        except WebDriverException as exp:
+            print("exception: {}".format(exp))
+
+    def close_browser(self):
+        self.browser.close()
+        time.sleep(1)
+        self.browser.quit()
+
+    def play_youtube(self, url, max_duration):
+        try:
+            print("play {}".format(url))
+            self.browser.get(url)
+            print ("sleep 0.2 sec")
+            time.sleep(0.8)
+
+            element = self.browser.switch_to.active_element
+            print ("send к")
+            element.send_keys("k")
+
+            time.sleep(0.5)
+            print ("send f")
+            element.send_keys("f")
+
+            #time.sleep(0.5)
+            #print ("send p")
+            #element.send_keys("p")
+
+            print("max_duration = {}".format(max_duration))
+            time.sleep(max_duration)
+            return True
+        except WebDriverException as exp:
+            print("exception: {}".format(exp))
+            return False
+
+    def _parse_serp(self):
+        search_results = []
+        for element in self.browser.find_elements(By.TAG_NAME, "a"):
+            url = element.get_attribute("href")
+            if url is not None and url != '#' and url.startswith('http'):
+                if "youtube" in url:
+                    search_results.append(url)
+        return search_results
+
+    def send_request(self, search_engine_request):
+        self.browser.get("https://www.google.ru/videohp?hl=ru")
+        time.sleep(3)
+        element = self.browser.switch_to.active_element
+        element.send_keys(search_engine_request)
+        time.sleep(1)
+        element.send_keys(Keys.RETURN)
+        time.sleep(3)
+        search_results = self._parse_serp()
+        return search_results
+
 
 class TZvuchki(tk.Frame):
     def __init__(self, master=None):
@@ -276,17 +346,18 @@ class TZvuchki(tk.Frame):
         self.init_all_abc_keyboard()
         self.left_queries = set(URLS.keys())
 
-
     def init_sample_abc_keyboard(self):
         #self.add_keyboard_row(1, "БЦХ123" + TChars.PLAY + TChars.BACKSPACE )
         self.add_keyboard_row(1, "БЦХ1234" + TChars.PLAY + TChars.BACKSPACE)
         self.add_keyboard_row(2, "ИКТЗГУРДСФЖ")
         self.add_keyboard_row(3, "МПАВЯЛОНЕШЬ")
+
     def init_all_abc_keyboard(self):
         self.add_keyboard_row(1, "123456" + TChars.PLAY + TChars.BACKSPACE)
         self.add_keyboard_row(2, "ЙЦУКЕНГШЩЗХ")
         self.add_keyboard_row(3, "ФЫВАПРОЛДЖЭ")
         self.add_keyboard_row(4, "ЯЧСМИТЬБЮ")
+
     def add_keyboard_row(self, row_index, chars):
         self.last_char_timestamp = time.time()
         column_index = 0
@@ -305,7 +376,6 @@ class TZvuchki(tk.Frame):
                 background = "red"
             font = self.key_font
             if char == "Й" or char == "Ё":
-                print("aaaaaaaaaaaa")
                 font = self.key_font_umlaut
 
             button = tk.Button(self.master,
@@ -321,57 +391,54 @@ class TZvuchki(tk.Frame):
             button.grid(column=column_index, row=row_index, columnspan=colspan, padx=padx, pady=2)
             column_index += colspan
 
-    def play_youtube(self, url, max_duration):
-        try:
-            print("play {}".format(url))
-            browser = webdriver.Chrome()
-            browser.set_page_load_timeout(3)
-            browser.get(url)
-        except WebDriverException as exp:
-            print("exception: {}".format(exp))
-            pass
-        try:
-            print ("sleep 0.2 sec")
-            time.sleep(0.2)
-            #WebDriverWait(browser, 15).until(EC.element_to_be_clickable(
-            #    (By.XPATH, "//button[@aria-label='Pla2y']"))).click()
-            #№WebDriverWait(browser, 15).until(EC.element_to_be_clickable(
-            #        (By.XPATH, "//button[@aria-label='Смотреть']"))).click()
+    def get_url_video_from_google(self, car, position):
+        browser = TBrowser()
+        browser.start_browser()
+        search_results = browser.send_request("тест драйв {}".format(car))
+        browser.close_browser()
+        if position > 0:
+            position -= 1
+        if position >= len(search_results):
+            position = len(search_results) - 1
+        return search_results[position]
 
-            #browser.maximize_window()
-            #print ("sleep 1 sec")
-            #time.sleep(1)
-            element = browser.switch_to.active_element
-            print ("send к")
-            element.send_keys("k")
-            time.sleep(0.3)
+    def play_youtube_video(self, url, seconds):
+        for try_index in range(2):
+            browser = TBrowser()
+            browser.start_browser()
+            res = browser.play_youtube(url, seconds)
+            browser.close_browser()
+            if res:
+                break
 
-            print ("send f")
-            element.send_keys("f")
-
-
-            print("max_duration = {}".format(max_duration))
-            time.sleep(max_duration)
-            browser.close()
-            time.sleep(1)
-            browser.quit()
-        except WebDriverException as exp:
-            print("exception: {}".format(exp))
-            pass
-
-    def play_word(self, word):
-        add_sec = 0
-        if len(word) > 1 and word[-1].upper() == "Д" and word[-2].isdigit():
-            add_sec = 120
-            word = word[:-1]
-
-        key = word.lower()
-        if key not in URLS:
+    def play_test_drive(self, car_and_pos, add_seconds):
+        seconds = 30 + add_seconds
+        if car_and_pos[-1] != 'Т':
             return False
+        else:
+            car_and_pos = car_and_pos[:-1]
+        if len(car_and_pos) == 0 or not car_and_pos[-1].isdigit():
+            return False
+        position = int(car_and_pos[-1])
+        car = car_and_pos[:-1]
+        if car.lower() not in CARS:
+            return False
+        url = self.get_url_video_from_google(car, position)
+        self.play_youtube_video(url, seconds)
+        return True
+
+    def play_request(self, request):
+        add_sec = 0
+        if len(request) > 1 and request[-1].upper() == "Д" and request[-2].isdigit():
+            add_sec = 120
+            request = request[:-1]
+        key = request.lower()
+        if key not in URLS:
+            return self.play_test_drive(request, add_sec)
         url, timeout = URLS[key]
         if self.args.max_play_seconds < timeout:
             timeout = self.args.max_play_seconds
-        self.play_youtube(url, timeout + add_sec)
+        self.play_youtube_video(url, timeout + add_sec)
         if key in self.left_queries:
             self.left_queries.remove(key)
         self.print_tasks()
@@ -382,7 +449,7 @@ class TZvuchki(tk.Frame):
             pass
         elif char == TChars.PLAY:
             s = self.text_widget.get(1.0, tk.END).strip("\n")
-            if self.play_word(s):
+            if self.play_request(s):
                 self.text_widget.delete(1.0, tk.END)
         elif char == TChars.BACKSPACE:  #backspace
             s = self.text_widget.get(1.0, tk.END).strip("\n")

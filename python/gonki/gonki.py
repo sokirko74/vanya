@@ -1,3 +1,7 @@
+import sys
+import os
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+
 from utils.logging_wrapper import setup_logging
 from utils.racing_wheel import TRacingWheel
 from utils.colors import TColors
@@ -470,7 +474,7 @@ class TRacesGame:
         self.redraw_background()
         self.init_new_other_car()
         save_is_on_road_side = False
-        self.sounds.stop_all_and_play(self.other_car.sound)
+        self.sounds.stop_all_and_play(self.other_car.sound, 100)
         x_change = 0
         while not self.stats.game_over:
             assert len(self.obstacle_sprites) <= 3
