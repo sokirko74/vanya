@@ -159,7 +159,7 @@ URLS = {
  'скания3': ('https://www.youtube.com/watch?v=KmcWO9EzWjk', 180),
     'шевроле2': ('https://www.youtube.com/watch?v=GolxWT8wczU', 130),
     'даф12': ('https://www.youtube.com/watch?v=e9EUmQBO498', 200),
-    'портер': ('https://www.youtube.com/watch?v=tK_NbKKLAd8',140),
+    'портер1': ('https://www.youtube.com/watch?v=tK_NbKKLAd8',140),
     'самолет2': ('https://www.youtube.com/watch?v=Nf6NkZHCyF8', 120),
 
     'мицубиси2':('https://www.youtube.com/watch?v=78ZO6Nsj_uk&t=129s', 180),
@@ -203,8 +203,30 @@ URLS = {
 
     'дизель3': ('https://www.youtube.com/watch?v=_lJyaAhn2gA', 360),
     'дизель21': ('https://www.youtube.com/watch?v=T3gFDP3-xDI', 360),
-    'начало1': ('https://www.youtube.com/watch?v=C3p55J-VA5k', 250),
-    'трактор21': ('https://www.youtube.com/watch?v=Y-2H642XA-o', 180)
+    'машина1': ('https://www.youtube.com/watch?v=C3p55J-VA5k', 250),
+    'трактор21': ('https://www.youtube.com/watch?v=Y-2H642XA-o', 180),
+
+     'мотор1': ('https://www.youtube.com/watch?v=c1eiuw3tsTE', 300),
+     'мотор2': ('https://www.youtube.com/watch?v=6RCjsS4JaJ8', 300),
+     'мотор3': ('https://www.youtube.com/watch?v=CoR7sLmOklY', 180),
+     'мотор12': ('https://www.youtube.com/watch?v=yFIpb63WMR0', 300),
+
+    'стук1': ('https://www.youtube.com/watch?v=gst_ODoP3eI', 180),
+    'стук2': ('https://www.youtube.com/watch?v=7d9j137Y3dw', 180),
+
+    'старики11': ('https://www.youtube.com/watch?v=yXSW4T5ys_E', 120),
+    'старики12': ('https://www.youtube.com/watch?v=D6jR-FLYiUs&t=180s', 240),
+    'гигант1':('https://www.youtube.com/watch?v=q6iOtsS6_zg', 200),
+    'фабрика1':('https://www.youtube.com/watch?v=kxHmGn50nmk', 240),
+
+    'старики13': ('https://www.youtube.com/watch?v=x3032A5nBRc&t=180s', 300),
+    'старики21': ('https://www.youtube.com/watch?v=M1jHZIdt1x8', 300),
+    'стук3': ('https://www.youtube.com/watch?v=l3r_28k4nFo', 240),
+    'мото1': ('https://www.youtube.com/watch?v=n-b-XjrgYTY', 240),
+    'мото2': ('https://www.youtube.com/watch?v=mnjjxLC2WKQ', 300),
+
+    'ваз41': ('https://www.youtube.com/watch?v=pDVrRaJqGio', 350),
+    'ваз42': ("https://www.youtube.com/watch?v=M_ZGFwWSsfA", 90)
 
 }
 
@@ -235,6 +257,7 @@ class TZvuchki(tk.Frame):
         self.player = None
         self.editor_font = ("DejaVu Sans Mono", self.args.font_size+20)
         self.key_font = tkFont.Font(family="DejaVu Sans Mono", size=self.args.font_size)
+        self.key_font_umlaut = tkFont.Font(family="DejaVu Sans Mono", size=self.args.font_size - 20)
         self.master.grid_columnconfigure((0, 1, 2, 4, 5, 6, 7, 8, 9, 10, 11, 12 ), weight=1)
         self.master.grid_rowconfigure(0, weight=1)
         self.master.grid_rowconfigure((1, 2, 3), weight=2)
@@ -249,37 +272,53 @@ class TZvuchki(tk.Frame):
         self.last_char = None
         self.last_char_timestamp =   time.time()
         self.keyboard_type = TKeyboardType.ABC
-        self.init_abc_keyboard()
+        #self.init_sample_abc_keyboard()
+        self.init_all_abc_keyboard()
         self.left_queries = set(URLS.keys())
 
-    def init_abc_keyboard(self):
-        self.add_keyboard_row(1, "БЦХ123" + TChars.PLAY + TChars.BACKSPACE )
+
+    def init_sample_abc_keyboard(self):
+        #self.add_keyboard_row(1, "БЦХ123" + TChars.PLAY + TChars.BACKSPACE )
+        self.add_keyboard_row(1, "БЦХ1234" + TChars.PLAY + TChars.BACKSPACE)
         self.add_keyboard_row(2, "ИКТЗГУРДСФЖ")
         self.add_keyboard_row(3, "МПАВЯЛОНЕШЬ")
-
+    def init_all_abc_keyboard(self):
+        self.add_keyboard_row(1, "123456" + TChars.PLAY + TChars.BACKSPACE)
+        self.add_keyboard_row(2, "ЙЦУКЕНГШЩЗХ")
+        self.add_keyboard_row(3, "ФЫВАПРОЛДЖЭ")
+        self.add_keyboard_row(4, "ЯЧСМИТЬБЮ")
     def add_keyboard_row(self, row_index, chars):
         self.last_char_timestamp = time.time()
         column_index = 0
-        for c in chars:
+        for char in chars:
             colspan = 1
             width = 1
             background = None
-            if c == TChars.PLAY:
+            if char == TChars.PLAY:
                 colspan *= 2
                 width *= 2
+                background = "lightgreen"
 
-            if c == TChars.BACKSPACE:
+            if char == TChars.BACKSPACE:
                 colspan *= 3
                 width *= 3
                 background = "red"
+            font = self.key_font
+            if char == "Й" or char == "Ё":
+                print("aaaaaaaaaaaa")
+                font = self.key_font_umlaut
 
             button = tk.Button(self.master,
                                background=background,
-                               text=c, width=width, relief="raised", height=1,
-                               font=self.key_font,
-                               command=partial(self.keyboard_click, c))
-            self.keys[c] = button
-            button.grid(column=column_index, row=row_index, columnspan=colspan, padx=0, pady=2)
+                               text=char, width=width, relief="raised", height=1,
+                               font=font,
+                               command=partial(self.keyboard_click, char))
+            self.keys[char] = button
+            if column_index == 0:
+                padx = (30, 0)
+            else:
+                padx = 0
+            button.grid(column=column_index, row=row_index, columnspan=colspan, padx=padx, pady=2)
             column_index += colspan
 
     def play_youtube(self, url, max_duration):
@@ -319,18 +358,24 @@ class TZvuchki(tk.Frame):
         except WebDriverException as exp:
             print("exception: {}".format(exp))
             pass
-    def play_word(self, w):
-        key = w.lower()
-        u, t = URLS.get(key, (None, None))
-        if u is not None:
-            if  self.args.max_play_seconds < t:
-                t = self.args.max_play_seconds
-            self.play_youtube(u, t)
-            if key in self.left_queries:
-                self.left_queries.remove(key)
-            self.print_tasks()
-            return True
-        return False
+
+    def play_word(self, word):
+        add_sec = 0
+        if len(word) > 1 and word[-1].upper() == "Д" and word[-2].isdigit():
+            add_sec = 120
+            word = word[:-1]
+
+        key = word.lower()
+        if key not in URLS:
+            return False
+        url, timeout = URLS[key]
+        if self.args.max_play_seconds < timeout:
+            timeout = self.args.max_play_seconds
+        self.play_youtube(url, timeout + add_sec)
+        if key in self.left_queries:
+            self.left_queries.remove(key)
+        self.print_tasks()
+        return True
 
     def keyboard_click(self, char):
         if char == ' ':
@@ -390,3 +435,7 @@ if __name__ == "__main__":
 
 
 #победа и еще что-то, подумать о лайках и свободном поиске.
+# музыкальный редактор, латинские буквы, диезы и бемоли, цифры обозначают октаву, длительность стрелками
+# рисуем https://lilypond.org/doc/v2.23/Documentation/notation/direction-and-placement
+#  для нее есть https://pypi.org/project/abjad/
+# ваня вводит мелодию буквами, цифры и
