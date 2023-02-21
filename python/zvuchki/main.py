@@ -1,11 +1,13 @@
 import sys
 
+import selenium.common.exceptions
 from selenium import webdriver
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
-from selenium.common.exceptions import WebDriverException
+from selenium.common.exceptions import WebDriverException, TimeoutException
 from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.common.action_chains import ActionChains, ActionBuilder
 
 import os
 import argparse
@@ -14,6 +16,7 @@ import tkinter.font as tkFont
 import time
 import vlc
 from functools import partial
+import json
 
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 from utils.logging_wrapper import setup_logging
@@ -36,11 +39,26 @@ class TChars:
     BACKSPACE = '⌫'
     PLAY = '𝄞'
 
-CARS =  { "зил", "камаз", "урал", "газ", "даф", "скания", "лиаз", "нива", "ситроен",
-          "форд", "порш", "авео", "круз", "лачети", "ваз4", "лада", "ауди", "мерседес",
-         "танк", "субару","буханка", "смарт", "мазда", "тойота", "сааб", "волга", "москвич",
-         "хонда", "плимут", "ока", "туарег", "мицубиси", "ферари", "иж", "ивеко", "щшхман",
-          "кия", "портер", "уаз", "победа", "понтиак"
+
+CARS =  { 'авео', 'ауди',
+          'бмв', 'бумер', 'буханка',
+          'ваз', 'ваз3', 'ваз4', 'ваз5', 'волга',
+          'газ', 'газель', 'даф',
+          'запорожец', 'зил',
+          'ивеко', 'иж',
+          'камаз', 'кия', 'круз',
+          'лада', 'лачети', 'лиаз',
+          'мазда', 'мерседес', 'мицубиси', 'москвич',
+          'нива',
+          'ока',
+          'плимут', 'победа', 'понтиак', 'портер', 'порш',
+          'сааб', 'ситроен', 'скания', 'смарт', 'субару', 'сузуки',
+          'танк', 'тойота', 'туарег',
+          'уаз', 'урал',
+          'ферари', 'фиат', 'форд',
+          'хонда',
+          'чайка',
+          'щахман']
 }
 
 URLS = {
@@ -238,32 +256,102 @@ URLS = {
 
 }
 
+
 class TBrowser:
     def __init__(self):
         self.browser = None
+        self.cache_path = "search_request_cache.txt"
+        self.all_requests = dict()
+        if os.path.exists(self.cache_path):
+            with open(self.cache_path) as inp:
+                self.all_requests = json.load(inp)
+
+    def init_chrome(self):
+        options = webdriver.ChromeOptions()
+        options.add_argument("start-maximized")
+        options.add_argument("enable-automation")
+        options.add_argument("--no-sandbox")
+        options.add_argument("--disable-dev-shm-usage")
+        options.add_argument("--disable-browser-side-navigation")
+        options.add_argument("--disable-gpu")
+        self.browser = webdriver.Chrome(options=options)
+        self.browser.set_page_load_timeout(10)
+        self.browser.set_script_timeout(30)
+        self.browser.set_page_load_timeout(10)
+        self.browser.set_script_timeout(30)
+    def init_firefox(self):
+        opts =  webdriver.FirefoxOptions()
+        #opts.log.level = "trace"
+        self.browser = webdriver.Firefox(
+                options=opts,
+                executable_path='/snap/bin/geckodriver',
+                #service_log_path=os.path.join(os.path.dirname(__file__), 'geckodriver.log')
+                    service_log_path=None
+                )
 
     def start_browser(self):
-        try:
-            self.browser = webdriver.Chrome()
-            self.browser.set_page_load_timeout(5)
-        except WebDriverException as exp:
-            print("exception: {}".format(exp))
+        #self.init_firefox()
+        self.init_chrome()
 
     def close_browser(self):
         self.browser.close()
         time.sleep(1)
         self.browser.quit()
 
+    def mouse_click(self, x, y):
+        self.browser.execute_script('el = document.elementFromPoint({}, {}); el.click();'.format(x, y))
+
+    def send_ctrl_end(self):
+        ActionChains(self.browser) \
+            .key_down(Keys.CONTROL) \
+            .key_down(Keys.END) \
+            .perform()
+
+    def send_ctrl_home(self):
+        ActionChains(self.browser) \
+            .key_down(Keys.CONTROL) \
+            .key_down(Keys.HOME) \
+            .perform()
+
+    def navigate(self, url):
+        try:
+            self.browser.get(url)
+        except selenium.common.exceptions.TimeoutException as e:
+            print(e)
+            time.sleep(2)
+
     def play_youtube(self, url, max_duration):
         try:
+            time.sleep(1)
             print("play {}".format(url))
-            self.browser.get(url)
-            print ("sleep 0.2 sec")
-            time.sleep(0.8)
+            self.navigate(url)
+
+            print ("sleep 3 sec")
+            time.sleep(3)
+
+            #self.send_ctrl_end()
+            #time.sleep(1)
+
+            #self.send_ctrl_home()
+            #time.sleep(1)
 
             element = self.browser.switch_to.active_element
+            time.sleep(1)
+
+            #print("send Tab")
+            #element.send_keys(Keys.TAB)
+            #time.sleep(1)
+
+            #self.browser.execute_script("window.scrollTo(0, 100)")
+            #time.sleep(1)
+
+            #element = self.browser.switch_to.active_element
+            #time.sleep(1)
+            #element = self.browser.find_elements('body')
+
             print ("send к")
             element.send_keys("k")
+            time.sleep(1)
 
             time.sleep(0.5)
             print ("send f")
@@ -298,6 +386,10 @@ class TBrowser:
         element.send_keys(Keys.RETURN)
         time.sleep(3)
         search_results = self._parse_serp()
+        self.all_requests[search_engine_request] = search_results
+        if search_results:
+            with open(self.cache_path, "w") as outp:
+                json.dump(self.all_requests, outp, ensure_ascii=False, indent=4)
         return search_results
 
 
@@ -353,7 +445,7 @@ class TZvuchki(tk.Frame):
         self.add_keyboard_row(3, "МПАВЯЛОНЕШЬ")
 
     def init_all_abc_keyboard(self):
-        self.add_keyboard_row(1, "123456" + TChars.PLAY + TChars.BACKSPACE)
+        self.add_keyboard_row(1, "12345" + TChars.PLAY + TChars.BACKSPACE + '6')
         self.add_keyboard_row(2, "ЙЦУКЕНГШЩЗХ")
         self.add_keyboard_row(3, "ФЫВАПРОЛДЖЭ")
         self.add_keyboard_row(4, "ЯЧСМИТЬБЮ")
@@ -365,6 +457,10 @@ class TZvuchki(tk.Frame):
             colspan = 1
             width = 1
             background = None
+            if column_index == 0:
+                padx = (30, 0)
+            else:
+                padx = 0
             if char == TChars.PLAY:
                 colspan *= 2
                 width *= 2
@@ -372,8 +468,9 @@ class TZvuchki(tk.Frame):
 
             if char == TChars.BACKSPACE:
                 colspan *= 3
-                width *= 3
+                width *= 5
                 background = "red"
+                padx = (0, 0)
             font = self.key_font
             if char == "Й" or char == "Ё":
                 font = self.key_font_umlaut
@@ -384,18 +481,17 @@ class TZvuchki(tk.Frame):
                                font=font,
                                command=partial(self.keyboard_click, char))
             self.keys[char] = button
-            if column_index == 0:
-                padx = (30, 0)
-            else:
-                padx = 0
             button.grid(column=column_index, row=row_index, columnspan=colspan, padx=padx, pady=2)
             column_index += colspan
 
     def get_url_video_from_google(self, car, position):
+        request = "{} тест драйв от первого лица".format(car)
         browser = TBrowser()
-        browser.start_browser()
-        search_results = browser.send_request("тест драйв {}".format(car))
-        browser.close_browser()
+        search_results = browser.all_requests.get(request)
+        if search_results is None:
+            browser.start_browser()
+            search_results = browser.send_request(request)
+            browser.close_browser()
         if position > 0:
             position -= 1
         if position >= len(search_results):
@@ -412,7 +508,8 @@ class TZvuchki(tk.Frame):
                 break
 
     def play_test_drive(self, car_and_pos, add_seconds):
-        seconds = 30 + add_seconds
+        seconds = 300 + add_seconds
+        #seconds = 10 + add_seconds
         if car_and_pos[-1] != 'Т':
             return False
         else:
@@ -497,6 +594,9 @@ def parse_args():
 if __name__ == "__main__":
     game = TZvuchki()
     game.main_loop()
+    #b = TBrowser()
+    #b.start_browser()
+    #b.play_youtube('https://www.youtube.com/watch?v=NaiCfIcutbM', 10)
 
 
 
