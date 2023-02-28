@@ -48,7 +48,7 @@ CARS =  { 'авео', 'ауди',
           'запорожец', 'зил',
           'ивеко', 'иж', 'инфинити',
           'камаз', 'камри', 'катер', 'кия', 'краз', 'кран', 'кировец', 'круз',
-          'лада', 'лаз', 'лачети', 'лексус', 'лиаз',  'лифан', 'лодка',
+          'лада', 'лада2110', 'лада2106', 'лада2108', 'лада2105', 'лада2101','лаз', 'лачети', 'лексус', 'лиаз',  'лифан', 'лодка',
           'маз', 'мазда', 'мерседес', 'мицубиси', 'москвич',
           'нива', "ниссан",
           'ока', 'опель',
@@ -451,10 +451,10 @@ class TZvuchki(tk.Frame):
         self.add_keyboard_row(3, "МПАВЯЛОНЕШЬ")
 
     def init_all_abc_keyboard(self):
-        self.add_keyboard_row(1, "12345" + TChars.PLAY + TChars.BACKSPACE + '6')
+        self.add_keyboard_row(1, "123456780" + TChars.BACKSPACE)
         self.add_keyboard_row(2, "ЙЦУКЕНГШЩЗХ")
         self.add_keyboard_row(3, "ФЫВАПРОЛДЖЭ")
-        self.add_keyboard_row(4, "ЯЧСМИТЬБЮ")
+        self.add_keyboard_row(4, "ЯЧСМИТЬБЮ"+TChars.PLAY)
 
     def add_keyboard_row(self, row_index, chars):
         self.last_char_timestamp = time.time()
