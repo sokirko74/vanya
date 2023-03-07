@@ -18,6 +18,7 @@ import vlc
 from functools import partial
 import json
 
+
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 from utils.logging_wrapper import setup_logging
 
