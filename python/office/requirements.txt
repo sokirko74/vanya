@@ -1,3 +1,2 @@
 mingus
-tkinter
-vlc
+python-vlc
