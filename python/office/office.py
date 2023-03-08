@@ -13,6 +13,7 @@ from mingus.midi import fluidsynth
 sys.path.append(os.path.join(os.path.dirname(__file__), '../utils'))
 from logging_wrapper import setup_logging
 
+
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
 RED = (255, 0, 0)
@@ -33,8 +34,7 @@ GOAL_WORDS = [
     "КИЯ",
     "КУБ",
     "САД",
-    "ЛОДКА",
-    "НОТА",
+    "ЛОДКА",    "НОТА",
     "ЦЕНА",
     "КУСТ",
     "УСЫ",
@@ -57,7 +57,7 @@ GOAL_WORDS = [
     "МЫЛО",
     "ЛАДА",
     "КИТ",
-    "РОСТ"
+    "РОСТ",
     "ХЛЕБ",
     "СОЛЬ",
     "ЛОБ",
@@ -67,7 +67,7 @@ GOAL_WORDS = [
     "ГОРН",
     "РОК",
     "СЫР",
-    "РОВ"
+    "РОВ",
     "ЛЮДА",
     "ЖУК",
     "НОГА",
@@ -136,7 +136,6 @@ class TVanyaOffice(tk.Frame):
         self.left_offset = 80
         self.is_running = True
         self.print_victory = False
-        self.font_size = self.args.font_size
         self.master = tk.Tk()
         super().__init__(master)
 
@@ -153,10 +152,13 @@ class TVanyaOffice(tk.Frame):
             self.main_wnd_height = 800
             self.master.geometry("{}x{}".format(self.main_wnd_width, self.main_wnd_height))
         self.audioplayer = None
-        self.editor_font = ("DejaVu Sans Mono", self.args.font_size+20)
+        self.write_font = ("DejaVu Sans Mono", self.args.write_font_size)
+        self.read_font = ("DejaVu Sans Mono", self.args.read_font_size)
         self.goal_word = tk.StringVar()
         self.goal_words_combobox = tk.ttk.Combobox(
-            self.master, width=10, textvariable=self.goal_word, font=self.editor_font)
+            self.master, width=6,
+                 textvariable=self.goal_word,
+               font=self.read_font)
         self.goal_words_combobox['values'] = tuple(GOAL_WORDS)
         self.new_game()
         self.last_word = ""
@@ -166,20 +168,20 @@ class TVanyaOffice(tk.Frame):
         self.text_widget = tk.Text(self.master,
                                    width=20,
                                    height=1,
-                                   font=self.editor_font)
+                                   font=self.write_font)
         self.text_widget.pack(side=tk.TOP)
         self.text_widget.focus_set()
 
-        self.log_widget = tk.Text(self.master , width=100, height=3)
+        self.log_widget = tk.Text(self.master, width=100, height=3)
         self.log_widget.pack(side=tk.BOTTOM)
         self.master.bind('<KeyPress>', self.keyboard_click)
         #self.piano = mingus.containers.Piano()
         #fluidsynth.init("soundfont.SF2")
-        fluidsynth.init('/usr/share/sounds/sf2/default-GM.sf2')
+        fluidsynth.init('/usr/share/sounds/sf2/default-GM.sf2', 'alsa')
         fluidsynth.main_volume(1, 10000)
         self.last_char = None
-        #fluidsynth.set_instrument(1, 105)
-        #fluidsynth.play_Note(Note("C-5"))
+        fluidsynth.set_instrument(1, 105)
+        fluidsynth.play_Note(Note("C-5"))
         #b = Bar()
         #b.place_notes(['C', 'E', 'G'], 1)
         #fluidsynth.play_Bar(b)
@@ -280,7 +282,8 @@ class TVanyaOffice(tk.Frame):
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--not-fullscreen", dest='fullscreen', default=True, action="store_false")
-    parser.add_argument("--font-size", dest='font_size', default=250, type=int)
+    parser.add_argument("--write-font-size", dest='write_font_size', default=110, type=int)
+    parser.add_argument("--read-font-size", dest='read_font_size', default=110, type=int)
     return parser.parse_args()
 
 

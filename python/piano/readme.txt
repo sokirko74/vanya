@@ -18,6 +18,7 @@ aplay -L to see devices
 
 
 4.  Jack
+NO REALTIME!!!!!
 4.1. sudo apt-get install qjackctl
 
 
