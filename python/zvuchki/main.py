@@ -43,14 +43,14 @@ class TChars:
 
 CARS =  { 'авео', 'ауди',
           'бмв', 'бумер', 'буханка', 'белаз',
-          'ваз', 'ваз3', 'ваз4', 'ваз5', 'веста', 'витязь', 'волга', 'вольво',
+          'ваз', 'ваз1', 'ваз2','ваз3', 'ваз4', 'ваз5', 'веста', 'витязь', 'волга', 'вольво',
           'газ', 'газель', 'гранта',
           'даф', 'дастер', 'деу',
           'жук',
           'запорожец', 'зил',
           'ивеко', 'иж', 'импала', 'инфинити',
           'камаз', 'камаро', 'камри', 'катер', 'кия', 'краз', 'кран', 'кировец', 'круз',
-          'лада', 'лада2110', 'лада2106', 'лада2108', 'лада2105', 'лада2101','лаз', 'лачети', 'лексус', 'лиаз',  'лифан', 'лодка',
+          'лада', 'лада2102', 'лада2110', 'лада2106', 'лада2108', 'лада2105', 'лада2101','лаз', 'лачети', 'лексус', 'лиаз',  'лифан', 'лодка',
           'маз', 'мазда', 'мерседес', 'мицубиси', 'москвич',
           'нива', "ниссан",
           'ока', 'опель',
@@ -492,8 +492,8 @@ class TZvuchki(tk.Frame):
             button.grid(column=column_index, row=row_index, columnspan=colspan, padx=padx, pady=2)
             column_index += colspan
 
-    def get_url_video_from_google(self, car, position):
-        request = "{} тест драйв от первого лица".format(car)
+    def get_url_video_from_google(self, car, position, add_query):
+        request = "{} {}".format(car, add_query)
         browser = TBrowser()
         search_results = browser.all_requests.get(request)
         if search_results is None:
@@ -518,17 +518,21 @@ class TZvuchki(tk.Frame):
     def play_test_drive(self, car_and_pos, add_seconds):
         seconds = 300 + add_seconds
         #seconds = 10 + add_seconds
-        if car_and_pos[-1] != 'Т':
-            return False
+        add_query = None
+        if car_and_pos[-1] == 'Т':
+            add_query = "тест драйв от первого лица"
+        elif car_and_pos[-1] == 'З':
+            add_query = "звук двигателя"
         else:
-            car_and_pos = car_and_pos[:-1]
+            return False
+        car_and_pos = car_and_pos[:-1]
         if len(car_and_pos) == 0 or not car_and_pos[-1].isdigit():
             return False
         position = int(car_and_pos[-1])
         car = car_and_pos[:-1]
         if car.lower() not in CARS:
             return False
-        url = self.get_url_video_from_google(car, position)
+        url = self.get_url_video_from_google(car, position, add_query)
         self.play_youtube_video(url, seconds)
         return True
 
@@ -537,7 +541,7 @@ class TZvuchki(tk.Frame):
         if len(request) > 1 and request[-1].upper() == "Д" and request[-2].isdigit():
             add_sec = 120
             request = request[:-1]
-        if len(request) > 2 and request[-1].upper() == "Д" and request[-2].upper() == 'Т' and request[-3].isdigit():
+        if len(request) > 2 and request[-1].upper() == "Д" and (request[-2].upper()  in  'ТЗ') and request[-3].isdigit():
             add_sec = 120
             request = request[:-1]
         key = request.lower()
@@ -617,3 +621,4 @@ if __name__ == "__main__":
 # рисуем https://lilypond.org/doc/v2.23/Documentation/notation/direction-and-placement
 #  для нее есть https://pypi.org/project/abjad/
 # ваня вводит мелодию буквами, цифры и
+# поиск в youtube
