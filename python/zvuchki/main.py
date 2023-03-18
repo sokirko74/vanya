@@ -50,7 +50,8 @@ CARS =  { 'авео', 'ауди',
           'запорожец', 'зил',
           'ивеко', 'иж', 'импала', 'инфинити',
           'камаз', 'камаро', 'камри', 'катер', 'кия', 'краз', 'кран', 'кировец', 'круз',
-          'лада', 'лада2102', 'лада2110', 'лада2106', 'лада2108', 'лада2105', 'лада2101','лаз', 'лачети', 'лексус', 'лиаз',  'лифан', 'лодка',
+          'лада', 'лада2102', 'лада2110', 'лада2106', 'лада2108', 'лада2105', 'лада2101','лаз',
+          'лачети', 'лексус', 'лиаз',  'лимузин','лифан', 'лодка',
           'маз', 'мазда', 'мерседес', 'мицубиси', 'москвич',
           'нива', "ниссан",
           'ока', 'опель',
@@ -461,7 +462,7 @@ class TZvuchki(tk.Frame):
     def add_keyboard_row(self, row_index, chars):
         self.last_char_timestamp = time.time()
         column_index = 0
-        for char in chars:
+        for char_index, char in enumerate(chars):
             colspan = 1
             width = 1
             background = None
@@ -479,6 +480,10 @@ class TZvuchki(tk.Frame):
                 width *= 5
                 background = "red"
                 padx = (0, 0)
+
+            if char_index == len(chars) - 1:
+                padx = (0, 100)
+
             font = self.key_font
             if char == "Й" or char == "Ё":
                 font = self.key_font_umlaut
@@ -601,7 +606,7 @@ def parse_args():
     parser.add_argument("--fullscreen", dest='fullscreen', default=False, action="store_true")
     parser.add_argument("--row1", dest='row1', default='')
     parser.add_argument("--row2", dest='row2', default='МПАВЯЛОНЕ𝄞 ')
-    parser.add_argument("--font-size", dest='font_size', default=100, type=int)
+    parser.add_argument("--font-size", dest='font_size', default=90, type=int)
     parser.add_argument("--max-play-seconds", dest='max_play_seconds', default=540, type=int)
     return parser.parse_args()
 
