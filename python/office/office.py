@@ -22,55 +22,78 @@ BLUE = (0, 0, 255)
 YELLOW = (228, 155, 0)
 
 GOAL_WORDS = [
-    #"МАМА",
-    #"ПАПА",
-    #"ВАНЯ",
-    #"ЕФИМ",
-    "ЛЕНА",
-    "КАША",
-    "МОРЕ",
-    "МАРТ",
-    "САША",
-    "КИЯ",
-    "КУБ",
-    "САД",
-    "ЛОДКА",    "НОТА",
-    "ЦЕНА",
-    "КУСТ",
-    "УСЫ",
-    "НОС",
-    "РОТ",
-    "ДОМ",
-    "СОН",
-    "МЫЛО",
-    "ПУЛЯ",
-    "СОН",
-    "ТОРТ",
-    "СЫН",
-    "ПОЛ",
-    "ЛИСТ",
-    "КОТ",
-    "ТОК",
-    "ЛУК",
-    "НЕТ",
-    "СОК",
-    "МЫЛО",
-    "ЛАДА",
-    "КИТ",
-    "РОСТ",
-    "ХЛЕБ",
-    "СОЛЬ",
-    "ЛОБ",
-    "ПИЛА",
-    "ТЮК",
+    "АИСТ",
+    "АРФА",
+    "БУКА",
+    "ВАНЯ",
     "ВЕРА",
     "ГОРН",
-    "РОК",
-    "СЫР",
-    "РОВ",
-    "ЛЮДА",
+    "ГРУЗ",
+    "ДВОР",
+    "ДОМ",
+    "ДРУГ",
+    "ЕФИМ",
     "ЖУК",
+    "ЗАЯЦ",
+    "КАША",
+    "КИТ",
+    "КИЯ",
+    "КОТ",
+    "КУБ",
+    "КУСТ",
+    "ЛАДА",
+    "ЛЕНА",
+    "ЛИСТ",
+    "ЛОБ",
+    "ЛОДКА",
+    "ЛУК",
+    "ЛЮДА",
+    "МАМА",
+    "МАРТ",
+    "МОРЕ",
+    "МУХА",
+    "МЫЛО",
+    "НЕГР",
+    "НЕТ",
+    "НИВА",
     "НОГА",
+    "НОС",
+    "НОТА",
+    "ПАПА",
+    "ПИЛА",
+    "ПОЛ",
+    "ПУЗО",
+    "ПУЛЯ",
+    "РОВ",
+    "РОЗА",
+    "РОК",
+    "РОСТ",
+    "РОТ",
+    "САД",
+    "САША",
+    "СЛОН",
+    "СОК",
+    "СОЛЬ",
+    "СОН",
+    "СЫН",
+    "СЫР",
+    "ТОК",
+    "ТОРТ",
+    "ТРЮК"
+    "ТЮК",
+    "УСЫ",
+    "ФАРА",
+    "ХЛЕБ",
+    "ЦЕНА",
+    "ЦИРК",
+    "ШИНА",
+    "ШАРФ",
+    "ШУТ",
+    "ЩУКА",
+    "ЩЕКА",
+    "ЭТАЖ",
+    "ЮБКА",
+    "ЯХТА"
 
 ]
 START_OCTAVE = 2
@@ -154,6 +177,7 @@ class TVanyaOffice(tk.Frame):
         self.audioplayer = None
         self.write_font = ("DejaVu Sans Mono", self.args.write_font_size)
         self.read_font = ("DejaVu Sans Mono", self.args.read_font_size)
+        self.label_font = ("DejaVu Sans Mono", 150)
         self.goal_word = tk.StringVar()
         self.goal_words_combobox = tk.ttk.Combobox(
             self.master, width=6,
@@ -164,6 +188,8 @@ class TVanyaOffice(tk.Frame):
         self.last_word = ""
         self.fail_count = 0
         self.victory_count = 0
+        self.victory_count_label = tk.Label(text="0", font=self.label_font)
+        #self.victory_count_label.pack(side=tk.TOP)
         self.goal_words_combobox.pack(side=tk.TOP)
         self.text_widget = tk.Text(self.master,
                                    width=20,
@@ -282,8 +308,8 @@ class TVanyaOffice(tk.Frame):
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--not-fullscreen", dest='fullscreen', default=True, action="store_false")
-    parser.add_argument("--write-font-size", dest='write_font_size', default=110, type=int)
-    parser.add_argument("--read-font-size", dest='read_font_size', default=110, type=int)
+    parser.add_argument("--write-font-size", dest='write_font_size', default=200, type=int)
+    parser.add_argument("--read-font-size", dest='read_font_size', default=200, type=int)
     return parser.parse_args()
 
 
