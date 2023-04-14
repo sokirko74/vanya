@@ -1,3 +1,8 @@
+import sys
+import os
+
+sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
+
 from utils.logging_wrapper import setup_logging
 
 import tkinter as tk
@@ -156,6 +161,11 @@ class TApplication(tk.Frame):
         self.slide_switch = os.path.join(os.path.dirname(os.path.realpath(__file__)), "sound", "slide_switch.wav")
         self.on_change_instrument()
 
+        tk.Button(master=self, text='Next', font=("Helvetica", 20), bg="green", width=30,
+                  command=self.next_instrument).pack(side=tk.LEFT, padx=50)
+        tk.Button(master=self, text='Prev', font=("Helvetica", 20), width=30,
+                  command=self.prev_instrument, bg="red").pack(side=tk.LEFT, padx=50)
+
     def run_cmd(self, cmd):
         self.logger.info(cmd)
         os.system(cmd)
@@ -175,12 +185,12 @@ class TApplication(tk.Frame):
         self.last_change_instrument_time = time.time()
         return True
 
-    def next_instrument(self, event):
+    def next_instrument(self):
         if self.check_time():
             self.get_bank().increment_instrument_index(+1)
             self.on_change_instrument()
 
-    def prev_instrument(self, event):
+    def prev_instrument(self):
         if self.check_time():
             self.get_bank().increment_instrument_index(-1)
             self.on_change_instrument()
@@ -288,7 +298,7 @@ def parse_args():
     parser.add_argument("--not-fullscreen", dest='fullscreen', default=True, action="store_false")
     parser.add_argument("--bank-folder", dest='banks_folder',
                         default="/usr/share/zynaddsubfx/banks")
-    parser.add_argument("--zynaddsubfx-path", dest='zynaddsubfx_path')
+    parser.add_argument("--zynaddsubfx-path", dest='zynaddsubfx_path', default='/usr/bin/zynaddsubfx')
     parser.add_argument("--zynaddsubfx-args", dest='zynaddsubfx_args', default="-a -U")
     parser.add_argument("--zynaddsubfx-starting-timeout", dest='zynaddsubfx_starting_timeout', default=2, type=int)
     parser.add_argument("--skip-keyboard-connect", dest='connect_keyboard',  action="store_false", default=True)

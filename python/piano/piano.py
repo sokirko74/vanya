@@ -76,7 +76,7 @@ class TApplication(tk.Frame):
         self.run_zynadd()
         self.bind_moise_move()
         self.master.wm_protocol("WM_DELETE_WINDOW", self.quit)
-        self.init_collection_switcher()
+        #self.init_collection_switcher()
 
     def init_collection_switcher(self):
         self.collection_switcher_thread = None
@@ -131,6 +131,10 @@ class TApplication(tk.Frame):
         self.CanvasFrame.pack(fill=tk.BOTH, expand=1)
         self.Canvas = tk.Canvas(self.CanvasFrame, bg="blue")
         self.Canvas.pack(fill=tk.BOTH, expand=1)
+        tk.Button(master=self, text='Next', font=("Helvetica", 20), bg="green", width=30,
+                  command=self.next_instrument).pack(side=tk.LEFT, padx=50)
+        tk.Button(master=self, text='Prev', font=("Helvetica", 20), width=30,
+                  command=self.prev_instrument, bg="red").pack(side=tk.LEFT, padx=50)
 
         # initial time display
         self.on_update()
@@ -189,8 +193,10 @@ class TApplication(tk.Frame):
             self.clear_canvas()
             self.run_zynadd()
 
-    def next_instrument(self, event):
+    def next_instrument(self):
         self.switch_instrument("up")
+    def prev_instrument(self):
+        self.switch_instrument("down")
 
     def try_to_detect_movement(self):
         points = [(x,y) for (_, x, y) in self.Points]
