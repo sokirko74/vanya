@@ -1,6 +1,7 @@
 import sys
 import os
-
+import psutil
+import signal
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
 from utils.logging_wrapper import setup_logging
@@ -283,8 +284,13 @@ class TApplication(tk.Frame):
             self.connect_keyboard()
 
     def kill_zynaddsubfx(self):
-        self.run_cmd("pkill ffplay")
-        self.run_cmd("pkill {0}".format(ZYNADDSUBFX_BINARY))
+        for proc in psutil.process_iter():
+            if proc.pid  == os.getpid():
+                continue
+            elif proc.name() == ZYNADDSUBFX_BINARY:
+                os.kill(proc.pid, signal.SIGKILL)
+            elif proc.name() == 'ffplay':
+                os.kill(proc.pid, signal.SIGKILL)
 
     def quit(self):
         self.kill_zynaddsubfx()
@@ -299,7 +305,7 @@ def parse_args():
     parser.add_argument("--bank-folder", dest='banks_folder',
                         default="/usr/share/zynaddsubfx/banks")
     parser.add_argument("--zynaddsubfx-path", dest='zynaddsubfx_path', default='/usr/bin/zynaddsubfx')
-    parser.add_argument("--zynaddsubfx-args", dest='zynaddsubfx_args', default="-a -U")
+    parser.add_argument("--zynaddsubfx-args", dest='zynaddsubfx_args', default="-a -U -I alsa -O alsa")
     parser.add_argument("--zynaddsubfx-starting-timeout", dest='zynaddsubfx_starting_timeout', default=2, type=int)
     parser.add_argument("--skip-keyboard-connect", dest='connect_keyboard',  action="store_false", default=True)
     return parser.parse_args()
