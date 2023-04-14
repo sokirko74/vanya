@@ -126,46 +126,57 @@ class TApplication(tk.Frame):
             self.volume = 0
         self.set_volume()
 
+    def on_update(self):
+        curtime = time.time()
+        self.after(200, self.on_update)
+
     def print_to_widget(self, widget, s):
         widget.delete('1.0', tk.END)
         widget.insert(tk.END, s)
 
     def create_widgets(self):
-        self.now = tk.StringVar()
-        tk.Frame.__init__(self, self.master)
-        self.pack()
-        text = "F4-prev instrument, F6-next instrument, F8-prev bank, F10 - next bank"
-        self.time = tk.Label(self, text=text, font=('Helvetica', 12))
-        self.time.pack(side=tk.TOP)
+        frame1 = tk.Frame(self.master)
+        frame1.pack(side=tk.TOP)
 
-        tk.Button(master=self, text='Exit', command=self.quit).pack(side=tk.TOP)
+        text = "F4-prev instrument, F6-next instrument, F8-prev bank, F10 - next bank"
+        self.legend = tk.Label(frame1, text=text, font=('Helvetica', 12))
+        self.legend.pack(side=tk.LEFT)
+        tk.Button(frame1, text='Exit', command=self.quit).pack(side=tk.LEFT)
+
+        frame2 = tk.Frame(self.master)
+        frame2.pack(side=tk.TOP)
         fontsize = 20
         if self.main_wnd_width > 900:
             fontsize = 100
-        self.CollectionWidget = tk.Text(self, width=self.main_wnd_width-10, height=1, font=("Helvetica", fontsize))
-        self.CollectionWidget.pack(side=tk.TOP)
-        self.InstrumentWidget = tk.Text(self, width=self.main_wnd_width-10, height=1, font=("Helvetica", fontsize))
+        self.CollectionWidget = tk.Text(frame2, width=self.main_wnd_width-10, height=1, font=("Helvetica", fontsize))
+        self.CollectionWidget.pack(side=tk.LEFT)
+
+        frame3 = tk.Frame(self.master)
+        frame3.pack(side=tk.TOP)
+        self.InstrumentWidget = tk.Text(frame3, width=self.main_wnd_width-10, height=1, font=("Helvetica", fontsize))
         self.InstrumentWidget.pack(side=tk.TOP)
 
-        self.InstrumentIndexWidget = tk.Text(self, width=3, height=1, font=("Helvetica", 300), bg="green")
-        self.BankIndexWidget = tk.Text(self, width=3, height=1, font=("Helvetica", 300), bg="red")
+        frame4 = tk.Frame(self.master)
+        frame4.pack(side=tk.TOP)
+        self.InstrumentIndexWidget = tk.Text(frame4, width=3, height=1, font=("Helvetica", 100), bg="green")
+        self.InstrumentIndexWidget.pack(side=tk.LEFT)
+        self.BankIndexWidget = tk.Text(frame4, width=3, height=1, font=("Helvetica", 100), bg="red")
+        self.BankIndexWidget.pack(side=tk.LEFT)
+
         #self.VolumeWidget = tk.Text(self, width=3, height=1, font=("Helvetica", 48))
         #self.VolumeWidget.pack(side=tk.RIGHT)
 
-        #tk.Label(text="Коллекция:", font=("Helvetica", 30)).pack(side=tk.LEFT)
-        self.BankIndexWidget.pack(side=tk.LEFT)
-
-        #tk.Label(text="Инструмент:", font=("Helvetica", 30)).pack(side=tk.TOP)
-        self.InstrumentIndexWidget.pack(side=tk.RIGHT)
 
         # initial time display
         self.slide_switch = os.path.join(os.path.dirname(os.path.realpath(__file__)), "sound", "slide_switch.wav")
         self.on_change_instrument()
 
-        tk.Button(master=self, text='Next', font=("Helvetica", 20), bg="green", width=30,
-                  command=self.next_instrument).pack(side=tk.LEFT, padx=50)
-        tk.Button(master=self, text='Prev', font=("Helvetica", 20), width=30,
-                  command=self.prev_instrument, bg="red").pack(side=tk.LEFT, padx=50)
+        frame5 = tk.Frame(self.master)
+        frame5.pack(side=tk.TOP)
+        tk.Button(frame5, text='Next', font=("Helvetica", 60), bg="green", width=10,
+                  command=self.next_instrument).pack(side=tk.LEFT, padx=50, pady=50)
+        tk.Button(frame5, text='Prev', font=("Helvetica", 60), width=10,
+                  command=self.prev_instrument, bg="red").pack(side=tk.LEFT, padx=50, pady=50)
 
     def run_cmd(self, cmd):
         self.logger.info(cmd)
@@ -216,10 +227,6 @@ class TApplication(tk.Frame):
             self.get_bank().instrument_index = 0
             self.on_change_instrument()
 
-    def on_update(self):
-        self.now.set(current_iso8601())
-        curtime = time.time()
-        self.after(200, self.on_update)
 
     def on_change_instrument(self):
         self.print_to_widget(self.CollectionWidget, self.get_bank().name)
@@ -227,7 +234,6 @@ class TApplication(tk.Frame):
         self.print_to_widget(self.InstrumentIndexWidget, "{}".format(self.get_bank().instrument_index))
         self.print_to_widget(self.BankIndexWidget, "{}".format(self.bank_index))
         self.send_command_to_zynaddsubfx("load_instrument {}".format(self.get_bank().get_instrument_path()))
-        self.on_update()
         time.sleep(1)
         play_file(self.slide_switch)
 
@@ -322,7 +328,7 @@ def main():
     play_file("sound/slide_switch.wav")
 
     try:
-        tk_app.mainloop()
+        tk_app.master.mainloop()
     except KeyboardInterrupt:
         logger.error("KeyboardInterrupt")
         tk_app.quit()
