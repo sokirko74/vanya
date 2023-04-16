@@ -60,8 +60,9 @@ class TInstrumentBank:
 def load_banks(folder):
     instrument_banks = list()
     for x in os.listdir(folder):
-        b = TInstrumentBank(os.path.join(folder, x))
-        instrument_banks.append(b)
+        if x != 'Drums':
+            b = TInstrumentBank(os.path.join(folder, x))
+            instrument_banks.append(b)
     return instrument_banks
 
 
@@ -95,6 +96,9 @@ class TApplication(tk.Frame):
         self.create_widgets()
         self.master.wm_protocol("WM_DELETE_WINDOW", self.quit)
         #self.print_to_widget(self.VolumeWidget, self.volume)
+        self.processed_command_count = 0
+        self.tk = master
+        self.on_update()
 
     def set_volume(self):
         cmd = "amixer -D pulse sset Master {}%".format(self.volume)
@@ -127,8 +131,10 @@ class TApplication(tk.Frame):
         self.set_volume()
 
     def on_update(self):
-        curtime = time.time()
         self.after(200, self.on_update)
+        if self.last_start_zynaddsubfx - time.time() > 60*9:
+            self.logger.info('restart at schedule')
+            self.reset()
 
     def print_to_widget(self, widget, s):
         widget.delete('1.0', tk.END)
@@ -142,12 +148,13 @@ class TApplication(tk.Frame):
         self.legend = tk.Label(frame1, text=text, font=('Helvetica', 12))
         self.legend.pack(side=tk.LEFT)
         tk.Button(frame1, text='Exit', command=self.quit).pack(side=tk.LEFT)
+        tk.Button(frame1, text='Reset', command=self.reset).pack(side=tk.LEFT)
 
         frame2 = tk.Frame(self.master)
         frame2.pack(side=tk.TOP)
         fontsize = 20
         if self.main_wnd_width > 900:
-            fontsize = 100
+            fontsize = 40
         self.CollectionWidget = tk.Text(frame2, width=self.main_wnd_width-10, height=1, font=("Helvetica", fontsize))
         self.CollectionWidget.pack(side=tk.LEFT)
 
@@ -158,10 +165,15 @@ class TApplication(tk.Frame):
 
         frame4 = tk.Frame(self.master)
         frame4.pack(side=tk.TOP)
-        self.InstrumentIndexWidget = tk.Text(frame4, width=3, height=1, font=("Helvetica", 100), bg="green")
-        self.InstrumentIndexWidget.pack(side=tk.LEFT)
-        self.BankIndexWidget = tk.Text(frame4, width=3, height=1, font=("Helvetica", 100), bg="red")
+        self.BankIndexWidget = tk.Text(frame4, width=3, height=1, font=("Helvetica", 200), bg="red")
+        self.BankIndexWidget.bind("<Button-1>", self.next_bank)
+        self.BankIndexWidget.bind("<Button-3>", self.prev_bank)
         self.BankIndexWidget.pack(side=tk.LEFT)
+
+        self.InstrumentIndexWidget = tk.Text(frame4, width=3, height=1, font=("Helvetica", 200), bg="green")
+        self.InstrumentIndexWidget.bind("<Button-1>", self.next_instrument)
+        self.InstrumentIndexWidget.bind("<Button-3>", self.prev_instrument)
+        self.InstrumentIndexWidget.pack(side=tk.LEFT)
 
         #self.VolumeWidget = tk.Text(self, width=3, height=1, font=("Helvetica", 48))
         #self.VolumeWidget.pack(side=tk.RIGHT)
@@ -173,68 +185,63 @@ class TApplication(tk.Frame):
 
         frame5 = tk.Frame(self.master)
         frame5.pack(side=tk.TOP)
-        tk.Button(frame5, text='Next', font=("Helvetica", 60), bg="green", width=10,
-                  command=self.next_instrument).pack(side=tk.LEFT, padx=50, pady=50)
-        tk.Button(frame5, text='Prev', font=("Helvetica", 60), width=10,
-                  command=self.prev_instrument, bg="red").pack(side=tk.LEFT, padx=50, pady=50)
+
+        btn1 = tk.Button(frame5, text='Bank', font=("Helvetica", 60), width=10,
+                  command=self.next_bank, bg="red")
+        btn1.bind("<Button-3>", self.prev_bank)
+        btn1.pack(side=tk.LEFT, padx=50, pady=50)
+
+        btn2 = tk.Button(frame5, text='Inst', font=("Helvetica", 60), bg="green", width=10,
+                  command=self.next_instrument)
+        btn2.bind("<Button-3>", self.prev_instrument)
+        btn2.pack(side=tk.LEFT, padx=50, pady=50)
 
     def run_cmd(self, cmd):
         self.logger.info(cmd)
         os.system(cmd)
 
-    def clear_canvas(self):
-        self.Points = list()
-        self.Canvas.delete("all")
-
     def get_bank(self) -> TInstrumentBank :
         return self.instrument_banks[self.bank_index]
 
-    def check_time(self):
-        self.logger.info("check time")
-        if time.time() - self.last_change_instrument_time < 1:
-            self.logger.info("skip change instrument (timeout)")
-            return False
-        self.last_change_instrument_time = time.time()
-        return True
+    def next_instrument(self, event=None):
+        self.get_bank().increment_instrument_index(+1)
+        self.on_change_instrument()
 
-    def next_instrument(self):
-        if self.check_time():
-            self.get_bank().increment_instrument_index(+1)
-            self.on_change_instrument()
+    def prev_instrument(self, event=None):
+        self.get_bank().increment_instrument_index(-1)
+        self.on_change_instrument()
 
-    def prev_instrument(self):
-        if self.check_time():
-            self.get_bank().increment_instrument_index(-1)
-            self.on_change_instrument()
-
-    def next_bank(self, event):
+    def next_bank(self, event=None):
         self.logger.info("next_bank")
-        if self.check_time():
-            if self.bank_index  + 1 == len(self.instrument_banks):
-                self.bank_index = 0
-            else:
-                self.bank_index  += 1
-            self.get_bank().instrument_index = 0
-            self.on_change_instrument()
+        if self.bank_index  + 1 == len(self.instrument_banks):
+            self.bank_index = 0
+        else:
+            self.bank_index  += 1
+        self.get_bank().instrument_index = 0
+        self.on_change_instrument()
 
     def prev_bank(self, event):
         self.logger.info("prev_bank")
-        if self.check_time():
-            if self.bank_index > 0:
-                self.bank_index -= 1
-            else:
-                self.bank_index = len(self.instrument_banks) - 1
-            self.get_bank().instrument_index = 0
-            self.on_change_instrument()
+        if self.bank_index > 0:
+            self.bank_index -= 1
+        else:
+            self.bank_index = len(self.instrument_banks) - 1
+        self.get_bank().instrument_index = 0
+        self.on_change_instrument()
 
+    def set_instrument_in_zynsubfx(self):
+        self.send_command_to_zynaddsubfx("load_instrument {}".format(self.get_bank().get_instrument_path()))
 
     def on_change_instrument(self):
+        if self.processed_command_count > 20:
+            self.reset()
+        self.processed_command_count += 1
         self.print_to_widget(self.CollectionWidget, self.get_bank().name)
         self.print_to_widget(self.InstrumentWidget, self.get_bank().get_instrument_name())
         self.print_to_widget(self.InstrumentIndexWidget, "{}".format(self.get_bank().instrument_index))
         self.print_to_widget(self.BankIndexWidget, "{}".format(self.bank_index))
-        self.send_command_to_zynaddsubfx("load_instrument {}".format(self.get_bank().get_instrument_path()))
-        time.sleep(1)
+        self.set_instrument_in_zynsubfx()
+        time.sleep(0.2)
         play_file(self.slide_switch)
 
     def get_command_path(self):
@@ -274,6 +281,8 @@ class TApplication(tk.Frame):
         self.run_cmd('aconnect {} {}'.format(keyboard_id, zyn_id))
 
     def run_zynaddsubfx(self):
+        self.processed_command_count = 0
+        self.last_start_zynaddsubfx = time.time()
         self.kill_zynaddsubfx()
 
         binary_path = self.args.zynaddsubfx_path
@@ -297,6 +306,10 @@ class TApplication(tk.Frame):
                 os.kill(proc.pid, signal.SIGKILL)
             elif proc.name() == 'ffplay':
                 os.kill(proc.pid, signal.SIGKILL)
+
+    def reset(self):
+        self.run_zynaddsubfx()
+        self.set_instrument_in_zynsubfx()
 
     def quit(self):
         self.kill_zynaddsubfx()
@@ -325,7 +338,7 @@ def main():
     logger = setup_logging("piano2")
     tk_app = TApplication(args, logger, tk_root)
 
-    play_file("sound/slide_switch.wav")
+    #play_file("sound/slide_switch.wav")
 
     try:
         tk_app.master.mainloop()
