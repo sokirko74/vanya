@@ -177,29 +177,12 @@ class TVanyaOffice(tk.Frame):
         self.audioplayer = None
         self.write_font = ("DejaVu Sans Mono", self.args.write_font_size)
         self.read_font = ("DejaVu Sans Mono", self.args.read_font_size)
-        self.label_font = ("DejaVu Sans Mono", 150)
-        self.goal_word = tk.StringVar()
-        self.goal_words_combobox = tk.ttk.Combobox(
-            self.master, width=6,
-                 textvariable=self.goal_word,
-               font=self.read_font)
-        self.goal_words_combobox['values'] = tuple(GOAL_WORDS)
+        self.label_font = ("DejaVu Sans Mono", 140)
+        self.create_widgets()
         self.new_game()
         self.last_word = ""
         self.fail_count = 0
         self.victory_count = 0
-        self.victory_count_label = tk.Label(text="0", font=self.label_font)
-        #self.victory_count_label.pack(side=tk.TOP)
-        self.goal_words_combobox.pack(side=tk.TOP)
-        self.text_widget = tk.Text(self.master,
-                                   width=20,
-                                   height=1,
-                                   font=self.write_font)
-        self.text_widget.pack(side=tk.TOP)
-        self.text_widget.focus_set()
-
-        self.log_widget = tk.Text(self.master, width=100, height=3)
-        self.log_widget.pack(side=tk.BOTTOM)
         self.master.bind('<KeyPress>', self.keyboard_click)
         #self.piano = mingus.containers.Piano()
         #fluidsynth.init("soundfont.SF2")
@@ -214,6 +197,40 @@ class TVanyaOffice(tk.Frame):
         #pass
         self.text_cleaner_thread = TextCleaner(self)
 
+    def create_widgets(self):
+        frame1 = tk.Frame(self.master)
+        frame1.pack(side=tk.TOP)
+
+
+        self.goal_word = tk.StringVar()
+        self.goal_words_combobox = tk.ttk.Combobox(frame1, width=5,
+                 textvariable=self.goal_word,font=self.read_font)
+        self.goal_words_combobox['values'] = tuple(GOAL_WORDS)
+        self.goal_words_combobox.pack(side=tk.LEFT)
+
+
+
+        frame2 = tk.Frame(self.master)
+        frame2.pack(side=tk.TOP)
+        self.text_widget = tk.Text(frame2,
+                                   width=20,
+                                   height=1,
+                                   font=self.write_font)
+        self.text_widget.pack(side=tk.LEFT)
+        self.text_widget.focus_set()
+
+        frame3 = tk.Frame(self.master)
+        frame3.pack(side=tk.TOP)
+        self.victory_count_label = tk.Label(frame3, text="0", font=self.label_font,
+                                            bg="misty rose")
+        self.victory_count_label.pack(side=tk.LEFT)
+
+        self.log_widget = tk.Text(frame3, width=100, height=3)
+        self.log_widget.pack(side=tk.LEFT)
+
+        self.fail_count_label = tk.Label(frame3, text="0", font=self.label_font, bg="light green")
+        self.fail_count_label.pack(side=tk.LEFT)
+
     def new_game(self):
         last_goal = self.goal_word.get()
         words = list(GOAL_WORDS)
@@ -225,6 +242,7 @@ class TVanyaOffice(tk.Frame):
         self.goal_words_combobox.update()
 
         self.fail_count = 0
+        self.fail_count_label.config(text=str(self.fail_count))
 
     def print_to_log(self, m):
         self.log_widget.insert(tk.END, m)
@@ -235,6 +253,7 @@ class TVanyaOffice(tk.Frame):
         goal_word = self.goal_word.get()
         self.text_widget.update()
         self.victory_count += 1
+        self.victory_count_label.config(text=str(self.victory_count))
         self.print_to_log("victory count = {}\n".format(self.victory_count))
         # self.play_file("victory.wav")
         b = Bar()
@@ -281,7 +300,10 @@ class TVanyaOffice(tk.Frame):
             if ord(event.char) >= 32:
                 instrument = ERROR_CHAR_INSTRUMENT
                 self.fail_count += 1
+                self.fail_count_label.config(text=str(self.fail_count))
                 self.print_to_log("fail count = {}\n".format(self.fail_count))
+                if self.fail_count > 20:
+                    self.new_game()
 
         if len(event.char) == 1 and event.char.upper() in KEY_2_NOTE:
             self.play_char(event.char.upper(), instrument)

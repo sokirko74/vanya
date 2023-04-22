@@ -55,7 +55,7 @@ CARS =  { 'авео', 'ауди', 'акура',
           'маз', 'мазда', 'маршрутка', 'мерседес', 'мицубиси', 'москвич',
           'нива', "ниссан",
           'ока', 'опель',
-          'патриот','пежо','плимут', 'победа', 'понтиак', 'портер', 'порш',
+          'патриот','пежо','плимут', 'победа', 'полуторка','понтиак', 'портер', 'порш',
           'рафик','рено', 'ровер',
           'сааб', 'ситроен', 'скания', 'смарт',  'соболь','соренто', 'спринтер', 'субару', 'сузуки',
           'таврия', 'танк', 'тигго', 'тигуан', 'тойота', 'туарег',
@@ -285,7 +285,7 @@ class TBrowser:
         self.browser = webdriver.Chrome(options=options)
         self.browser.set_page_load_timeout(10)
         self.browser.set_script_timeout(30)
-        self.browser.set_page_load_timeout(10)
+        self.browser.set_page_load_timeout(60)
         self.browser.set_script_timeout(30)
         self.browser.set_window_position(0, 0)
 
@@ -380,6 +380,10 @@ class TBrowser:
 
     def _parse_serp(self):
         search_results = []
+        self.send_ctrl_end()
+        time.sleep(1)
+        self.send_ctrl_home()
+        time.sleep(1)
         for element in self.browser.find_elements(By.TAG_NAME, "a"):
             url = element.get_attribute("href")
             if url is not None and url != '#' and url.startswith('http'):
@@ -530,6 +534,8 @@ class TZvuchki(tk.Frame):
             add_query = "тест драйв от первого лица"
         elif car_and_pos[-1] == 'З':
             add_query = "звук двигателя"
+        elif car_and_pos[-1] == 'Э':
+            add_query = "эксплуатация"
         else:
             return False
         car_and_pos = car_and_pos[:-1]
