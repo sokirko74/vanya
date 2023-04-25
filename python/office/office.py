@@ -25,9 +25,12 @@ GOAL_WORDS = [
     "АИСТ",
     "АРФА",
     "БУКА",
+    "БУРЯ",
     "ВАНЯ",
     "ВЕРА",
     "ГОРН",
+    "ГРАЧ",
+    "ГРОМ",
     "ГРУЗ",
     "ДВОР",
     "ДОМ",
@@ -35,13 +38,18 @@ GOAL_WORDS = [
     "ЕФИМ",
     "ЖУК",
     "ЗАЯЦ",
+    "ЗИМА",
     "КАША",
     "КИТ",
     "КИЯ",
+    "КОРА",
     "КОТ",
+    "КРАЙ",
     "КУБ",
+    "КУМА",
     "КУСТ",
     "ЛАДА",
+    "ЛАМА",
     "ЛЕНА",
     "ЛИСТ",
     "ЛОБ",
@@ -51,6 +59,7 @@ GOAL_WORDS = [
     "МАМА",
     "МАРТ",
     "МОРЕ",
+    "МУКА",
     "МУХА",
     "МЫЛО",
     "НЕГР",
@@ -64,6 +73,7 @@ GOAL_WORDS = [
     "ПОЛ",
     "ПУЗО",
     "ПУЛЯ",
+    "ПЫЛЬ",
     "РОВ",
     "РОЗА",
     "РОК",
@@ -71,6 +81,7 @@ GOAL_WORDS = [
     "РОТ",
     "САД",
     "САША",
+    "СИЛА",
     "СЛОН",
     "СОК",
     "СОЛЬ",
@@ -79,13 +90,15 @@ GOAL_WORDS = [
     "СЫР",
     "ТОК",
     "ТОРТ",
-    "ТРЮК"
+    "ТРЮК",
+    "ТУЧА",
     "ТЮК",
     "УСЫ",
     "ФАРА",
     "ХЛЕБ",
     "ЦЕНА",
     "ЦИРК",
+    "ЧАЩА",
     "ШИНА",
     "ШАРФ",
     "ШУТ",
@@ -136,8 +149,10 @@ KEY_2_NOTE = {
     'Ю': ('F', START_OCTAVE + 4),
 
 }
-#CORRECT_CHAR_INSTRUMENT = 1
-CORRECT_CHAR_INSTRUMENT = 20 #ОРГАН
+CORRECT_CHAR_INSTRUMENT = 1 #пианино
+#CORRECT_CHAR_INSTRUMENT = 20 #ОРГАН
+ACCORD_INSTRUMENT = 20
+
 #CORRECT_CHAR_INSTRUMENT = 40
 ERROR_CHAR_INSTRUMENT = 105
 
@@ -259,7 +274,7 @@ class TVanyaOffice(tk.Frame):
         b = Bar()
         notes = [Note(*KEY_2_NOTE[i]) for i in goal_word]
         b.place_notes(notes, 1)
-        fluidsynth.set_instrument(1, CORRECT_CHAR_INSTRUMENT)
+        fluidsynth.set_instrument(1, ACCORD_INSTRUMENT)
         fluidsynth.stop_everything()
         fluidsynth.play_Bar(b)
         time.sleep(5)
@@ -302,7 +317,7 @@ class TVanyaOffice(tk.Frame):
                 self.fail_count += 1
                 self.fail_count_label.config(text=str(self.fail_count))
                 self.print_to_log("fail count = {}\n".format(self.fail_count))
-                if self.fail_count > 20:
+                if self.fail_count > 18:
                     self.new_game()
 
         if len(event.char) == 1 and event.char.upper() in KEY_2_NOTE:
