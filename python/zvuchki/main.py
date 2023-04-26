@@ -8,6 +8,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import WebDriverException, TimeoutException
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.action_chains import ActionChains, ActionBuilder
+from car_brands import CARS, URLS
 
 import os
 import argparse
@@ -39,228 +40,6 @@ class TKeyboardType:
 class TChars:
     BACKSPACE = '⌫'
     PLAY = '𝄞'
-
-
-CARS =  { 'авео', 'ауди', 'акура',
-          'баргузин','бмв', 'бумер', 'буханка', 'белаз',
-          'ваз', 'ваз1', 'ваз2','ваз3', 'ваз4', 'ваз5', 'веста', 'витязь', 'волга', 'вольво',
-          'газ', 'газель', 'гранта',
-          'даф', 'дастер', 'деу',
-          'жук',
-          'запорожец', 'зил',
-          'ивеко', 'иж', 'импала', 'инфинити',
-          'камаз', 'камаро', 'камри', 'катер', 'кеди', 'кия', 'краз', 'кран', 'кировец', 'круз',
-          'лада', 'лада2102', 'лада2110', 'лада2111', 'лада2104', 'лада2106', 'лада2108', 'лада2105', 'лада2101','лаз',
-          'лачети', 'лексус', 'лиаз',  'лимузин','лифан', 'лодка',
-          'маз', 'мазда', 'маршрутка', 'мерседес', 'мицубиси', 'москвич',
-          'нива', "ниссан",
-          'ока', 'опель',
-          'патриот','пежо','плимут', 'победа', 'полуторка','понтиак', 'портер', 'порш',
-          'рафик','рено', 'ровер',
-          'сааб', 'ситроен', 'скания', 'смарт',  'соболь','соренто', 'спринтер', 'субару', 'сузуки',
-          'таврия', 'танк', 'тигго', 'тигуан', 'тойота', 'туарег',
-          'уаз', 'урал',
-          'ферари', 'фиат', 'форд', 'фура',
-          'хавал', 'хендай','хонда',
-          'чайка', 'черри',
-          'шахман', 'шевроле', 'шевиван',
-          'ягуар'
-}
-
-URLS = {
-    'зил1': ('https://www.youtube.com/watch?v=DyiqVFVJbYg', 70),
-    'камаз1': ('https://www.youtube.com/watch?v=EJO5XRMUTgk', 70),
-    'урал1': ('https://www.youtube.com/watch?v=INehuQl3LRo', 120),
-    'газ1': ('https://www.youtube.com/watch?v=LBvGCU-eToc', 70),
-    'даф1': ('https://www.youtube.com/watch?v=gN4wzPXleCY', 70),
-    'скания1': ('https://www.youtube.com/watch?v=5FC-mepd7TI', 70),
-    'нива1': ('https://www.youtube.com/watch?v=uDlqz42c9Ao', 44),
-    'лиаз1': ('https://www.youtube.com/watch?v=Tvrtn_47bGA', 70),
-    'ситроен1': ('https://www.youtube.com/watch?v=xrkoVUDsoBQ', 36),
-    'пила1': ('https://www.youtube.com/watch?v=qHKfd-vRdOI', 70),
-    'форд1': ('https://www.youtube.com/watch?v=Gt2VJEOuGKY', 1080),
-    'порш1': ('https://www.youtube.com/watch?v=_JaBoMgM4Y4', 80),
-    'шевроле1': ('https://www.youtube.com/watch?v=6-GQFNC83DA', 130),
-    'кот1': ('https://www.youtube.com/watch?v=TjmOWZ3y9gg', 60),
-    'лада1': ('https://www.youtube.com/watch?v=sTDneAKEzQY', 53),
-    'кия1': ('https://www.youtube.com/watch?v=U5eVplyAkto', 90),
-    'танк1': ('https://www.youtube.com/watch?v=DyxdDR79a-0', 55),
-    'танк2': ('https://www.youtube.com/watch?v=_CGLanOPwnw', 70),
-    'буханка1': ('https://www.youtube.com/watch?v=5d8xdjQ8ma8', 90),
-    'смарт1': ('https://www.youtube.com/watch?v=PxP2dq7nGwE', 90),
-    'субару1': ('https://www.youtube.com/watch?v=EhQ0r9caVOM', 90),
-    'баран1':('https://www.youtube.com/watch?v=vlvbkOhKFmw', 90),
-    'петух1':('https://www.youtube.com/watch?v=CB7awpjMMkc', 90),
-    "шум1": ('https://www.youtube.com/watch?v=ukZYP5Dy43E', 240),
-    "шум2": ('https://www.youtube.com/watch?v=FgOg6aYqASY', 240),
-    "форд2":('https://www.youtube.com/watch?v=yAYIZ2xMuFU', 120),
-    'волга1':('https://www.youtube.com/watch?v=uvCxZ-Kv1q4', 31),
-    'волга2':('https://www.youtube.com/watch?v=nw_BiXi4M8Y', 39),
-    'утка1': ('https://www.youtube.com/watch?v=hw1sdm3M-CU',110),
-    'слон1': ('https://www.youtube.com/watch?v=MW0l_3xhSXw', 120),
-    'хонда1':('https://www.youtube.com/watch?v=eDjLovtcXW8', 120),
-    'деу1': ('https://www.youtube.com/watch?v=cBBD74xuMKk', 60),
-    'сааб1': ('https://www.youtube.com/watch?v=-AsOG3nYJ9A', 60),
-    'волга21':('https://www.youtube.com/watch?v=WR8TovF4A4U', 120),
-    'мазда1': ('https://www.youtube.com/watch?v=GmiKzouALk8', 120),
-    'ауди1': ('https://www.youtube.com/watch?v=VoWb_lD_bIc', 120),
-    'мерседес1': ('https://www.youtube.com/watch?v=ai-Gc2a8KWY', 50),
-    'белаз1': ('https://www.youtube.com/watch?v=Tb2IwXdagHc', 180),
-     'краз1': ('https://www.youtube.com/watch?v=-S6CdlFUJrU', 120),
-    'икарус1':('https://www.youtube.com/watch?v=uOJVBAuqfLY', 45),
-    'ман1': ('https://www.youtube.com/watch?v=7LGh8PAG4BI', 180),
-    'студебекер1': ('https://www.youtube.com/watch?v=3A2QXiHcdQQ', 70),
-    'паровоз1': ('https://www.youtube.com/watch?v=Sgkq1Kiz80I', 240),
-    'рено1': ('https://www.youtube.com/watch?v=sBmpXCXjohI', 56),
-    'рено2': ('https://www.youtube.com/watch?v=IU9WAUV5n3s',  57),
-    'лексус1': ('https://www.youtube.com/watch?v=zkZSfGeD6ko', 120),
-    'трактор1': ('https://www.youtube.com/watch?v=FQqKfhKNDSE', 180),
-    'станок1':('https://www.youtube.com/watch?v=ewCaidVH4MA', 180),
-    'форд3': ('https://www.youtube.com/watch?v=bQGBUaW88E4', 180),
-    'шкода1': ('https://www.youtube.com/watch?v=MY6liZv6t2Y', 180),
-    'фиат1':('https://www.youtube.com/watch?v=QBxSnSIqCaQ', 120),
-    'татра1':('https://www.youtube.com/watch?v=Tget7hNlVTY',80),
-    'супер1': ('https://www.youtube.com/watch?v=Rg6awBglzGU', 240),
-    'таврия1': ('https://www.youtube.com/watch?v=6dUwQ3k7XRQ',130),
-    'инфинити1': ('https://www.youtube.com/watch?v=0-kalBhe-qo',180),
-    'скания2':('https://www.youtube.com/watch?v=6zLmMU1Gc0c', 120),
-    'вертолет1':('https://www.youtube.com/watch?v=XHkNgZ5KAg0', 150),
-    'телефон1':('https://www.youtube.com/watch?v=iHgJLSvpvp8', 300),
-    'газ2':('https://www.youtube.com/watch?v=KmiA9_GQQt8', 59),
-    'танк3':('https://www.youtube.com/watch?v=pYsQy3mHV10', 60),
-    'туарег1':('https://www.youtube.com/watch?v=VO_6bVYur_w', 180),
-    'девятка1':('https://www.youtube.com/watch?v=lRKPqIkOj1Q', 80),
-    'гранта1': ('https://www.youtube.com/watch?v=p8mUKHigEbQ&t=19s', 150),
-    'ларгус1': ('https://www.youtube.com/watch?v=n0LM6QaxDyg', 55),
-    'ягуар1': ('https://www.youtube.com/watch?v=Vx0b5-R1U5U', 110),
-    'лендровер1':('https://www.youtube.com/watch?v=0yxCr8LAEa4', 55),
-    'тигуан1': ('https://www.youtube.com/watch?v=kcBVqet7yI8', 70),
-   'лаз1': ('https://www.youtube.com/watch?v=bkqk9YvrmGc', 180),
-  'рио1': ('https://www.youtube.com/watch?v=P7_n0Q1Xvu0&t=29s', 220),
-  'урал2':('https://www.youtube.com/watch?v=rzgi1tl59Hg', 82),
-  'гонка1': ('https://www.youtube.com/watch?v=hetIqjWHBu8',  200),
-
-  'лодка1': ('https://www.youtube.com/watch?v=BmbSMZbgkOg', 180),
-  'масами1': ('https://www.youtube.com/watch?v=-gzBqayDmJ8',  240),
-    'пыхтелки1': ('https://www.youtube.com/watch?v=-BE476MvO_g', 240),
-    'лодка2':('https://www.youtube.com/watch?v=HwF0HbG_wYE', 180),
-    'лодка3': ('https://www.youtube.com/watch?v=wvr5ESGkYDo', 120),
-    'мотособака1':('https://www.youtube.com/watch?v=zpPQKIveCXk',180),
-   'миникупер1': ('https://www.youtube.com/watch?v=SLjw4jLf1Kg', 100),
-  'бобкет1': ('https://www.youtube.com/watch?v=OJ27XkuW6uw', 180),
-  'кировец1':('https://www.youtube.com/watch?v=7NY1c_RrlRE', 120),
-  'метеор1': ('https://www.youtube.com/watch?v=7pmx-b336Ik',  60),
-  'лада2': ('https://www.youtube.com/watch?v=l2rglKquGvw', 120),
-  'лада3': ('https://www.youtube.com/watch?v=C5pgJqV-jI0', 100),
-  'станок2':('https://www.youtube.com/watch?v=9AlIEDSG_6g',  180),
-  'самолет1': ('https://www.youtube.com/watch?v=RXVJxX9gG7g', 120),
-  'мазда1': ('https://www.youtube.com/watch?v=cdjIF4jYQow', 120),
-  'мицубиси1': ('https://www.youtube.com/watch?v=78ZO6Nsj_uk', 180),
-  'ока1':('https://www.youtube.com/watch?v=C_lbeii0spk', 120),
-  'катер1': ('https://www.youtube.com/watch?v=VWRV3uy87ZU', 120),
-    'лада21':('https://www.youtube.com/watch?v=Dmgz8yJicCI', 320),
-    'лада22':('https://www.youtube.com/watch?v=6pXdEezkk9I', 53),
-    'катер2':('https://www.youtube.com/watch?v=XVo15giIU68', 100),
-    'лада23': ('https://www.youtube.com/watch?v=luRA6Gtm3PM', 180),
-    'шкода2': ('https://www.youtube.com/watch?v=95ijPASWIjU', 75),
-    'трактор2':('https://www.youtube.com/watch?v=Xevamo7l5D4', 140),
-    'трактор3': ('https://www.youtube.com/watch?v=ECEYU579nrU', 180),
-    'трактор12': ('https://www.youtube.com/watch?v=QjinY3Q5jcY', 180),
-    'белаз2': ('https://www.youtube.com/watch?v=pX8XR0NgNNY', 240),
-    'альфаромео1':('https://www.youtube.com/watch?v=YPfAV3iGfTA', 120),
-    'шахман1':('https://www.youtube.com/watch?v=Tg38pD8Rtyc', 180),
-    'транзит1':('https://www.youtube.com/watch?v=1b4c_t6mh-I', 180),
-    'крета1': ('https://www.youtube.com/watch?v=EyFpo1iI5eg', 160),
-    'дизель1': ('https://www.youtube.com/watch?v=xhC4c2tJxtI', 90),
-    'пежо1': ('https://www.youtube.com/watch?v=-pROqa9HNEA', 110),
-    'пежо2': ('https://www.youtube.com/watch?v=-irquE0-vfo',  130),
-    'вольво1': ('https://www.youtube.com/watch?v=C1CJJeCMtt0', 110),  #вариатор
-   'вольво2': ('https://www.youtube.com/watch?v=WFyxBSLYchQ', 110),
-   'вольво3': ('https://www.youtube.com/watch?v=rPHDZ0CuxoY', 240),
-  'ауди2': ('https://www.youtube.com/watch?v=Xz3_cdlnEo0', 110),
-  'ауди3':('https://www.youtube.com/watch?v=t9KbDHavhYw', 70),
-  'сааб2': ('https://www.youtube.com/watch?v=tiFxaE6GAOM', 130),
-  'ферари1': ('https://www.youtube.com/watch?v=kUXRbHpOM7k',  240),
-   'иж1': ('https://www.youtube.com/watch?v=dxzS3Zjbsqo', 180),
-   'ивеко1': ('https://www.youtube.com/watch?v=m0MDra5ei28', 180),
-   'даф2': ('https://www.youtube.com/watch?v=DXb2geQnLKU', 240),
-  'большие1':('https://www.youtube.com/watch?v=jDOr6emtqv0', 540),
-  'даф3': ('https://www.youtube.com/watch?v=ly7pjLq0EzI', 70),
-  'ивеко2': ('https://www.youtube.com/watch?v=v9pa-g2nghs', 130),
- 'вольво3': ('https://www.youtube.com/watch?v=uXFzqHxOZTw&t=39s', 180),
- 'скания3': ('https://www.youtube.com/watch?v=KmcWO9EzWjk', 180),
-    'шевроле2': ('https://www.youtube.com/watch?v=GolxWT8wczU', 130),
-    'даф12': ('https://www.youtube.com/watch?v=e9EUmQBO498', 200),
-    'портер1': ('https://www.youtube.com/watch?v=tK_NbKKLAd8',140),
-    'самолет2': ('https://www.youtube.com/watch?v=Nf6NkZHCyF8', 120),
-
-    'мицубиси2':('https://www.youtube.com/watch?v=78ZO6Nsj_uk&t=129s', 180),
-    'мицубиси3':('https://www.youtube.com/watch?v=SltgNonnyVw',180),
-    'уаз1': ('https://www.youtube.com/watch?v=MoPK7EK5bF4', 180),
-
-    'шахман2': ('https://www.youtube.com/watch?v=H7PmOwnWqK0', 120),
-    'ман2': ('https://www.youtube.com/watch?v=C12kOxoewtw', 80),
-    'скания12':('https://www.youtube.com/watch?v=88BFzhefRs0', 120),
-
-    'баргузин1': ('https://youtu.be/VRNU-Hxkvsw', 140),
-    'дастер1': ('https://www.youtube.com/watch?v=ru8UIwSHzhA', 170),
-    'баргузин2': ('https://www.youtube.com/watch?v=FdbCTbtIL9k', 60),
-
-    'шахман3': ('https://www.youtube.com/watch?v=KPX3lQGYk00', 200),
-    'баргузин3': ('https://www.youtube.com/watch?v=yUHaXpJy8g8', 220),
-    'газон1': ('https://www.youtube.com/watch?v=KPX3lQGYk00', 180),
-    'зил2': ('https://www.youtube.com/watch?v=KPX3lQGYk00', 70),
-    'гонка2':('https://www.youtube.com/watch?v=TGfvGrL1KsM', 240),
-
-   'понтиак1': ('https://www.youtube.com/watch?v=duYFWCgCMNo',80),
-   'понтиак2': ('https://www.youtube.com/watch?v=fw1QwiY9IFk', 80),
-   'плимут1': ('https://www.youtube.com/watch?v=RXX-VurBU1o', 90),
-  'ферари2': ('https://www.youtube.com/watch?v=1LogBufE0Ms', 240),
-
-  'багги1': ('https://www.youtube.com/watch?v=M_VZOFzCaXw', 180),
-  'нива2': ('https://www.youtube.com/watch?v=DZsTATJB6og', 300),
-  'нива3': ('https://www.youtube.com/watch?v=hkXcvofU8MQ', 240),
-  'лада31': ('https://www.youtube.com/watch?v=tCqhCSJWTic', 240),
-
-  'победа1': ('https://www.youtube.com/watch?v=Pb8Y63qQ6Qo', 83),
-  'фиат2': ('https://www.youtube.com/watch?v=J_ALQl2MEkg', 240),
-   'брутус1': ('https://www.youtube.com/watch?v=_3bcwTeCMNM', 240),
-    'старики1': ('https://www.youtube.com/watch?v=K72dKFcDTAw', 340),
-
-# не слушал
-    'старики2': ('https://www.youtube.com/watch?v=9PSw4UsDv-I', 340),
-    'старики3': ('https://www.youtube.com/watch?v=m1hlBO02Akk', 240),
-   'дизель1': ('https://www.youtube.com/watch?v=gTVc-9bMxOE', 200),
-    'дизель2': ('https://www.youtube.com/watch?v=AdAiVIs0VZk', 360),
-
-    'дизель3': ('https://www.youtube.com/watch?v=_lJyaAhn2gA', 360),
-    'дизель21': ('https://www.youtube.com/watch?v=T3gFDP3-xDI', 360),
-    'машина1': ('https://www.youtube.com/watch?v=C3p55J-VA5k', 250),
-    'трактор21': ('https://www.youtube.com/watch?v=Y-2H642XA-o', 180),
-
-     'мотор1': ('https://www.youtube.com/watch?v=c1eiuw3tsTE', 300),
-     'мотор2': ('https://www.youtube.com/watch?v=6RCjsS4JaJ8', 300),
-     'мотор3': ('https://www.youtube.com/watch?v=CoR7sLmOklY', 180),
-     'мотор12': ('https://www.youtube.com/watch?v=yFIpb63WMR0', 300),
-
-    'стук1': ('https://www.youtube.com/watch?v=gst_ODoP3eI', 180),
-    'стук2': ('https://www.youtube.com/watch?v=7d9j137Y3dw', 180),
-
-    'старики11': ('https://www.youtube.com/watch?v=yXSW4T5ys_E', 120),
-    'старики12': ('https://www.youtube.com/watch?v=D6jR-FLYiUs&t=180s', 240),
-    'гигант1':('https://www.youtube.com/watch?v=q6iOtsS6_zg', 200),
-    'фабрика1':('https://www.youtube.com/watch?v=kxHmGn50nmk', 240),
-
-    'старики13': ('https://www.youtube.com/watch?v=x3032A5nBRc&t=180s', 300),
-    'старики21': ('https://www.youtube.com/watch?v=M1jHZIdt1x8', 300),
-    'стук3': ('https://www.youtube.com/watch?v=l3r_28k4nFo', 240),
-    'мото1': ('https://www.youtube.com/watch?v=n-b-XjrgYTY', 240),
-    'мото2': ('https://www.youtube.com/watch?v=mnjjxLC2WKQ', 300),
-
-    'ваз41': ('https://www.youtube.com/watch?v=pDVrRaJqGio', 350),
-    'ваз42': ("https://www.youtube.com/watch?v=M_ZGFwWSsfA", 90)
-
-}
 
 
 class TBrowser:
@@ -551,6 +330,9 @@ class TZvuchki(tk.Frame):
 
     def play_request(self, request):
         add_sec = 0
+        if len(request) > 2 and request[-2:].upper() == "ДД" and request[-3].isdigit():
+            add_sec = 240
+            request = request[:-2]
         if len(request) > 1 and request[-1].upper() == "Д" and request[-2].isdigit():
             add_sec = 120
             request = request[:-1]
