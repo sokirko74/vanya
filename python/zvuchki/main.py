@@ -330,7 +330,7 @@ class TZvuchki(tk.Frame):
 
     def play_request(self, request):
         add_sec = 0
-        if len(request) > 2 and request[-2:].upper() == "ДД" and request[-3].isdigit():
+        if len(request) > 2 and request[-2:].upper() == "ДД":
             add_sec = 240
             request = request[:-2]
         if len(request) > 1 and request[-1].upper() == "Д" and request[-2].isdigit():

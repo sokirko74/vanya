@@ -12,6 +12,10 @@ import random
 from mingus.midi import fluidsynth
 sys.path.append(os.path.join(os.path.dirname(__file__), '../utils'))
 from logging_wrapper import setup_logging
+from tkinter.messagebox import askyesno
+
+MAX_WORD_FAIL_COUNT = 16
+MAX_VICTORIES_COUNT = 20
 
 
 BLACK = (0, 0, 0)
@@ -21,146 +25,61 @@ GREEN = (0, 255, 0)
 BLUE = (0, 0, 255)
 YELLOW = (228, 155, 0)
 
-GOAL_WORDS = [
-    "АИСТ",
-    "АРФА",
-    "БУКА",
-    "БУРЯ",
-    "ВАНЯ",
-    "ВЕРА",
-    "ГОРН",
-    "ГРАЧ",
-    "ГРОМ",
-    "ГРУЗ",
-    "ДВОР",
-    "ДОМ",
-    "ДРУГ",
-    "ЕФИМ",
-    "ЖУК",
-    "ЗАЯЦ",
-    "ЗИМА",
-    "КАША",
-    "КИТ",
-    "КИЯ",
-    "КОРА",
-    "КОТ",
-    "КРАЙ",
-    "КУБ",
-    "КУМА",
-    "КУСТ",
-    "ЛАДА",
-    "ЛАМА",
-    "ЛЕНА",
-    "ЛИСТ",
-    "ЛОБ",
-    "ЛОДКА",
-    "ЛУК",
-    "ЛЮДА",
-    "МАМА",
-    "МАРТ",
-    "МОРЕ",
-    "МУКА",
-    "МУХА",
-    "МЫЛО",
-    "НЕГР",
-    "НЕТ",
-    "НИВА",
-    "НОГА",
-    "НОС",
-    "НОТА",
-    "ПАПА",
-    "ПИЛА",
-    "ПОЛ",
-    "ПУЗО",
-    "ПУЛЯ",
-    "ПЫЛЬ",
-    "РОВ",
-    "РОЗА",
-    "РОК",
-    "РОСТ",
-    "РОТ",
-    "САД",
-    "САША",
-    "СИЛА",
-    "СЛОН",
-    "СОК",
-    "СОЛЬ",
-    "СОН",
-    "СЫН",
-    "СЫР",
-    "ТОК",
-    "ТОРТ",
-    "ТРЮК",
-    "ТУЧА",
-    "ТЮК",
-    "УСЫ",
-    "ФАРА",
-    "ХЛЕБ",
-    "ЦЕНА",
-    "ЦИРК",
-    "ЧАЩА",
-    "ШИНА",
-    "ШАРФ",
-    "ШУТ",
-    "ЩУКА",
-    "ЩЕКА",
-    "ЭТАЖ",
-    "ЮБКА",
-    "ЯХТА"
+PIANO = 1
+ORGAN = 20
+SITAR = 105
 
-]
 START_OCTAVE = 2
 KEY_2_NOTE = {
-    'Й': ('C', START_OCTAVE + 0),
-    'Ц': ('D', START_OCTAVE + 0),
-    'У': ('E', START_OCTAVE + 0 ),
-    'К': ('F', START_OCTAVE + 0),
-    'Е': ('G', START_OCTAVE + 0),
-    'Н': ('A', START_OCTAVE + 0),
-    'Г': ('B', START_OCTAVE + 0),
+    'Й': ('C', START_OCTAVE + 0, ORGAN),
+    'Ц': ('D', START_OCTAVE + 0, ORGAN),
+    'У': ('E', START_OCTAVE + 0, ORGAN),
+    'К': ('F', START_OCTAVE + 0, ORGAN),
+    'Е': ('G', START_OCTAVE + 0, ORGAN),
+    'Н': ('A', START_OCTAVE + 0, ORGAN),
+    'Г': ('B', START_OCTAVE + 0, ORGAN),
 
-    'Ш': ('C', START_OCTAVE + 1),
-    'Щ': ('D', START_OCTAVE + 1),
-    'З': ('E', START_OCTAVE + 1),
-    'Х': ('F', START_OCTAVE + 1),
-    'Ъ': ('G', START_OCTAVE + 1),
-    'Ф': ('A', START_OCTAVE + 1),
-    'Ы': ('B', START_OCTAVE + 1),
+    'Ш': ('C', START_OCTAVE + 1, ORGAN),
+    'Щ': ('D', START_OCTAVE + 1, ORGAN),
+    'З': ('E', START_OCTAVE + 1, ORGAN),
+    'Х': ('F', START_OCTAVE + 1, ORGAN),
+    'Ъ': ('G', START_OCTAVE + 1, ORGAN),
+    'Ф': ('A', START_OCTAVE + 1, PIANO),
+    'Ы': ('B', START_OCTAVE + 1, PIANO),
 
-    'В': ('C', START_OCTAVE + 2),
-    'А': ('D', START_OCTAVE + 2),
-    'П': ('E', START_OCTAVE + 2),
-    'Р': ('F', START_OCTAVE + 2),
-    'О': ('G', START_OCTAVE + 2),
-    'Л': ('A', START_OCTAVE + 2),
-    'Д': ('B', START_OCTAVE + 2),
+    'В': ('C', START_OCTAVE + 2, PIANO),
+    'А': ('D', START_OCTAVE + 2, PIANO),
+    'П': ('E', START_OCTAVE + 2, PIANO),
+    'Р': ('F', START_OCTAVE + 2, PIANO),
+    'О': ('G', START_OCTAVE + 2, PIANO),
+    'Л': ('A', START_OCTAVE + 2, PIANO),
+    'MAX': ('B', START_OCTAVE + 2, PIANO),
 
-    'Ж': ('C', START_OCTAVE + 3),
-    'Э': ('D', START_OCTAVE + 3),
-    'Я': ('E', START_OCTAVE + 3),
-    'Ч': ('F', START_OCTAVE + 3),
-    'С': ('G', START_OCTAVE + 3),
-    'М': ('A', START_OCTAVE + 3),
-    'И': ('B', START_OCTAVE + 3),
+    'Ж': ('C', START_OCTAVE + 3,  PIANO),
+    'Э': ('D', START_OCTAVE + 3, PIANO),
+    'Я': ('E', START_OCTAVE + 3, PIANO),
+    'Ч': ('F', START_OCTAVE + 3, PIANO),
+    'С': ('G', START_OCTAVE + 3, PIANO),
+    'М': ('A', START_OCTAVE + 3, PIANO),
+    'И': ('B', START_OCTAVE + 3, PIANO),
 
-    'Т': ('C', START_OCTAVE + 4),
-    'Ь': ('D', START_OCTAVE + 4),
-    'Б': ('E', START_OCTAVE + 4),
-    'Ю': ('F', START_OCTAVE + 4),
+    'Т': ('C', START_OCTAVE + 4, PIANO),
+    'Ь': ('D', START_OCTAVE + 4, PIANO),
+    'Б': ('E', START_OCTAVE + 4, PIANO),
+    'Ю': ('F', START_OCTAVE + 4, PIANO),
 
 }
-CORRECT_CHAR_INSTRUMENT = 1 #пианино
-#CORRECT_CHAR_INSTRUMENT = 20 #ОРГАН
-ACCORD_INSTRUMENT = 20
 
-#CORRECT_CHAR_INSTRUMENT = 40
-ERROR_CHAR_INSTRUMENT = 105
+CORRECT_CHAR_INSTRUMENT = PIANO
+ACCORD_INSTRUMENT = ORGAN
+ERROR_CHAR_INSTRUMENT = SITAR
 
 
 class TextCleaner (threading.Thread):
     def __init__(self, parent):
         threading.Thread.__init__(self)
         self.parent = parent
+
     def run(self):
         while self.parent.is_running:
             self.parent.check_word()
@@ -193,34 +112,37 @@ class TVanyaOffice(tk.Frame):
         self.write_font = ("DejaVu Sans Mono", self.args.write_font_size)
         self.read_font = ("DejaVu Sans Mono", self.args.read_font_size)
         self.label_font = ("DejaVu Sans Mono", 140)
+        self.goal_words = list()
+        self.read_goal_words()
+
         self.create_widgets()
         self.new_game()
         self.last_word = ""
         self.fail_count = 0
         self.victory_count = 0
         self.master.bind('<KeyPress>', self.keyboard_click)
-        #self.piano = mingus.containers.Piano()
-        #fluidsynth.init("soundfont.SF2")
         fluidsynth.init('/usr/share/sounds/sf2/default-GM.sf2', 'alsa')
         fluidsynth.main_volume(1, 10000)
         self.last_char = None
         fluidsynth.set_instrument(1, 105)
         fluidsynth.play_Note(Note("C-5"))
-        #b = Bar()
-        #b.place_notes(['C', 'E', 'G'], 1)
-        #fluidsynth.play_Bar(b)
-        #pass
         self.text_cleaner_thread = TextCleaner(self)
+        #self.play_file("word_fail.wav")
+
+    def read_goal_words(self):
+        path = os.path.join(os.path.dirname(__file__), "goal_words.txt")
+        with open(path) as inp:
+            for i in inp:
+                self.goal_words.append(i.strip())
 
     def create_widgets(self):
         frame1 = tk.Frame(self.master)
         frame1.pack(side=tk.TOP)
 
-
         self.goal_word = tk.StringVar()
         self.goal_words_combobox = tk.ttk.Combobox(frame1, width=5,
                  textvariable=self.goal_word,font=self.read_font)
-        self.goal_words_combobox['values'] = tuple(GOAL_WORDS)
+        self.goal_words_combobox['values'] = tuple(self.goal_words)
         self.goal_words_combobox.pack(side=tk.LEFT)
 
 
@@ -248,10 +170,11 @@ class TVanyaOffice(tk.Frame):
 
     def new_game(self):
         last_goal = self.goal_word.get()
-        words = list(GOAL_WORDS)
+        words = list(self.goal_words)
         if last_goal in words:
             words.remove(last_goal)
         w = random.choice(words)
+        #w = "ЖУК"
         self.goal_words_combobox.set(w)
         self.goal_word.set(w)
         self.goal_words_combobox.update()
@@ -272,19 +195,34 @@ class TVanyaOffice(tk.Frame):
         self.print_to_log("victory count = {}\n".format(self.victory_count))
         # self.play_file("victory.wav")
         b = Bar()
-        notes = [Note(*KEY_2_NOTE[i]) for i in goal_word]
+        notes = list()
+        channel = 1
+        for char in goal_word:
+            note, octave, instr = KEY_2_NOTE[char]
+            fluidsynth.set_instrument(channel, instr)
+            notes.append(Note(note, octave, channel=channel))
+            channel += 1
         b.place_notes(notes, 1)
-        fluidsynth.set_instrument(1, ACCORD_INSTRUMENT)
         fluidsynth.stop_everything()
         fluidsynth.play_Bar(b)
-        time.sleep(5)
+        time.sleep(4)
         self.text_widget.delete('1.0', tk.END)
+        if self.victory_count == MAX_VICTORIES_COUNT:
+            self.play_file('victory.wav', 50)
+            self.master.grab_set()  # Prevent clicking root while messagebox is open
+            ans = askyesno('', 'Выйти? Press Yes / No')
+            if ans:
+                self.quit()
+            else:
+                self.victory_count = 0
         self.new_game()
 
-    def play_char(self, ch, instrument):
+    def play_char(self, ch, custom_instrument=None):
+        name, octave, instrument = KEY_2_NOTE[ch]
+        if custom_instrument is not None:
+            instrument = custom_instrument
         fluidsynth.set_instrument(1, instrument)
-        n, o = KEY_2_NOTE[ch]
-        note = Note(n, o)
+        note = Note(name, octave)
         fluidsynth.stop_everything()
         fluidsynth.play_Note(note)
 
@@ -310,14 +248,16 @@ class TVanyaOffice(tk.Frame):
             return
         instrument = None
         if goal_word.startswith(new_word):
-            instrument = CORRECT_CHAR_INSTRUMENT
+            instrument = None
         else:
             if ord(event.char) >= 32:
                 instrument = ERROR_CHAR_INSTRUMENT
                 self.fail_count += 1
                 self.fail_count_label.config(text=str(self.fail_count))
                 self.print_to_log("fail count = {}\n".format(self.fail_count))
-                if self.fail_count > 18:
+                if self.fail_count > MAX_WORD_FAIL_COUNT:
+                    self.play_file("word_fail.wav")
+                    time.sleep(2)
                     self.new_game()
 
         if len(event.char) == 1 and event.char.upper() in KEY_2_NOTE:
@@ -327,12 +267,13 @@ class TVanyaOffice(tk.Frame):
             self.play_file("key_fail.wav")
             self.print_to_log("ignore event {}\n".format(event))
 
-    def play_file(self, file_path):
+    def play_file(self, file_path, volume=30):
         file_path = os.path.join(os.path.dirname(__file__), "sound", file_path)
+        assert os.path.exists(file_path)
         if self.audioplayer is not None:
             self.audioplayer.stop()
         self.audioplayer = vlc.MediaPlayer(file_path)
-        self.audioplayer.audio_set_volume(30)
+        self.audioplayer.audio_set_volume(volume)
         self.audioplayer.play()
 
     def main_loop(self):
@@ -354,5 +295,3 @@ if __name__ == "__main__":
     game = TVanyaOffice()
     game.main_loop()
 
-# повторный буквы игнорировать
-# удалять все неправильное?
