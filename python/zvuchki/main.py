@@ -1,23 +1,14 @@
-import sys
-
-import selenium.common.exceptions
-from selenium import webdriver
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.common.exceptions import WebDriverException, TimeoutException
-from selenium.webdriver.common.keys import Keys
-from selenium.webdriver.common.action_chains import ActionChains, ActionBuilder
 from car_brands import CARS, URLS
+from browser_wrapper import TBrowser
 
 import os
+import sys
 import argparse
 import tkinter as tk
 import tkinter.font as tkFont
 import time
 import vlc
 from functools import partial
-import json
 
 
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
@@ -31,10 +22,7 @@ GREEN = (0, 255, 0)
 BLUE = (0, 0, 255)
 YELLOW = (228, 155, 0)
 
-
-class TKeyboardType:
-    ABC = 1
-    DIGITS = 2
+MAX_TEXT_LEN = 25
 
 
 class TChars:
@@ -43,158 +31,12 @@ class TChars:
     SPACE = ' '
 
 
-class TBrowser:
-    def __init__(self):
-        self.browser = None
-        self.cache_path = "search_request_cache.txt"
-        self.all_requests = dict()
-        if os.path.exists(self.cache_path):
-            with open(self.cache_path) as inp:
-                s = inp.read()
-                if len(s) > 0:
-                    self.all_requests = json.loads(s)
-
-    def init_chrome(self):
-        options = webdriver.ChromeOptions()
-        options.add_argument("start-maximized")
-        options.add_argument("enable-automation")
-        options.add_argument("--no-sandbox")
-        options.add_argument("--disable-dev-shm-usage")
-        options.add_argument("--disable-browser-side-navigation")
-        options.add_argument("--disable-gpu")
-        self.browser = webdriver.Chrome(options=options)
-        self.browser.set_page_load_timeout(10)
-        self.browser.set_script_timeout(30)
-        self.browser.set_page_load_timeout(60)
-        self.browser.set_script_timeout(30)
-        self.browser.set_window_position(0, 0)
-
-    def init_firefox(self):
-        opts =  webdriver.FirefoxOptions()
-        #opts.log.level = "trace"
-        self.browser = webdriver.Firefox(
-                options=opts,
-                executable_path='/snap/bin/geckodriver',
-                #service_log_path=os.path.join(os.path.dirname(__file__), 'geckodriver.log')
-                    service_log_path=None
-                )
-
-    def start_browser(self):
-        #self.init_firefox()
-        self.init_chrome()
-
-    def close_browser(self):
-        self.browser.close()
-        time.sleep(1)
-        self.browser.quit()
-
-    def mouse_click(self, x, y):
-        self.browser.execute_script('el = document.elementFromPoint({}, {}); el.click();'.format(x, y))
-
-    def send_ctrl_end(self):
-        ActionChains(self.browser) \
-            .key_down(Keys.CONTROL) \
-            .key_down(Keys.END) \
-            .perform()
-
-    def send_ctrl_home(self):
-        ActionChains(self.browser) \
-            .key_down(Keys.CONTROL) \
-            .key_down(Keys.HOME) \
-            .perform()
-
-    def navigate(self, url):
-        try:
-            self.browser.get(url)
-        except selenium.common.exceptions.TimeoutException as e:
-            print(e)
-            time.sleep(2)
-
-    def play_youtube(self, url, max_duration):
-        try:
-            time.sleep(1)
-            print("play {}".format(url))
-            self.navigate(url)
-
-            print ("sleep 3 sec")
-            time.sleep(3)
-
-            #self.send_ctrl_end()
-            #time.sleep(1)
-
-            #self.send_ctrl_home()
-            #time.sleep(1)
-
-            element = self.browser.switch_to.active_element
-            time.sleep(1)
-
-            #print("send Tab")
-            #element.send_keys(Keys.TAB)
-            #time.sleep(1)
-
-            #self.browser.execute_script("window.scrollTo(0, 100)")
-            #time.sleep(1)
-
-            #element = self.browser.switch_to.active_element
-            #time.sleep(1)
-            #element = self.browser.find_elements('body')
-
-            print ("send к")
-            element.send_keys("k")
-            time.sleep(1)
-
-            time.sleep(0.5)
-            print ("send f")
-            element.send_keys("f")
-
-            #time.sleep(0.5)
-            #print ("send p")
-            #element.send_keys("p")
-
-            print("max_duration = {}".format(max_duration))
-            time.sleep(max_duration)
-            return True
-        except WebDriverException as exp:
-            print("exception: {}".format(exp))
-            return False
-
-    def _parse_serp(self):
-        search_results = []
-        self.send_ctrl_end()
-        time.sleep(1)
-        self.send_ctrl_home()
-        time.sleep(1)
-        for element in self.browser.find_elements(By.TAG_NAME, "a"):
-            url = element.get_attribute("href")
-            if url is not None and url != '#' and url.startswith('http'):
-                if "youtube" in url:
-                    if url not in search_results:
-                        search_results.append(url)
-        return search_results
-
-    def send_request(self, search_engine_request):
-        self.browser.get("https://www.google.ru/videohp?hl=ru")
-        time.sleep(3)
-        element = self.browser.switch_to.active_element
-        element.send_keys(search_engine_request)
-        time.sleep(1)
-        element.send_keys(Keys.RETURN)
-        time.sleep(3)
-        search_results = self._parse_serp()
-        self.all_requests[search_engine_request] = search_results
-        if search_results:
-            with open(self.cache_path, "w") as outp:
-                json.dump(self.all_requests, outp, ensure_ascii=False, indent=4)
-        return search_results
-
-
 class TZvuchki(tk.Frame):
     def __init__(self, master=None):
         self.args = parse_args()
         self.logger = setup_logging("office.log")
         self.left_offset = 80
         self.is_running = True
-        self.print_victory = False
         self.font_size = self.args.font_size
         self.master = tk.Tk()
         super().__init__(master)
@@ -211,10 +53,11 @@ class TZvuchki(tk.Frame):
             self.main_wnd_width = 1600
             self.main_wnd_height = 800
             self.master.geometry("{}x{}".format(self.main_wnd_width, self.main_wnd_height))
-        self.player = None
+        self.audioplayer = None
         self.editor_font = ("DejaVu Sans Mono", self.args.font_size+20)
         self.key_font = tkFont.Font(family="DejaVu Sans Mono", size=self.args.font_size)
         self.key_font_umlaut = tkFont.Font(family="DejaVu Sans Mono", size=self.args.font_size - 20)
+
         self.master.grid_columnconfigure((0, 1, 2, 4, 5, 6, 7, 8, 9, 10, 11, 12 ), weight=1)
         self.master.grid_rowconfigure(0, weight=1)
         self.master.grid_rowconfigure((1, 2, 3), weight=2)
@@ -224,15 +67,13 @@ class TZvuchki(tk.Frame):
                                    height=1,
                                    font=self.editor_font)
         self.text_widget.grid(column=0,  columnspan=13)
-        self.text_widget.bind("<Button-1>", self.on_click)
+        self.text_widget.bind("<Button-1>", self.on_text_click)
         self.text_widget.tag_config('green_tag', background='lightgreen')
 
         self.keys = dict()
         self.last_char = None
-        self.last_char_timestamp =   time.time()
-        self.keyboard_type = TKeyboardType.ABC
+        self.last_char_timestamp = time.time()
         self.init_all_abc_keyboard()
-        self.left_queries = set(URLS.keys())
 
 
     def init_all_abc_keyboard(self):
@@ -279,13 +120,13 @@ class TZvuchki(tk.Frame):
             button.grid(column=column_index, row=row_index, columnspan=colspan, padx=padx, pady=2)
             column_index += colspan
 
-    def on_click(self, event):
+    def on_text_click(self, event):
         self.logger.info("clicked")
         s = self.text_widget.get(1.0, tk.END).strip("\n")
         if self.play_request(s):
             self.text_widget.delete(1.0, tk.END)
 
-    def get_url_video_from_google(self, request, position):
+    def get_url_video_from_google_or_cached(self, request, position):
         browser = TBrowser()
         search_results = browser.all_requests.get(request)
         if search_results is None:
@@ -331,6 +172,8 @@ class TZvuchki(tk.Frame):
                 add_sec = 240
             elif cmd == 'Т':
                 add_query = "тест драйв от первого лица"
+            elif cmd == 'К':
+                add_query = "в кабине водителя"
             elif cmd == 'З':
                 add_query = "звук двигателя"
             elif cmd == 'Э':
@@ -351,16 +194,12 @@ class TZvuchki(tk.Frame):
             if car_brand.lower() not in CARS:
                 self.logger.error("bad car brand")
                 return False
-            #if add_query == '':
-            #    self.logger.error("nothing to play")
-            #    return False
             seconds = 300 + add_sec
             # seconds = 10 + add_seconds
             request = "{} {}".format(car_brand, add_query)
             self.logger.info("req={}, dur={}, serp_index={}".format(request, seconds, clip_index))
-            url = self.get_url_video_from_google(request, clip_index)
+            url = self.get_url_video_from_google_or_cached(request, clip_index)
             return self.play_youtube_video(url, seconds)
-
 
     def get_text_str(self):
         return self.text_widget.get(1.0, tk.END).strip("\n")
@@ -373,13 +212,15 @@ class TZvuchki(tk.Frame):
 
     def add_char(self, char):
         s = self.get_text_str()
+        if len(s) > MAX_TEXT_LEN:
+            return
         tags = 'green_tag' if char == ' ' else None
         self.text_widget.insert(tk.END, char, tags)
 
     def keyboard_click(self, char):
         if char == TChars.BACKSPACE:
             self.backspace()
-            self.play_file("key_sound.wav")
+            self.play_audio("key_sound.wav")
         else:
             ts = time.time()
             if ts - self.last_char_timestamp < 1 and char == self.last_char:
@@ -387,24 +228,17 @@ class TZvuchki(tk.Frame):
             self.last_char_timestamp = ts
             self.last_char = char
             self.add_char(char)
-            self.play_file("key_sound.wav")
+            self.play_audio("key_sound.wav")
         self.logger.info("text={}".format(self.text_widget.get(1.0, tk.END).strip("\n")))
 
-    def play_file(self, file_path):
+    def play_audio(self, file_path):
         file_path = os.path.join(os.path.dirname(__file__), "sound", file_path)
-        if self.player is not None:
-            self.player.stop()
-        self.player = vlc.MediaPlayer(file_path)
-        self.player.play()
-
-    def print_tasks(self):
-        #s = list(self.left_queries)
-        #s.sort()
-        #print(">>>> " + str(s))
-        pass
+        if self.audioplayer is not None:
+            self.audioplayer.stop()
+        self.audioplayer = vlc.MediaPlayer(file_path)
+        self.audioplayer.play()
 
     def main_loop(self):
-        self.print_tasks()
         self.master.mainloop()
 
 
@@ -421,16 +255,7 @@ def parse_args():
 if __name__ == "__main__":
     game = TZvuchki()
     game.main_loop()
-    #b = TBrowser()
-    #b.start_browser()
-    #b.play_youtube('https://www.youtube.com/watch?v=NaiCfIcutbM', 10)
 
 
 
 
-#победа и еще что-то, подумать о лайках и свободном поиске.
-# музыкальный редактор, латинские буквы, диезы и бемоли, цифры обозначают октаву, длительность стрелками
-# рисуем https://lilypond.org/doc/v2.23/Documentation/notation/direction-and-placement
-#  для нее есть https://pypi.org/project/abjad/
-# ваня вводит мелодию буквами, цифры и
-# поиск в youtube
