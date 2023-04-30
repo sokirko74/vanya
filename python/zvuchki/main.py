@@ -40,6 +40,7 @@ class TKeyboardType:
 class TChars:
     BACKSPACE = '⌫'
     PLAY = '𝄞'
+    SPACE = ' '
 
 
 class TBrowser:
@@ -223,26 +224,22 @@ class TZvuchki(tk.Frame):
                                    height=1,
                                    font=self.editor_font)
         self.text_widget.grid(column=0,  columnspan=13)
+        self.text_widget.bind("<Button-1>", self.on_click)
+        self.text_widget.tag_config('green_tag', background='lightgreen')
 
         self.keys = dict()
         self.last_char = None
         self.last_char_timestamp =   time.time()
         self.keyboard_type = TKeyboardType.ABC
-        #self.init_sample_abc_keyboard()
         self.init_all_abc_keyboard()
         self.left_queries = set(URLS.keys())
 
-    def init_sample_abc_keyboard(self):
-        #self.add_keyboard_row(1, "БЦХ123" + TChars.PLAY + TChars.BACKSPACE )
-        self.add_keyboard_row(1, "БЦХ1234" + TChars.PLAY + TChars.BACKSPACE)
-        self.add_keyboard_row(2, "ИКТЗГУРДСФЖ")
-        self.add_keyboard_row(3, "МПАВЯЛОНЕШЬ")
 
     def init_all_abc_keyboard(self):
         self.add_keyboard_row(1, "123456780" + TChars.BACKSPACE)
         self.add_keyboard_row(2, "ЙЦУКЕНГШЩЗХ")
         self.add_keyboard_row(3, "ФЫВАПРОЛДЖЭ")
-        self.add_keyboard_row(4, "ЯЧСМИТЬБЮ"+TChars.PLAY)
+        self.add_keyboard_row(4, "ЯЧСМИТЬБЮ"+TChars.SPACE)
 
     def add_keyboard_row(self, row_index, chars):
         self.last_char_timestamp = time.time()
@@ -255,7 +252,7 @@ class TZvuchki(tk.Frame):
                 padx = (30, 0)
             else:
                 padx = 0
-            if char == TChars.PLAY:
+            if char == TChars.SPACE:
                 colspan *= 2
                 width *= 2
                 background = "lightgreen"
@@ -282,8 +279,13 @@ class TZvuchki(tk.Frame):
             button.grid(column=column_index, row=row_index, columnspan=colspan, padx=padx, pady=2)
             column_index += colspan
 
-    def get_url_video_from_google(self, car, position, add_query):
-        request = "{} {}".format(car, add_query)
+    def on_click(self, event):
+        self.logger.info("clicked")
+        s = self.text_widget.get(1.0, tk.END).strip("\n")
+        if self.play_request(s):
+            self.text_widget.delete(1.0, tk.END)
+
+    def get_url_video_from_google(self, request, position):
         browser = TBrowser()
         search_results = browser.all_requests.get(request)
         if search_results is None:
@@ -305,65 +307,78 @@ class TZvuchki(tk.Frame):
             if res:
                 break
 
-    def play_test_drive(self, car_and_pos, add_seconds):
-        seconds = 300 + add_seconds
-        #seconds = 10 + add_seconds
-        add_query = None
-        if car_and_pos[-1] == 'Т':
-            add_query = "тест драйв от первого лица"
-        elif car_and_pos[-1] == 'З':
-            add_query = "звук двигателя"
-        elif car_and_pos[-1] == 'Э':
-            add_query = "эксплуатация"
-        else:
-            return False
-        car_and_pos = car_and_pos[:-1]
-        if len(car_and_pos) == 0 or not car_and_pos[-1].isdigit():
-            return False
-        position = int(car_and_pos[-1])
-        car = car_and_pos[:-1]
-        if car.lower() not in CARS:
-            return False
-        url = self.get_url_video_from_google(car, position, add_query)
-        self.play_youtube_video(url, seconds)
-        return True
-
     def play_request(self, request):
+        words = request.strip().split(' ')
+        if len(words) < 2:
+            self.logger.error("car and  video clip index must be specified")
+            return
+        if not words[1].isdigit():
+            self.logger.error("video clip index must be integer")
+            return
+        car_brand = words[0]
+        if car_brand.lower() == 'усач':
+            car_brand = 'ТРАМВАЙ'
+
+        clip_index = int(words[1])
+        add_query = ''
         add_sec = 0
-        if len(request) > 2 and request[-2:].upper() == "ДД":
-            add_sec = 240
-            request = request[:-2]
-        if len(request) > 1 and request[-1].upper() == "Д" and request[-2].isdigit():
-            add_sec = 120
-            request = request[:-1]
-        if len(request) > 2 and request[-1].upper() == "Д" and (request[-2].upper()  in  'ТЗ') and request[-3].isdigit():
-            add_sec = 120
-            request = request[:-1]
-        key = request.lower()
-        if key not in URLS:
-            return self.play_test_drive(request, add_sec)
-        url, timeout = URLS[key]
-        if self.args.max_play_seconds < timeout:
-            timeout = self.args.max_play_seconds
-        self.play_youtube_video(url, timeout + add_sec)
-        if key in self.left_queries:
-            self.left_queries.remove(key)
-        self.print_tasks()
-        return True
+        use_old_urls = False
+        for i in range(2, len(words)):
+            cmd = words[i]
+            if cmd == 'Д':
+                add_sec = 120
+            elif cmd == 'ДД':
+                add_sec = 240
+            elif cmd == 'Т':
+                add_query = "тест драйв от первого лица"
+            elif cmd == 'З':
+                add_query = "звук двигателя"
+            elif cmd == 'Э':
+                add_query = "эксплуатация"
+            elif cmd == 'П':
+                use_old_urls = True
+        if use_old_urls:
+            key = '{}{}'.format(car_brand, clip_index).lower()
+            if key not in URLS:
+                self.logger.error("no stored key {}".format(key))
+                return False
+            url, timeout = URLS[key]
+            if self.args.max_play_seconds < timeout:
+                timeout = self.args.max_play_seconds
+            self.play_youtube_video(url, timeout + add_sec)
+            return True
+        else:
+            if car_brand.lower() not in CARS:
+                self.logger.error("bad car brand")
+                return False
+            #if add_query == '':
+            #    self.logger.error("nothing to play")
+            #    return False
+            seconds = 300 + add_sec
+            # seconds = 10 + add_seconds
+            request = "{} {}".format(car_brand, add_query)
+            self.logger.info("req={}, dur={}, serp_index={}".format(request, seconds, clip_index))
+            url = self.get_url_video_from_google(request, clip_index)
+            return self.play_youtube_video(url, seconds)
+
+
+    def get_text_str(self):
+        return self.text_widget.get(1.0, tk.END).strip("\n")
+
+    def backspace(self, s):
+        s = self.get_text_str()
+        if len(s) > 0:
+            self.text_widget.delete(1.0, tk.END)
+            self.text_widget.insert(tk.END, s[:-1])
+
+    def add_char(self, char):
+        s = self.get_text_str()
+        tags = 'green_tag' if char == ' ' else None
+        self.text_widget.insert(tk.END, char, tags)
 
     def keyboard_click(self, char):
-        if char == ' ':
-            pass
-        elif char == TChars.PLAY:
-            s = self.text_widget.get(1.0, tk.END).strip("\n")
-            if self.play_request(s):
-                self.text_widget.delete(1.0, tk.END)
-        elif char == TChars.BACKSPACE:  #backspace
-            s = self.text_widget.get(1.0, tk.END).strip("\n")
-            if len(s) > 0:
-                #self.text_widget.delete(float(len(s)), tk.END)
-                self.text_widget.delete(1.0, tk.END)
-                self.text_widget.insert(tk.END, s[:-1])
+        if char == TChars.BACKSPACE:
+            self.backspace()
             self.play_file("key_sound.wav")
         else:
             ts = time.time()
@@ -371,8 +386,9 @@ class TZvuchki(tk.Frame):
                 return
             self.last_char_timestamp = ts
             self.last_char = char
-            self.text_widget.insert(tk.END, char)
+            self.add_char(char)
             self.play_file("key_sound.wav")
+        self.logger.info("text={}".format(self.text_widget.get(1.0, tk.END).strip("\n")))
 
     def play_file(self, file_path):
         file_path = os.path.join(os.path.dirname(__file__), "sound", file_path)
@@ -382,9 +398,10 @@ class TZvuchki(tk.Frame):
         self.player.play()
 
     def print_tasks(self):
-        s = list(self.left_queries)
-        s.sort()
-        print(">>>> " + str(s))
+        #s = list(self.left_queries)
+        #s.sort()
+        #print(">>>> " + str(s))
+        pass
 
     def main_loop(self):
         self.print_tasks()
