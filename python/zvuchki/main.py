@@ -152,10 +152,10 @@ class TZvuchki(tk.Frame):
         words = request.strip().split(' ')
         if len(words) < 2:
             self.logger.error("car and  video clip index must be specified")
-            return
+            return False
         if not words[1].isdigit():
             self.logger.error("video clip index must be integer")
-            return
+            return False
         car_brand = words[0]
         if car_brand.lower() == 'усач':
             car_brand = 'ТРАМВАЙ'
@@ -180,6 +180,7 @@ class TZvuchki(tk.Frame):
                 add_query = "эксплуатация"
             elif cmd == 'П':
                 use_old_urls = True
+        duration =  None
         if use_old_urls:
             key = '{}{}'.format(car_brand, clip_index).lower()
             if key not in URLS:
@@ -188,23 +189,23 @@ class TZvuchki(tk.Frame):
             url, timeout = URLS[key]
             if self.args.max_play_seconds < timeout:
                 timeout = self.args.max_play_seconds
-            self.play_youtube_video(url, timeout + add_sec)
-            return True
+            duration = timeout + add_sec
         else:
             if car_brand.lower() not in CARS:
                 self.logger.error("bad car brand")
                 return False
-            seconds = 300 + add_sec
-            # seconds = 10 + add_seconds
+            duration = 300 + add_sec
+            # duration = 10 + add_seconds
             request = "{} {}".format(car_brand, add_query)
-            self.logger.info("req={}, dur={}, serp_index={}".format(request, seconds, clip_index))
+            self.logger.info("req={}, dur={}, serp_index={}".format(request, duration, clip_index))
             url = self.get_url_video_from_google_or_cached(request, clip_index)
-            return self.play_youtube_video(url, seconds)
+        self.play_youtube_video(url, duration)
+        return True
 
     def get_text_str(self):
         return self.text_widget.get(1.0, tk.END).strip("\n")
 
-    def backspace(self, s):
+    def backspace(self):
         s = self.get_text_str()
         if len(s) > 0:
             self.text_widget.delete(1.0, tk.END)
@@ -227,8 +228,8 @@ class TZvuchki(tk.Frame):
                 return
             self.last_char_timestamp = ts
             self.last_char = char
-            self.add_char(char)
             self.play_audio("key_sound.wav")
+            self.add_char(char)
         self.logger.info("text={}".format(self.text_widget.get(1.0, tk.END).strip("\n")))
 
     def play_audio(self, file_path):
