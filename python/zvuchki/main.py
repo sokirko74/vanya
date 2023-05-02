@@ -9,6 +9,7 @@ import tkinter.font as tkFont
 import time
 import vlc
 from functools import partial
+import threading
 
 
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
@@ -29,6 +30,32 @@ class TChars:
     BACKSPACE = '⌫'
     PLAY = '𝄞'
     SPACE = ' '
+
+
+class VideoPlayer (threading.Thread):
+    def __init__(self, parent,url, seconds):
+        threading.Thread.__init__(self)
+        self.parent = parent
+        self.url = url
+        self.seconds = seconds
+        self._interrupted = False
+        self.browser = None
+
+    def stop_playing(self):
+        self._interrupted = True
+        self.browser.close_browser()
+
+    def run(self):
+        for try_index in range(2):
+            if not self.parent.is_running or self._interrupted:
+                break
+            self.browser = TBrowser()
+            self.browser.start_browser()
+            res = self.browser.play_youtube(self.url, self.seconds)
+            self.browser.close_browser()
+            if res:
+                break
+        self.parent.on_video_finish()
 
 
 class TZvuchki(tk.Frame):
@@ -74,7 +101,7 @@ class TZvuchki(tk.Frame):
         self.last_char = None
         self.last_char_timestamp = time.time()
         self.init_all_abc_keyboard()
-
+        self.video_player_thread = None
 
     def init_all_abc_keyboard(self):
         self.add_keyboard_row(1, "123456780" + TChars.BACKSPACE)
@@ -120,11 +147,20 @@ class TZvuchki(tk.Frame):
             button.grid(column=column_index, row=row_index, columnspan=colspan, padx=padx, pady=2)
             column_index += colspan
 
+    def on_video_finish(self):
+        self.logger.info('on_video_finish...')
+        #self.video_player_thread.join(0.1)
+        self.video_player_thread = None
+        self.text_widget.delete(1.0, tk.END)
+
     def on_text_click(self, event):
         self.logger.info("clicked")
-        s = self.text_widget.get(1.0, tk.END).strip("\n")
-        if self.play_request(s):
-            self.text_widget.delete(1.0, tk.END)
+        if self.video_player_thread is not None:
+            self.video_player_thread.stop_playing()
+            self.on_video_finish()
+        else:
+            s = self.text_widget.get(1.0, tk.END).strip("\n")
+            self.play_request(s)
 
     def get_url_video_from_google_or_cached(self, request, position):
         browser = TBrowser()
@@ -140,13 +176,8 @@ class TZvuchki(tk.Frame):
         return search_results[position]
 
     def play_youtube_video(self, url, seconds):
-        for try_index in range(2):
-            browser = TBrowser()
-            browser.start_browser()
-            res = browser.play_youtube(url, seconds)
-            browser.close_browser()
-            if res:
-                break
+        self.video_player_thread = VideoPlayer(self, url, seconds)
+        self.video_player_thread.start()
 
     def play_request(self, request):
         words = request.strip().split(' ')
@@ -156,7 +187,7 @@ class TZvuchki(tk.Frame):
         if not words[1].isdigit():
             self.logger.error("video clip index must be integer")
             return False
-        car_brand = words[0]
+        car_brand = words[0].strip()
         if car_brand.lower() == 'усач':
             car_brand = 'ТРАМВАЙ'
 
@@ -195,7 +226,7 @@ class TZvuchki(tk.Frame):
                 self.logger.error("bad car brand")
                 return False
             duration = 300 + add_sec
-            # duration = 10 + add_seconds
+            №duration = 10 + add_sec
             request = "{} {}".format(car_brand, add_query)
             self.logger.info("req={}, dur={}, serp_index={}".format(request, duration, clip_index))
             url = self.get_url_video_from_google_or_cached(request, clip_index)

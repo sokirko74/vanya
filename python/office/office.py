@@ -53,7 +53,7 @@ KEY_2_NOTE = {
     'Р': ('F', START_OCTAVE + 2, PIANO),
     'О': ('G', START_OCTAVE + 2, PIANO),
     'Л': ('A', START_OCTAVE + 2, PIANO),
-    'MAX': ('B', START_OCTAVE + 2, PIANO),
+    'Д': ('B', START_OCTAVE + 2, PIANO),
 
     'Ж': ('C', START_OCTAVE + 3,  PIANO),
     'Э': ('D', START_OCTAVE + 3, PIANO),
