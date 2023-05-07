@@ -125,7 +125,9 @@ class TVanyaOffice(tk.Frame):
         fluidsynth.main_volume(1, 10000)
         self.last_char = None
         fluidsynth.set_instrument(1, 105)
-        fluidsynth.play_Note(Note("C-5"))
+        #note = Note("C-5")
+        note = Note().from_hertz(460)
+        fluidsynth.play_Note(note)
         self.text_cleaner_thread = TextCleaner(self)
         #self.play_file("word_fail.wav")
 
