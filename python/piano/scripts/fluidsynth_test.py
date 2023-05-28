@@ -2,16 +2,9 @@ import math        #import needed modules
 import sys
 import time
 
-import pyaudio     #sudo apt-get install python-pyaudio
 import tkinter as tk
 import os
 import numpy as np
-import matplotlib.pyplot as plt
-
-from matplotlib.backends.backend_tkagg import (
-    FigureCanvasTkAgg, NavigationToolbar2Tk)
-
-from matplotlib.animation import FuncAnimation
 from mingus.containers import Note, Bar
 import vlc
 import random
@@ -19,7 +12,7 @@ from mingus.midi import pyfluidsynth, fluidsynth
 
 
 
-OCTAVE_CHUNK_COUNT = 8
+OCTAVE_CHUNK_COUNT = 5
 START_FREQ = 16.35  #C0
 MULTIPLIER = math.pow(2, 1/OCTAVE_CHUNK_COUNT)
 
@@ -28,9 +21,12 @@ def get_custom_note (octave_index, note_degree):
     note = start * math.pow(MULTIPLIER, note_degree)
     return note
 
+
 PIANO = 1
 ORGAN = 20
 SITAR = 105
+DEFAULT_INSTRUMENT = ORGAN + 4
+
 
 class BentNote:
     def __init__(self, synth, channel, freq):
@@ -39,12 +35,14 @@ class BentNote:
         self.channel = channel
         next_note = Note().from_hertz(freq)
         next_note.augment()
-        bent_unit = next_note.to_hertz() - self.note.to_hertz() / 2048
-        self.bend =  int((freq - self.note.to_hertz()) * bent_unit)
-        print ('channel = {}, freq={} -> {} + {}'.format(channel, freq, self.note, self.bend))
+        bent_unit = 4096 / (next_note.to_hertz() - self.note.to_hertz())
+        freq_diff = int(freq - self.note.to_hertz())
+        self.bend =  int(freq_diff * bent_unit)
+        print ('input_freq={} = {} ({} hz) + {} hz (bend={}, bu={})'.format(
+            freq, self.note, self.note.to_hertz(),  freq_diff, self.bend, bent_unit))
 
     def play_note(self):
-        self.synth.noteon(self.channel, int(self.note), 64)
+        self.synth.noteon(self.channel, int(self.note), 127)
         self.synth.pitch_bend(self.channel, self.bend)
 
     def stop_note(self):
@@ -77,18 +75,20 @@ class TKeyboardSynth:
         self.synth.sfload(sound_font)
         self.synth.program_reset()
         self.synth.start('alsa')
-        self.synth.noteon(1, 70, 64)
+        #self.synth.noteon(1, 70, 64)
         self.synth.program_change(1, ORGAN)
-        self.synth.program_change(3, ORGAN)
-        # synth.noteon(3, 60, 64)
-        # synth.noteon(13, 50, 64)
-        # for i in range(0, 2000, 100):
-        #     synth.pitch_bend(1, i)
-        #     synth.noteon(1, 70, 64)
-        #     time.sleep(0.1)
-        # synth.noteoff(1, 70)
-        # synth.noteoff(3, 60)
-        #
+        #self.synth.program_change(3, ORGAN)
+        #synth.noteon(3, 60, 64)
+        # self.synth.noteon(1, 70, 64)
+        # for i in range(0, 4096, 100):
+        #      print (i)
+        #      self.synth.pitch_bend(1, i)
+        #      #self.synth.noteon(1, 70, 64)
+        #      time.sleep(0.3)
+        #synth.noteoff(1, 70)
+        #synth.noteoff(3, 60)
+
+        pass
         #
         # #synth.p
         # pass
@@ -110,7 +110,7 @@ class TKeyboardSynth:
                 for i in self.play_freqs.values():
                     free_channels.remove(i.channel)
                 free_channel = list(free_channels)[0]
-                self.synth.program_change(free_channel, ORGAN)
+                self.synth.program_change(free_channel, DEFAULT_INSTRUMENT)
                 bn = BentNote(self.synth, free_channel, freq)
                 self.play_freqs[freq] = bn
                 bn.play_note()

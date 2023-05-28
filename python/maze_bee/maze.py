@@ -45,7 +45,7 @@ class TKeyEventType:
 
 
 class TMaze:
-    def __init__(self, use_joystick, is_full_screen, rooms_count, speed, block_size):
+    def __init__(self, use_joystick, is_full_screen, rooms_count, speed, block_size, maze_width=1000, maze_height=800):
         self.logger = setup_logging("maze_logger")
         self.gen = generator.Generator(logger=self.logger, rooms=max(rooms_count, 2))
         self.tiles = []
@@ -69,8 +69,8 @@ class TMaze:
         else:
             self.left_maze = 0
             self.top_maze = 0
-            self.maze_width = 1000
-            self.maze_height = 800
+            self.maze_width = maze_width
+            self.maze_height = maze_height
             self.screen = pygame.display.set_mode((self.maze_width, self.maze_height))
             pygame.init()
 
@@ -261,11 +261,14 @@ def parse_args():
     parser.add_argument("--rooms-count", dest='rooms_count', default=2, type=int)
     parser.add_argument("--speed", dest='speed', default=2, type=int)
     parser.add_argument("--block-size", dest='block_size', default=25, type=int)
+    parser.add_argument("--maze-width", dest='maze_width', default=1000, type=int)
+    parser.add_argument("--maze-height", dest='maze_height', default=800, type=int)
     return parser.parse_args()
 
 
 if __name__ == '__main__':
     args = parse_args()
-    maze = TMaze(args.use_joystick, args.fullscreen, args.rooms_count, args.speed, args.block_size)
+    maze = TMaze(args.use_joystick, args.fullscreen, args.rooms_count, args.speed, args.block_size,
+                 args.maze_width, args.maze_height )
     maze.main_loop()
     pygame.quit()
