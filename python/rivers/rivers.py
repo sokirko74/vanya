@@ -31,7 +31,7 @@ class TRiverGame:
         self.sounds = TSounds(SOUNDS_DIR, not args.silent)
         self.racing_wheel = TRacingWheel(self.logger, args.wheel_center)
         self.max_game_speed = args.speed_count
-        self.engine_sound = TEngineSound(self.max_game_speed, self.args.engine_audio_folder, max_volume=self.args.engine_volume)
+        self.engine_sound = TEngineSound(self.logger, self.max_game_speed, self.args.engine_audio_folder, max_volume=self.args.engine_volume)
         self.engine_sound.start_engine()
 
         self.river_sprites = pygame.sprite.Group()

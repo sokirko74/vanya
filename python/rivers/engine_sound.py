@@ -24,7 +24,7 @@ class TEngineState:
     engine_stable = 3
 
 
-class TOneSpeedSound(pygame.mixer.Sound):
+class TOneSpeedSound:
     segment_folder = None
 
     def get_state(self):
@@ -46,14 +46,18 @@ class TOneSpeedSound(pygame.mixer.Sound):
         self.start_speed = start_speed
         self.last_speed = last_speed
         filename = TOneSpeedSound.get_file_name(self.start_speed, self.last_speed)
-        super().__init__(filename)
+        self._sound = pygame.mixer.Sound(filename)
         self.filename = filename
+
+    def get_mixer_sound(self):
+        return self._sound
 
 
 class TEngineSound(threading.Thread):
-    def __init__(self, max_speed, segment_folder, max_volume=None):
+    def __init__(self, logger, max_speed, segment_folder, max_volume=None):
         TOneSpeedSound.segment_folder = segment_folder
         threading.Thread.__init__(self)
+        self.logger = logger
         self.daemon = True
         self.max_speed = max_speed
         self.sounds = dict()
@@ -62,6 +66,7 @@ class TEngineSound(threading.Thread):
         self.max_volume = max_volume
         if self.max_volume is not None:
             self.channel.set_volume(self.max_volume)
+        self.mixer_sound_to_info = dict()
 
     def load_sounds(self):
         for i in range(self.max_speed):
@@ -73,11 +78,21 @@ class TEngineSound(threading.Thread):
         self.load_sounds()
         self.start()
 
+    def get_sound_info(self):
+        snd = self.channel.get_sound()
+        info = self.mixer_sound_to_info.get(snd)
+        if info is not None:
+            return info
+        else:
+            if snd is not None:
+                self.logger.error("unknown sound in queue")
+            return None
+
     def get_state(self):
         if not self.channel.get_busy():
             return TEngineState.engine_stable
-        snd = self.channel.get_sound()
-        if isinstance(snd, TOneSpeedSound):
+        snd = self.get_sound_info()
+        if snd is not None:
             return snd.get_state()
         else:
             return TEngineState.engine_stable
@@ -88,9 +103,11 @@ class TEngineSound(threading.Thread):
     def get_current_speed(self):
         if not self.is_working():
             return 0
-        snd = self.channel.get_sound()
-        if isinstance(snd, TOneSpeedSound):
-            return snd.get_speed()
+        info = self.get_sound_info()
+        if info is not None:
+            spd = info.get_speed()
+            #self.logger.info('current speed = {}'.format(spd))
+            return spd
         else:
             return 0
 
@@ -106,18 +123,21 @@ class TEngineSound(threading.Thread):
     def get_stable_sound(self, speed):
         return self.sounds[(speed, speed)]
 
-    def queue_sound(self, snd):
-        #print("queue sound {} {} ".format(snd.start_speed, snd.last_speed))
-        self.channel.queue(snd)
+    def queue_sound(self, snd: TOneSpeedSound):
+        self.logger.info("queue sound {} {} ".format(snd.start_speed, snd.last_speed))
+        #_snd = pygame.mixer.Sound(snd)
+        self.channel.queue(snd.get_mixer_sound())
+        self.mixer_sound_to_info[snd.get_mixer_sound()] = snd
 
-    def play_sound(self, snd):
-        #print("play sound {} {} ".format(snd.start_speed, snd.last_speed))
-        self.channel.play(snd)
+    def play_sound(self, snd: TOneSpeedSound):
+        self.logger.debug("play sound {} {} ".format(snd.start_speed, snd.last_speed))
+        self.channel.play(snd.get_mixer_sound())
+        self.mixer_sound_to_info[snd.get_mixer_sound()] = snd
 
-    def queue_sound_after(self, snd):
+    def queue_sound_after(self, snd: TOneSpeedSound):
         state = snd.get_state()
         speed = snd.get_speed()
-        #print("state = {}".format(state))
+        #self.logger.debug("state = {}".format(state))
         if state == TEngineState.engine_increase:
             if speed != self.max_speed:
                 self.queue_sound(self.get_increase_sound(speed))
@@ -134,9 +154,9 @@ class TEngineSound(threading.Thread):
     def run(self):
         while not self.stop:
             if self.channel.get_busy():
-                snd = self.channel.get_sound()
-                if snd is not None and isinstance(snd, TOneSpeedSound):
-                    #print('now playing {}'.format(snd.filename))
+                snd = self.get_sound_info()
+                if snd is not None:
+                    #self.logger.debug('now playing {}'.format(snd.filename))
                     if self.channel.get_queue() is None:
                         self.queue_sound_after(snd)
 
@@ -145,6 +165,8 @@ class TEngineSound(threading.Thread):
     def increase_speed(self):
         if self.get_state() != TEngineState.engine_increase:
             speed = self.get_current_speed()
+            self.logger.debug("speed = {}".format(speed))
+            self.load_sounds()
             if speed != self.max_speed:
                 self.play_sound(self.get_increase_sound(speed))
 
@@ -158,7 +180,7 @@ class TEngineSound(threading.Thread):
 
     def create_sound_segments_from_engine_increasing_file(self, input, segment_time):
         if not os.path.exists(TOneSpeedSound.segment_folder):
-            print("create {}".format(TOneSpeedSound.segment_folder))
+            self.logger.debug("create {}".format(TOneSpeedSound.segment_folder))
             os.mkdir(TOneSpeedSound.segment_folder)
 
         format = 'wav'
@@ -174,7 +196,7 @@ class TEngineSound(threading.Thread):
             stable = (increasing[-1500:] + decreasing[:1500]) * 10
             stable = stable.set_channels(1)
             stable.export(TOneSpeedSound.get_file_name(speed + 1, speed + 1), format=format)
-        print("all done")
+        self.logger.info("all done")
 
     def test_engine(self):
         self.start_engine()
@@ -187,7 +209,7 @@ class TEngineSound(threading.Thread):
             elif not keys[pygame.K_UP]:
                 self.decrease_speed()
             if keys[pygame.K_ESCAPE]:
-                print("got escape key")
+                self.logger.debug("got escape key")
                 self.stop = True
                 self.join(2)
                 break
@@ -205,9 +227,12 @@ def parse_args():
 
 
 def main():
+    from utils.logging_wrapper import setup_logging
+    logger = setup_logging("test_sound")
+
     pygame.mixer.init()
     args = parse_args()
-    sound = TEngineSound(max_speed=args.speed_count, segment_folder=args.segment_folder)
+    sound = TEngineSound(logger, max_speed=args.speed_count, segment_folder=args.segment_folder)
     if args.action == "test":
         sound.test_engine()
     elif args.action == "prepare":
@@ -218,3 +243,9 @@ def main():
 
 if __name__ == '__main__':
     main()
+
+#todo
+# не работает открытие дверей
+# почему бабушки иногда не забираются?
+# работает ли Rampage на моем ноуте
+# не переключаются скорости
