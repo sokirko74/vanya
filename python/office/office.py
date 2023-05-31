@@ -14,7 +14,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '../utils'))
 from logging_wrapper import setup_logging
 from tkinter.messagebox import askyesno
 
-MAX_WORD_FAIL_COUNT = 16
+MAX_WORD_FAIL_COUNT = 14
 MAX_VICTORIES_COUNT = 20
 
 
@@ -221,6 +221,7 @@ class TVanyaOffice(tk.Frame):
 
     def play_char(self, ch, custom_instrument=None):
         name, octave, instrument = KEY_2_NOTE[ch]
+        self.print_to_log("play {}\n".format(name))
         if custom_instrument is not None:
             instrument = custom_instrument
         fluidsynth.set_instrument(1, instrument)

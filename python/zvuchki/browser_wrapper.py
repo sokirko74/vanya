@@ -51,9 +51,10 @@ class TBrowser:
         self.init_chrome()
 
     def close_browser(self):
-        self.browser.close()
-        time.sleep(1)
-        self.browser.quit()
+        if self.browser is not None:
+            self.browser.close()
+            time.sleep(1)
+            self.browser.quit()
 
     def mouse_click(self, x, y):
         self.browser.execute_script('el = document.elementFromPoint({}, {}); el.click();'.format(x, y))
@@ -68,6 +69,18 @@ class TBrowser:
         ActionChains(self.browser) \
             .key_down(Keys.CONTROL) \
             .key_down(Keys.HOME) \
+            .perform()
+
+    def send_shift_n(self):
+        ActionChains(self.browser) \
+            .key_down(Keys.SHIFT) \
+            .key_down('n') \
+            .perform()
+
+    def send_shift_p(self):
+        ActionChains(self.browser) \
+            .key_down(Keys.SHIFT) \
+            .key_down('p') \
             .perform()
 
     def navigate(self, url):

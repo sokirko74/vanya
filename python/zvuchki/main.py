@@ -1,4 +1,4 @@
-from car_brands import CARS, URLS
+from car_brands import CARS, URLS, BIRDS, COMPOSERS
 from browser_wrapper import TBrowser
 
 import os
@@ -44,6 +44,11 @@ class VideoPlayer (threading.Thread):
     def stop_playing(self):
         self._interrupted = True
         self.browser.close_browser()
+
+    def next_track(self):
+        self.browser.send_shift_n()
+    def prev_track(self):
+        self.browser.send_shift_p()
 
     def run(self):
         for try_index in range(2):
@@ -205,6 +210,8 @@ class TZvuchki(tk.Frame):
                 add_query = "тест драйв от первого лица"
             elif cmd == 'К':
                 add_query = "в кабине водителя"
+            elif cmd == 'КРИК':
+                add_query = "крик"
             elif cmd == 'З':
                 add_query = "звук двигателя"
             elif cmd == 'Э':
@@ -222,11 +229,12 @@ class TZvuchki(tk.Frame):
                 timeout = self.args.max_play_seconds
             duration = timeout + add_sec
         else:
-            if car_brand.lower() not in CARS:
+            search_obj = car_brand.lower()
+            if search_obj not in CARS and search_obj not in BIRDS and search_obj not in COMPOSERS:
                 self.logger.error("bad car brand")
                 return False
             duration = 300 + add_sec
-            №duration = 10 + add_sec
+            #duration = 10 + add_sec
             request = "{} {}".format(car_brand, add_query)
             self.logger.info("req={}, dur={}, serp_index={}".format(request, duration, clip_index))
             url = self.get_url_video_from_google_or_cached(request, clip_index)
@@ -250,6 +258,11 @@ class TZvuchki(tk.Frame):
         self.text_widget.insert(tk.END, char, tags)
 
     def keyboard_click(self, char):
+        if self.video_player_thread is not None:
+            if char and char.upper() == 'Н':
+                self.video_player_thread.next_track()
+            if char and char.upper() == 'П':
+                self.video_player_thread.prev_track()
         if char == TChars.BACKSPACE:
             self.backspace()
             self.play_audio("key_sound.wav")
@@ -288,6 +301,6 @@ if __name__ == "__main__":
     game = TZvuchki()
     game.main_loop()
 
-
+# shift N
 
 
