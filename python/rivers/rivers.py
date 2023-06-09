@@ -29,7 +29,7 @@ class TRiverGame:
         self.road_width = 30
         self.start_time_on_the_road_side = None
         self.sounds = TSounds(SOUNDS_DIR, not args.silent)
-        self.racing_wheel = TRacingWheel(self.logger, args.wheel_center)
+        self.racing_wheel = TRacingWheel(self.logger, args.wheel_center, angle_level_ratio=args.angle_level_ratio)
         self.max_game_speed = args.speed_count
         self.engine_sound = TEngineSound(self.logger, self.max_game_speed, self.args.engine_audio_folder, max_volume=self.args.engine_volume)
         self.engine_sound.start_engine()
@@ -370,6 +370,8 @@ def parse_args():
     parser.add_argument("--bridge-width", dest='bridge_width', default=300, type=int)
     parser.add_argument("--car-sprite", dest='my_sprite', default='my_car.png')
     parser.add_argument("--engine-volume", dest='engine_volume', type=float)
+    parser.add_argument("--angle-level-ratio", dest='angle_level_ratio', type=float, default=30,
+                        help="the less value, the less one must turn the angle to change the direction")
     parser.add_argument("--engine-audio-folder", dest='engine_audio_folder',
                         default= os.path.join(os.path.dirname(__file__), 'assets/sounds/ford'))
     return parser.parse_args()
@@ -384,7 +386,6 @@ if __name__ == "__main__":
     game.draw_game_intro()
     game.quit()
 
-#  открывание дверей(звук), посадка бабкт
-#  отрисовка бабки в автобусе
-#  картинка автобуса
-# работа с рулем (девайсом)
+#todo
+# почему бабушки иногда не забираются?
+# работает ли Rampage на моем ноуте
