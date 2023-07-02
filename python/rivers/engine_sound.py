@@ -1,12 +1,14 @@
 import json
 import os
 import enum
+import time
+
 import pyaudio
 import  librosa
 import numpy as np
 from collections import namedtuple
 from typing import List
-
+import threading
 
 class TEngineState(enum.Enum):
     engine_increase = 1
@@ -15,6 +17,47 @@ class TEngineState(enum.Enum):
 
 
 IncreaseProps = namedtuple('IncreaseProps', ['frame_rate', 'volume'])
+
+class PyAudioStreamWrapper(threading.Thread):
+    def __init__(self, frame_rate, call_back, frames_per_buffer=4096):
+        super().__init__()
+        self._pyaudio = pyaudio.PyAudio()
+        self._audio_buffer = None
+        self._frame_rate = frame_rate
+        self._call_back = call_back
+        self.stop = False
+        self.frames_per_buffer = frames_per_buffer
+
+    def start_stream(self):
+        self.start()
+
+    def set_audio_buffer(self, buffer):
+        self._audio_buffer = buffer
+
+    def get_audio_buffer(self):
+        return self._audio_buffer
+
+    def pop_frames(self, frame_count):
+        buf = self._audio_buffer[:frame_count]
+        self._audio_buffer = self._audio_buffer[frame_count:]
+        return buf
+
+    def add_frames(self, s):
+        self._audio_buffer = np.append(self._audio_buffer, s)
+
+    def run(self):
+        play_stream = self._pyaudio.open(
+                            format=pyaudio.paFloat32,
+                            channels=1,
+                            rate=self._frame_rate,
+                            output=True,
+                            stream_callback=self._call_back,
+                            frames_per_buffer=self.frames_per_buffer
+                        )
+        while not self.stop and play_stream.is_active():
+            time.sleep(0.1)
+
+        play_stream.close()
 
 
 class TEngineSound:
@@ -38,25 +81,19 @@ class TEngineSound:
         self._engine_state = TEngineState.engine_stable
         self._current_speed = 0
         self._speed_delta = 0.3
-        self._pyaudio = pyaudio.PyAudio()
         self._create_increasing_and_decreasing()
-        self._audio_buffer = None
         self._play_stream = None
 
     def set_idling_state(self):
         self._current_speed = self._limit_min_speed
-        self._audio_buffer = self._create_stable_at_speed(self._limit_min_speed)
+        self._engine_state = TEngineState.engine_stable
+        self._create_sound(self._limit_min_speed)
 
     def start_play_stream(self):
         self.log.debug('start engine sound')
+        self._play_stream = PyAudioStreamWrapper(self.orig_frame_rate, self._gen_audio_callback)
         self.set_idling_state()
-        self._play_stream = self._pyaudio.open(
-                            format=pyaudio.paFloat32,
-                            channels=1,
-                            rate=self.orig_frame_rate,
-                            output=True,
-                            stream_callback=self._gen_audio_callback
-                        )
+        self._play_stream.start_stream()
 
     def get_state(self):
         return self._engine_state
@@ -65,8 +102,10 @@ class TEngineSound:
         return round(self._current_speed, 2)
 
     def stop_engine(self):
-        if self._play_stream is not None:
-            self._play_stream.close()
+        if self._play_stream is not None and self._play_stream.is_alive():
+            self._play_stream.stop = True
+            self._play_stream.join(2)
+            self._play_stream = None
         self._current_speed = 0
 
     def _speed_to_frame_index(self, speed):
@@ -132,17 +171,17 @@ class TEngineSound:
 
     def _create_sound(self, speed):
         if self._engine_state == TEngineState.engine_stable:
-            return self._create_stable_at_speed(speed)
+            s = self._create_stable_at_speed(speed)
         elif self._engine_state == TEngineState.engine_increase:
-            return self._get_increasing_at_speed(speed)
+            s = self._get_increasing_at_speed(speed)
         else:
-            return self._get_decreasing_at_speed(speed)
+            s = self._get_decreasing_at_speed(speed)
+        self._play_stream.set_audio_buffer(s)
 
     def _gen_audio_callback(self, in_data, frame_count, time_info, status):
-#        self.log.debug("gen_audio_callback speed={}".format(self._current_speed))
         if self._current_speed == 0:
             return np.zeros( (frame_count,), dtype=np.float32)
-        if len(self._audio_buffer) < frame_count:
+        if len(self._play_stream.get_audio_buffer()) < frame_count:
             if self._engine_state == TEngineState.engine_increase:
                 self._engine_state = TEngineState.engine_stable
                 s = self._create_stable_at_speed(self._limit_max_speed)
@@ -153,10 +192,8 @@ class TEngineSound:
                 self._current_speed = self._limit_min_speed
             else:
                 s = self._create_stable_at_speed(self._current_speed)
-            self._audio_buffer = np.append(self._audio_buffer, s)
-        buf = self._audio_buffer[:frame_count]
-        self._audio_buffer = self._audio_buffer[frame_count:]
-        return buf,pyaudio.paContinue
+            self._play_stream.add_frames(s)
+        return self._play_stream.pop_frames(frame_count), pyaudio.paContinue
 
     def _can_increase(self):
         return self._current_speed < self._limit_max_speed
@@ -167,13 +204,13 @@ class TEngineSound:
     def stabilize_speed(self):
         if self._engine_state != TEngineState.engine_stable:
             self._engine_state = TEngineState.engine_stable
-            self._audio_buffer = self._create_sound(self._current_speed)
+            self._create_sound(self._current_speed)
 
     def increase_speed(self):
         if self._can_increase():
             if self._engine_state != TEngineState.engine_increase:
                 self._engine_state = TEngineState.engine_increase
-                self._audio_buffer = self._create_sound(self._current_speed)
+                self._create_sound(self._current_speed)
             self._current_speed = min(self._limit_max_speed, self._current_speed + self._speed_delta)
             self.log.debug("increase speed to {}".format(self._current_speed))
 
@@ -181,6 +218,6 @@ class TEngineSound:
         if self._can_decrease():
             if self._engine_state != TEngineState.engine_decrease:
                 self._engine_state = TEngineState.engine_decrease
-                self._audio_buffer = self._create_sound(self._current_speed)
+                self._create_sound(self._current_speed)
             self._current_speed = max(self._limit_min_speed, self._current_speed - self._speed_delta)
             self.log.debug("decrease speed to {}".format(self._current_speed))

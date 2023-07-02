@@ -120,6 +120,7 @@ class TRiverGame:
 
     def draw_game_intro(self, prev_score=None):
         self.sounds.stop_sounds()
+        self.engine_sound.stop_engine()
         self.game_intro.get_next_action(prev_score)
         if self.game_intro.action == TGameIntro.exit_game_action:
             self.quit()
