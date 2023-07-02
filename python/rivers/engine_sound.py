@@ -1,3 +1,4 @@
+import json
 import os
 import enum
 import pyaudio
@@ -17,15 +18,21 @@ IncreaseProps = namedtuple('IncreaseProps', ['frame_rate', 'volume'])
 
 
 class TEngineSound:
-    def __init__(self, log, engine_folder, limit_speed, max_volume=None):
+    def __init__(self, log, engine_folder, limit_speed):
         self.log = log
-        file_path = os.path.join(engine_folder, "stable.wav")
-        self._engine_sound, self.orig_frame_rate = librosa.load(file_path)
+        props_file = os.path.join(engine_folder, "audio_props.json")
+        props = dict()
+        if os.path.exists(props_file):
+            with open (props_file) as inp:
+                props = json.load(inp)
+        stable_file_path = os.path.join(engine_folder, props.get('stable', 'stable.wav'))
+        self._engine_sound, self.orig_frame_rate = librosa.load(stable_file_path)
+        self._engine_sound = self._engine_sound * props.get('init_volume_coef', 1.0)
         self._increasing_engine_sound = None
         self._increase_engine_props: List[IncreaseProps] = list()
         self._decreasing_engine_sound = None
         self._max_speed = 10
-        self.log.info("Length {} is {} ms ".format(file_path, len(self._engine_sound)))
+        self.log.info("Length {} is {} ms ".format(stable_file_path, len(self._engine_sound)))
         self._limit_max_speed = limit_speed
         self._limit_min_speed = 1.0
         self._engine_state = TEngineState.engine_stable
@@ -55,7 +62,7 @@ class TEngineSound:
         return self._engine_state
 
     def get_current_speed(self):
-        return self._current_speed - 1
+        return round(self._current_speed, 2)
 
     def stop_engine(self):
         if self._play_stream is not None:
@@ -85,7 +92,6 @@ class TEngineSound:
         i = 0
         self._increase_engine_props.clear()
         while i < len(stable):
-            speed = self._max_speed *  (i + 1) / len(self._engine_sound)
             if (i % 1000) == 0:
                 new_frame_rate = int(curr_frame_rate * 0.99)
                 curr_volume = curr_volume * 1.01

@@ -31,7 +31,7 @@ class TRiverGame:
         self.sounds = TSounds(SOUNDS_DIR, not args.silent)
         self.racing_wheel = TRacingWheel(self.logger, args.wheel_center)
         self.max_game_speed = args.speed_count
-        self.engine_sound = TEngineSound(self.logger,  self.args.engine_audio_folder, self.max_game_speed + 1, max_volume=self.args.engine_volume)
+        self.engine_sound = TEngineSound(self.logger,  self.args.engine_audio_folder, self.max_game_speed + 1)
 
         self.river_sprites = pygame.sprite.Group()
         self.bridge_sprites = pygame.sprite.Group()
@@ -107,8 +107,8 @@ class TRiverGame:
             if self.granny_in_car.river_fall_count >= 3:
                 self.granny_leaves_car("granny_sea_voyage")
 
-    def get_speed(self):
-        return self.engine_sound.get_current_speed()
+    def get_car_speed(self):
+        return self.engine_sound.get_current_speed() - 1
 
     def check_bridge_collision(self,  bridge_sprite):
         if not bridge_sprite.alive() or bridge_sprite.used:
@@ -169,7 +169,7 @@ class TRiverGame:
 
     def change_obstacle_positions(self):
         if self.map_part is not None:
-            speed = self.get_speed()
+            speed = self.get_car_speed()
             if speed > 0:
                 self.map_part.change_spite_position(speed)
                 self.map_part_next.change_spite_position(speed)
@@ -198,11 +198,11 @@ class TRiverGame:
         time.sleep(1)
 
     def open_door(self):
-        if self.get_speed() == 1:
+        if self.get_car_speed() == 1:
             self.use_brakes()
             time.sleep(2)
 
-        if self.get_speed() == 0:
+        if self.get_car_speed() == 0:
             town = pygame.sprite.spritecollideany(self.my_car, self.town_sprites, collided=pygame.sprite.collide_mask)
             granny = pygame.sprite.spritecollideany(self.my_car, self.granny_sprites,
                                                     collided=pygame.sprite.collide_mask)
@@ -272,7 +272,7 @@ class TRiverGame:
             self.open_door()
             self.racing_wheel.pressed_buttons.remove(TRacingWheel.left_hat_button)
         if self.my_car.horizontal_speed_increase_with_get_speed:
-            x_change += 0.01 * x_change * math.sqrt(self.get_speed())
+            x_change += 0.01 * x_change * math.sqrt(self.get_car_speed())
 
         self.my_car.rect.left += x_change
         if self.my_car.rect.left < 0:
@@ -308,7 +308,7 @@ class TRiverGame:
         pygame.draw.line(self.screen, TColors.white, (0, self.finish_top),
                          (self.width, self.finish_top))
 
-        self.stats.draw_params(self.my_car.rect.top, self.get_speed())
+        self.stats.draw_params(self.my_car.rect.top, self.get_car_speed())
         #pygame.draw.rect(self.screen, TColors.black, self.other_car.rect, width=1)
         #pygame.draw.rect(self.screen, TColors.black, self.my_car.rect, width=1)
         self.my_car_sprites.draw(self.screen)
@@ -369,7 +369,6 @@ def parse_args():
     parser.add_argument("--speed-count", dest='speed_count', default=10, type=int)
     parser.add_argument("--bridge-width", dest='bridge_width', default=300, type=int)
     parser.add_argument("--car-sprite", dest='my_sprite', default='my_car.png')
-    parser.add_argument("--engine-volume", dest='engine_volume', type=float)
     parser.add_argument("--engine-audio-folder", dest='engine_audio_folder',
                         default= os.path.join(os.path.dirname(__file__), 'assets/sounds/ford'))
     return parser.parse_args()
@@ -391,3 +390,6 @@ if __name__ == "__main__":
 
 
 #=========
+# Звук старта ( если есть)
+# Макс. громкость
+# пробование на ванином
