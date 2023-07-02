@@ -31,12 +31,7 @@ class TRiverGame:
         self.sounds = TSounds(SOUNDS_DIR, not args.silent)
         self.racing_wheel = TRacingWheel(self.logger, args.wheel_center, angle_level_ratio=args.angle_level_ratio)
         self.max_game_speed = args.speed_count
-<<<<<<< HEAD
         self.engine_sound = TEngineSound(self.logger,  self.args.engine_audio_folder, self.max_game_speed + 1)
-=======
-        self.engine_sound = TEngineSound(self.logger, self.max_game_speed, self.args.engine_audio_folder, max_volume=self.args.engine_volume)
-        self.engine_sound.start_engine()
->>>>>>> 2ba354f50e1d3ddc26025b49d97e3acfc3794426
 
         self.river_sprites = pygame.sprite.Group()
         self.bridge_sprites = pygame.sprite.Group()
@@ -374,12 +369,8 @@ def parse_args():
     parser.add_argument("--speed-count", dest='speed_count', default=10, type=int)
     parser.add_argument("--bridge-width", dest='bridge_width', default=300, type=int)
     parser.add_argument("--car-sprite", dest='my_sprite', default='my_car.png')
-<<<<<<< HEAD
-=======
-    parser.add_argument("--engine-volume", dest='engine_volume', type=float)
     parser.add_argument("--angle-level-ratio", dest='angle_level_ratio', type=float, default=30,
                         help="the less value, the less one must turn the angle to change the direction")
->>>>>>> 2ba354f50e1d3ddc26025b49d97e3acfc3794426
     parser.add_argument("--engine-audio-folder", dest='engine_audio_folder',
                         default= os.path.join(os.path.dirname(__file__), 'assets/sounds/ford'))
     return parser.parse_args()
@@ -394,19 +385,9 @@ if __name__ == "__main__":
     game.draw_game_intro()
     game.quit()
 
-<<<<<<< HEAD
-#  открывание дверей(звук), посадка бабкт
-#  отрисовка бабки в автобусе
-#  картинка автобуса
-# работа с рулем (девайсом)
-
-
 #=========
 # Звук старта ( если есть)
 # Макс. громкость
 # пробование на ванином
-=======
 #todo
 # почему бабушки иногда не забираются?
-# работает ли Rampage на моем ноуте
->>>>>>> 2ba354f50e1d3ddc26025b49d97e3acfc3794426
