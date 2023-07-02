@@ -1,19 +1,33 @@
+
 import os
+import time
+import threading
+import simpleaudio
+from pydub import AudioSegment
 import enum
+import math
+from pydub import effects
 import pyaudio
 import  librosa
 import numpy as np
 from collections import namedtuple
 from typing import List
 
-
 class TEngineState(enum.Enum):
     engine_increase = 1
     engine_decrease = 2
     engine_stable = 3
 
-
 IncreaseProps = namedtuple('IncreaseProps', ['frame_rate', 'volume'])
+
+def play_simple_audio(sound):
+    return  simpleaudio.play_buffer(
+        sound.raw_data,
+        num_channels=sound.channels,
+        bytes_per_sample=sound.sample_width,
+        sample_rate=sound.frame_rate
+    )
+
 
 
 class TEngineSound:
@@ -24,25 +38,27 @@ class TEngineSound:
         self._increasing_engine_sound = None
         self._increase_engine_props: List[IncreaseProps] = list()
         self._decreasing_engine_sound = None
+        self._playing_segment = None
+        self._play_obj = None
+        self.daemon = True
         self._max_speed = 10
         self.log.info("Length {} is {} ms ".format(file_path, len(self._engine_sound)))
         self._limit_max_speed = limit_speed
         self._limit_min_speed = 1.0
         self._engine_state = TEngineState.engine_stable
         self._current_speed = 0
+        self.stop = False
+        self.speed_step_duration_ms = 500
         self._speed_delta = 0.3
         self._pyaudio = pyaudio.PyAudio()
         self._create_increasing_and_decreasing()
         self._audio_buffer = None
         self._play_stream = None
 
-    def set_idling_state(self):
-        self._current_speed = self._limit_min_speed
-        self._audio_buffer = self._create_stable_at_speed(self._limit_min_speed)
-
     def start_play_stream(self):
         self.log.debug('start engine sound')
-        self.set_idling_state()
+        self._current_speed = self._limit_min_speed
+        self._audio_buffer = self._create_stable_at_speed(self._limit_min_speed)
         self._play_stream = self._pyaudio.open(
                             format=pyaudio.paFloat32,
                             channels=1,
@@ -55,8 +71,9 @@ class TEngineSound:
         return self._engine_state
 
     def get_current_speed(self):
-        return self._current_speed - 1
-
+        return self._current_speed
+    def get_current_volume(self):
+        return self._current_speed * 3
     def stop_engine(self):
         if self._play_stream is not None:
             self._play_stream.close()

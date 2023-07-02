@@ -31,8 +31,7 @@ class TRiverGame:
         self.sounds = TSounds(SOUNDS_DIR, not args.silent)
         self.racing_wheel = TRacingWheel(self.logger, args.wheel_center)
         self.max_game_speed = args.speed_count
-        self.engine_sound = TEngineSound(self.max_game_speed, self.args.engine_audio_folder, max_volume=self.args.engine_volume)
-        self.engine_sound.start_engine()
+        self.engine_sound = TEngineSound(self.logger,  self.args.engine_audio_folder, self.max_game_speed + 1, max_volume=self.args.engine_volume)
 
         self.river_sprites = pygame.sprite.Group()
         self.bridge_sprites = pygame.sprite.Group()
@@ -100,7 +99,7 @@ class TRiverGame:
             return
         self.logger.info("river collision")
         self.sounds.play_sound("river_accident", loops=0)
-        self.engine_sound.stop_engine()
+        self.engine_sound.set_idling_state()
         river_sprite.collided = True
         self.stats.river_accident_count += 1
         if self.granny_in_car is not None:
@@ -182,7 +181,7 @@ class TRiverGame:
     def use_brakes(self):
         self.logger.info("use brakes")
         self.sounds.play_sound("brakes", loops=0)
-        self.engine_sound.stop_engine()
+        self.engine_sound.set_idling_state()
 
     def init_granny_in_car(self, color):
         self.grannies_in_car.empty()
@@ -341,6 +340,7 @@ class TRiverGame:
         self.stats = TGameRegisters(self.screen)
         self.redraw_background()
         self.init_new_river()
+        self.engine_sound.start_play_stream()
 
     def game_loop(self):
         self.init_game_loop()
@@ -388,3 +388,6 @@ if __name__ == "__main__":
 #  отрисовка бабки в автобусе
 #  картинка автобуса
 # работа с рулем (девайсом)
+
+
+#=========
