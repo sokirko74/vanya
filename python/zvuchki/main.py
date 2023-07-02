@@ -1,4 +1,4 @@
-from car_brands import CARS, URLS, BIRDS, COMPOSERS
+from car_brands import CARS, URLS, BIRDS, COMPOSERS, OTHER_SRC
 from browser_wrapper import TBrowser
 
 import os
@@ -214,6 +214,8 @@ class TZvuchki(tk.Frame):
                 add_query = "крик"
             elif cmd == 'З':
                 add_query = "звук двигателя"
+            elif cmd == 'ЗВУК':
+                add_query = "звук"
             elif cmd == 'Э':
                 add_query = "эксплуатация"
             elif cmd == 'П':
@@ -230,7 +232,8 @@ class TZvuchki(tk.Frame):
             duration = timeout + add_sec
         else:
             search_obj = car_brand.lower()
-            if search_obj not in CARS and search_obj not in BIRDS and search_obj not in COMPOSERS:
+            if search_obj not in CARS and search_obj not in BIRDS and search_obj not in COMPOSERS \
+                and search_obj not in OTHER_SRC:
                 self.logger.error("bad car brand")
                 return False
             duration = 300 + add_sec

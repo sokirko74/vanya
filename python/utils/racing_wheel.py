@@ -11,7 +11,7 @@ class TRacingWheel:
     right_pedal = 9
     left_hat_button = 17
 
-    def __init__(self, logger, center, level=120, sound_pedals=False):
+    def __init__(self, logger, center, level=120, sound_pedals=False, angle_level_ratio=30):
         self.logger = logger
         self.raw_angle = None
         self.center = center
@@ -19,6 +19,11 @@ class TRacingWheel:
         self.pressed_buttons = set()
         self.last_left_hat_button_time = 0
         self.sound_pedals = sound_pedals
+        self.device = None
+        self.angle_level_ratio = angle_level_ratio
+        self.init_device()
+
+    def init_device(self):
         joysticks = list_devices()
         if len(joysticks) > 0:
             self.device = InputDevice(joysticks[0])
@@ -38,10 +43,19 @@ class TRacingWheel:
     def is_attached(self):
         return self.device is not None
 
+    def read_one_event(self):
+        for i in range(3):
+            try:
+                return self.device.read_one()
+            except (OSError, AttributeError) as exp:
+                self.logger.error(type(exp))
+                self.logger.error('wait 0.3 and try initialize one more time')
+                time.sleep(0.3)
+                self.init_device()
+
     def read_events(self):
-        if self.device is None:
-            return
-        event = self.device.read_one()
+        event = self.read_one_event()
+
         while event is not None:
             #print(event)
             if event.type == ecodes.EV_ABS and event.code == ecodes.ABS_HAT0X or event.code == ecodes.ABS_HAT0Y:
@@ -83,7 +97,7 @@ class TRacingWheel:
                     if TRacingWheel.right_pedal in self.pressed_buttons:
                         self.pressed_buttons.remove(TRacingWheel.right_pedal)
                 #self.logger.info("right_pedal value={} {}".format(event.value, self.pressed_buttons))
-            event = self.device.read_one()
+            event = self.read_one_event()
 
     def is_left_pedal_pressed(self):
         return TRacingWheel.left_pedal in self.pressed_buttons
@@ -94,7 +108,7 @@ class TRacingWheel:
     def get_angle(self):
         self.read_events()
         if self.raw_angle is not None:
-            return int((self.raw_angle - self.center) / 50)
+            return int((self.raw_angle - self.center) / self.angle_level_ratio)
 
     def test(self):
         run = True

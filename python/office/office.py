@@ -14,7 +14,8 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '../utils'))
 from logging_wrapper import setup_logging
 from tkinter.messagebox import askyesno
 
-MAX_WORD_FAIL_COUNT = 14
+
+MAX_WORD_FAIL_COUNT = 12
 MAX_VICTORIES_COUNT = 20
 
 

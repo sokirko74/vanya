@@ -140,7 +140,7 @@ class TApplication(tk.Frame):
         widget.delete('1.0', tk.END)
         widget.insert(tk.END, s)
 
-    def create_widgets(self):
+    def init_frame1(self):
         frame1 = tk.Frame(self.master)
         frame1.pack(side=tk.TOP)
 
@@ -148,32 +148,32 @@ class TApplication(tk.Frame):
         self.legend = tk.Label(frame1, text=text, font=('Helvetica', 12))
         self.legend.pack(side=tk.LEFT)
         tk.Button(frame1, text='Exit', command=self.quit).pack(side=tk.LEFT)
-        tk.Button(frame1, text='Reset', command=self.reset).pack(side=tk.LEFT)
 
+    def init_frame2(self, fontsize):
         frame2 = tk.Frame(self.master)
         frame2.pack(side=tk.TOP)
-        fontsize = 20
-        if self.main_wnd_width > 900:
-            fontsize = 40
         self.CollectionWidget = tk.Text(frame2, width=self.main_wnd_width-10, height=1, font=("Helvetica", fontsize))
         self.CollectionWidget.pack(side=tk.LEFT)
 
+    def init_frame3(self, fontsize):
         frame3 = tk.Frame(self.master)
         frame3.pack(side=tk.TOP)
         self.InstrumentWidget = tk.Text(frame3, width=self.main_wnd_width-10, height=1, font=("Helvetica", fontsize))
         self.InstrumentWidget.pack(side=tk.TOP)
 
+    def init_frame4(self, fontsize):
         frame4 = tk.Frame(self.master)
-        frame4.pack(side=tk.TOP)
-        self.BankIndexWidget = tk.Text(frame4, width=3, height=1, font=("Helvetica", 200), bg="red")
+        frame4.pack(side=tk.TOP, pady=10)
+        self.BankIndexWidget = tk.Text(frame4, width=3, height=1, font=("Helvetica", fontsize), bg="red")
         self.BankIndexWidget.bind("<Button-1>", self.next_bank)
         self.BankIndexWidget.bind("<Button-3>", self.prev_bank)
         self.BankIndexWidget.pack(side=tk.LEFT)
 
-        self.InstrumentIndexWidget = tk.Text(frame4, width=3, height=1, font=("Helvetica", 200), bg="green")
+        self.InstrumentIndexWidget = tk.Text(frame4, width=3, height=1, font=("Helvetica", fontsize), bg="green")
         self.InstrumentIndexWidget.bind("<Button-1>", self.next_instrument)
         self.InstrumentIndexWidget.bind("<Button-3>", self.prev_instrument)
         self.InstrumentIndexWidget.pack(side=tk.LEFT)
+
 
         #self.VolumeWidget = tk.Text(self, width=3, height=1, font=("Helvetica", 48))
         #self.VolumeWidget.pack(side=tk.RIGHT)
@@ -183,18 +183,38 @@ class TApplication(tk.Frame):
         self.slide_switch = os.path.join(os.path.dirname(os.path.realpath(__file__)), "sound", "slide_switch.wav")
         self.on_change_instrument()
 
+    def init_frame5(self):
         frame5 = tk.Frame(self.master)
-        frame5.pack(side=tk.TOP)
+        frame5.pack(side=tk.TOP, pady=10)
 
         btn1 = tk.Button(frame5, text='Bank', font=("Helvetica", 60), width=10,
                   command=self.next_bank, bg="red")
         btn1.bind("<Button-3>", self.prev_bank)
-        btn1.pack(side=tk.LEFT, padx=50, pady=50)
+        btn1.pack(side=tk.LEFT, padx=50)
 
         btn2 = tk.Button(frame5, text='Inst', font=("Helvetica", 60), bg="green", width=10,
                   command=self.next_instrument)
         btn2.bind("<Button-3>", self.prev_instrument)
-        btn2.pack(side=tk.LEFT, padx=50, pady=50)
+        btn2.pack(side=tk.LEFT)
+
+    def init_frame6(self, fontsize):
+        frame6 = tk.Frame(self.master, padx=10)
+        frame6.pack(side=tk.TOP)
+        btn3 = tk.Button(frame6, text='Reset', font=("Helvetica", fontsize), bg="yellow", width=10,
+                         command=self.reset)
+        btn3.pack(side=tk.LEFT, padx=50)
+
+    def create_widgets(self):
+        fontsize = 20
+        if self.main_wnd_width > 900:
+            fontsize = 40
+
+        self.init_frame1()
+        self.init_frame2(fontsize)
+        self.init_frame3(fontsize)
+        self.init_frame4(250)
+        #self.init_frame5()
+        self.init_frame6(50)
 
     def run_cmd(self, cmd):
         self.logger.info(cmd)
