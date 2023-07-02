@@ -108,7 +108,8 @@ class TRiverGame:
                 self.granny_leaves_car("granny_sea_voyage")
 
     def get_car_speed(self):
-        return self.engine_sound.get_current_speed() - 1
+        speed = self.engine_sound.get_current_speed() - 1
+        return speed
 
     def check_bridge_collision(self,  bridge_sprite):
         if not bridge_sprite.alive() or bridge_sprite.used:
@@ -242,8 +243,8 @@ class TRiverGame:
         wheel_angle = self.racing_wheel.get_angle()
         if wheel_angle is not None:
             x_change = wheel_angle
-
         for event in pygame.event.get():
+            self.logger.info('event = {}'.format(event))
             if event.type == pygame.QUIT:
                 self.stats.game_over = True
             if event.type == pygame.KEYDOWN:
@@ -252,6 +253,7 @@ class TRiverGame:
                 elif event.key == pygame.K_RIGHT:
                     x_change = +self.my_car.horizontal_speed
                 elif event.key == pygame.K_UP:
+                    self.logger.info("pygame.K_UP")
                     self.engine_sound.increase_speed()
                 elif event.key == pygame.K_DOWN:
                     self.use_brakes()
@@ -267,8 +269,8 @@ class TRiverGame:
             if event.type == pygame.KEYUP:
                 if event.key == pygame.K_LEFT or event.key == pygame.K_RIGHT:
                     x_change = 0
-                if event.key == pygame.K_UP:
-                    self.engine_sound.decrease_speed()
+                #if event.key == pygame.K_UP:
+                #    self.engine_sound.decrease_speed()
         if TRacingWheel.left_hat_button in self.racing_wheel.pressed_buttons:
             self.open_door()
             self.racing_wheel.pressed_buttons.remove(TRacingWheel.left_hat_button)
