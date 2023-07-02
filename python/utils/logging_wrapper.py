@@ -2,7 +2,7 @@ import logging
 import os
 
 
-def setup_logging(logger_name=None, log_file_name=None, append_mode=False):
+def setup_logging(logger_name=None, log_file_name=None, append_mode=False, console_level=logging.INFO):
     if logger_name is None:
         if log_file_name is not None:
             logger_name,_ = os.path.splitext(log_file_name)
@@ -31,7 +31,7 @@ def setup_logging(logger_name=None, log_file_name=None, append_mode=False):
 
     # create console handler with a higher log level
     ch = logging.StreamHandler()
-    ch.setLevel(logging.INFO)
+    ch.setLevel(console_level)
     logger.addHandler(ch)
 
     return logger

@@ -44,14 +44,15 @@ class TRacingWheel:
         return self.device is not None
 
     def read_one_event(self):
-        for i in range(3):
-            try:
-                return self.device.read_one()
-            except (OSError, AttributeError) as exp:
-                self.logger.error(type(exp))
-                self.logger.error('wait 0.3 and try initialize one more time')
-                time.sleep(0.3)
-                self.init_device()
+        if self.is_attached():
+            for i in range(3):
+                try:
+                    return self.device.read_one()
+                except (OSError, AttributeError) as exp:
+                    self.logger.error(type(exp))
+                    self.logger.error('wait 0.3 and try initialize one more time')
+                    time.sleep(0.3)
+                    self.init_device()
 
     def read_events(self):
         event = self.read_one_event()
