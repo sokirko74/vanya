@@ -1,10 +1,9 @@
-import time
-
 from python.utils.colors import TColors
 from python.utils.racing_wheel import TRacingWheel
 from python.utils.pygame_button import PygameButton
 
 import pygame
+import time
 
 
 class TGameIntro:
