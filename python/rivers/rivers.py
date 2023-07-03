@@ -15,9 +15,9 @@ import os
 import math
 import random
 import logging
-import cProfile, pstats, io
-from pstats import SortKey
-pr = cProfile.Profile()
+# import cProfile, pstats, io
+# from pstats import SortKey
+# pr = cProfile.Profile()
 
 
 SOUNDS_DIR = os.path.join(os.path.dirname(__file__), "assets", 'sounds')
@@ -59,6 +59,7 @@ class TRiverGame:
         self.map_part = None
         self.map_part_next = None
         self.granny_in_car = None
+        self.exit_game = False
 
     def message(self, mess, colour, size, x, y):
         font = pygame.font.SysFont(None, size)
@@ -67,7 +68,7 @@ class TRiverGame:
         pygame.display.update()
 
     def quit(self):
-        pygame.quit()
+        self.exit_game = True
 
     def check_finish(self):
         win = self.finish_top > self.my_car.rect.top
@@ -278,7 +279,9 @@ class TRiverGame:
             self.open_door()
             self.racing_wheel.pressed_buttons.remove(TRacingWheel.left_hat_button)
         if self.my_car.horizontal_speed_increase_with_get_speed:
-            x_change += 0.01 * x_change * math.sqrt(self.get_car_speed())
+            car_speed = self.get_car_speed()
+            if car_speed > 0:
+                x_change += 0.01 * x_change * math.sqrt(car_speed)
 
         self.my_car.rect.left += x_change
         if self.my_car.rect.left < 0:
@@ -351,7 +354,7 @@ class TRiverGame:
     def game_loop(self):
         self.init_game_loop()
         x_change = 0
-        while not self.stats.game_over:
+        while not self.stats.game_over and not self.exit_game:
             self.process_wheel_pedals()
             x_change = self.process_keyboard_and_wheel_events(x_change)
             if not self.stats.paused:
@@ -359,7 +362,8 @@ class TRiverGame:
             self.check_finish()
             self.check_all_collisions()
             self.redraw_all()
-            clock.tick(30)
+            clock.tick(20)
+            #pygame.time.delay(200)
             if self.my_car.rect.top + 30 > self.height:
                 self.my_car.rect.top = self.height - 30
 
@@ -387,20 +391,13 @@ def parse_args():
 if __name__ == "__main__":
     clock = pygame.time.Clock()
     args = parse_args()
-    pr.enable()
+    #pr.enable()
 
     pygame.display.init()
     pygame.font.init()
     game = TRiverGame(args)
     game.draw_game_intro()
-    game.quit()
 
-    pr.disable()
-    s = io.StringIO()
-    sortby = SortKey.CUMULATIVE
-    ps = pstats.Stats(pr, stream=s).sort_stats(sortby)
-    ps.print_stats()
-    print(s.getvalue())
 
 #=========
 # Звук старта ( если есть)
