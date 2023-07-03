@@ -1,5 +1,9 @@
-from utils.colors import TColors
-from utils.racing_wheel import TRacingWheel
+import time
+
+from python.utils.colors import TColors
+from python.utils.racing_wheel import TRacingWheel
+from python.utils.pygame_button import PygameButton
+
 import pygame
 
 
@@ -13,31 +17,18 @@ class TGameIntro:
         self.action = None
         self.image = pygame.transform.scale(pygame.image.load(background_image_path),
                                    (self.screen.get_width(), self.screen.get_height()))
+        button_y = 300
+        width = 100
+        height = 50
+        self.go_button = PygameButton(self.screen, 200, button_y, width, height, text='GO!', on_click=self.set_start_game_action)
+        self.exit_button = PygameButton(self.screen, self.screen.get_width() - 200, button_y, width, height,
+                                        text='QUIT', on_click=self.set_exit_action)
 
     def message(self, mess, colour, size, x, y):
         font = pygame.font.SysFont(None, size)
         screen_text = font.render(mess, True, colour)
         self.screen.blit(screen_text, (x, y))
         pygame.display.update()
-
-    def insert_button(self, x, y, w, h, mess, mess_color, actc, noc, size, tx, ty, func):
-        mouse = pygame.mouse.get_pos()
-        click = pygame.mouse.get_pressed()
-        if x + w > mouse[0] > x and y + h > mouse[1] > y:
-            pygame.draw.rect(self.screen, actc, [x, y, w, h])
-            self.message(mess, mess_color, size, tx, ty)
-            pygame.display.update()
-            if click == (1, 0, 0):
-                func()
-        else:
-            pygame.draw.rect(self.screen, noc, [x, y, w, h])
-            self.message(mess, mess_color, size, tx, ty)
-            pygame.display.update()
-        pygame.display.update()
-
-    def draw_intro_button(self, x, y, message, color, func):
-        self.insert_button(x, y, 70, 30, message, TColors.white, color, TColors.red, 25, x + 6,
-                      y + 6, func)
 
     def set_exit_action(self):
         self.action = TGameIntro.exit_game_action
@@ -70,9 +61,7 @@ class TGameIntro:
 
             if prev_score is not None:
                 self.message("Очки: {}".format(prev_score), TColors.black, 250, 100, 100)
-            button_y = 300
-            self.draw_intro_button(200, button_y, 'GO!', TColors.bright_red, self.set_start_game_action )
-            self.draw_intro_button(self.screen.get_width() - 200, button_y, 'QUIT', TColors.bright_green, self.set_exit_action)
+            self.go_button.process()
+            self.exit_button.process()
             pygame.display.update()
-
-        pygame.display.update()
+            time.sleep(0.2)

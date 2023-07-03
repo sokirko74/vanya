@@ -1,5 +1,5 @@
 from draw_road import draw_road
-from utils.colors import TColors
+from python.utils.colors import TColors
 
 import pygame
 import os

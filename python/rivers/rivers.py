@@ -1,15 +1,12 @@
-import sys
-import os
-sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
-from utils.logging_wrapper import setup_logging
-from utils.racing_wheel import TRacingWheel
-from utils.colors import TColors
-from utils.game_sounds import TSounds
-from utils.game_intro import TGameIntro
-from engine_sound import TEngineSound
-from river_sprites import TSprite, TMyCar, TMapPart, TGrannySprite
-from river_registers import TGameRegisters
+from python.utils.logging_wrapper import setup_logging
+from python.utils.racing_wheel import TRacingWheel
+from python.utils.colors import TColors
+from python.utils.game_sounds import TSounds
+from python.utils.game_intro import TGameIntro
+from python.rivers.engine_sound import TEngineSound
+from python.rivers.river_sprites import TSprite, TMyCar, TMapPart, TGrannySprite
+from python.rivers.river_registers import TGameRegisters
 
 import pygame
 import time
@@ -17,6 +14,11 @@ import argparse
 import os
 import math
 import random
+import logging
+import cProfile, pstats, io
+from pstats import SortKey
+pr = cProfile.Profile()
+
 
 SOUNDS_DIR = os.path.join(os.path.dirname(__file__), "assets", 'sounds')
 
@@ -24,14 +26,13 @@ SOUNDS_DIR = os.path.join(os.path.dirname(__file__), "assets", 'sounds')
 class TRiverGame:
     def __init__(self, args):
         self.args = args
-        self.logger = setup_logging("rivers")
+        self.logger = setup_logging("rivers", console_level=logging.DEBUG if args.verbose else logging.INFO)
         self.finish_top = 300
         self.road_width = 30
         self.start_time_on_the_road_side = None
         self.sounds = TSounds(SOUNDS_DIR, not args.silent)
         self.racing_wheel = TRacingWheel(self.logger, args.wheel_center, angle_level_ratio=args.angle_level_ratio)
-        self.max_game_speed = args.speed_count
-        self.engine_sound = TEngineSound(self.logger,  self.args.engine_audio_folder, self.max_game_speed + 1)
+        self.engine_sound = TEngineSound(self.logger,  self.args.engine_audio_folder, args.max_car_speed_limit + 1)
 
         self.river_sprites = pygame.sprite.Group()
         self.bridge_sprites = pygame.sprite.Group()
@@ -40,6 +41,7 @@ class TRiverGame:
         self.town_sprites = pygame.sprite.Group()
         self.granny_sprites = pygame.sprite.Group()
         self.grannies_in_car = pygame.sprite.Group()
+        self.last_pedal_event_time_stamp = 0
         if args.full_screen:
             self.screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
             pygame.display.toggle_fullscreen()
@@ -66,7 +68,6 @@ class TRiverGame:
 
     def quit(self):
         pygame.quit()
-        exit()
 
     def check_finish(self):
         win = self.finish_top > self.my_car.rect.top
@@ -108,8 +109,9 @@ class TRiverGame:
                 self.granny_leaves_car("granny_sea_voyage")
 
     def get_car_speed(self):
-        speed = self.engine_sound.get_current_speed() - 1
-        return speed
+        engine_speed = self.engine_sound.get_current_speed()
+        #self.logger.debug('engine speed = {}'.format(engine_speed))
+        return engine_speed - 1
 
     def check_bridge_collision(self,  bridge_sprite):
         if not bridge_sprite.alive() or bridge_sprite.used:
@@ -239,12 +241,13 @@ class TRiverGame:
                     self.map_part.generate_granny(left_granny_color)
                     self.map_part.add_grannies_to_group(self.granny_sprites)
 
+
     def process_keyboard_and_wheel_events(self, x_change):
         wheel_angle = self.racing_wheel.get_angle()
         if wheel_angle is not None:
             x_change = wheel_angle
         for event in pygame.event.get():
-            self.logger.info('event = {}'.format(event))
+            #self.logger.debug('event = {}'.format(event))
             if event.type == pygame.QUIT:
                 self.stats.game_over = True
             if event.type == pygame.KEYDOWN:
@@ -269,8 +272,8 @@ class TRiverGame:
             if event.type == pygame.KEYUP:
                 if event.key == pygame.K_LEFT or event.key == pygame.K_RIGHT:
                     x_change = 0
-                #if event.key == pygame.K_UP:
-                #    self.engine_sound.decrease_speed()
+                if event.key == pygame.K_UP:
+                    self.engine_sound.decrease_speed()
         if TRacingWheel.left_hat_button in self.racing_wheel.pressed_buttons:
             self.open_door()
             self.racing_wheel.pressed_buttons.remove(TRacingWheel.left_hat_button)
@@ -360,7 +363,6 @@ class TRiverGame:
             if self.my_car.rect.top + 30 > self.height:
                 self.my_car.rect.top = self.height - 30
 
-
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--silent", dest='silent', default=False, action="store_true")
@@ -369,24 +371,36 @@ def parse_args():
     parser.add_argument("--full-screen", dest='full_screen', default=False, action="store_true")
     parser.add_argument("--width", dest='width', default=1600, type=int)
     parser.add_argument("--height", dest='height', default=1000, type=int)
-    parser.add_argument("--speed-count", dest='speed_count', default=10, type=int)
+    parser.add_argument("--max-car-speed-limit", dest='max_car_speed_limit', default=10, type=int)
     parser.add_argument("--bridge-width", dest='bridge_width', default=300, type=int)
+    parser.add_argument("--verbose", dest='verbose', default=False, action="store_true")
+
     parser.add_argument("--car-sprite", dest='my_sprite', default='my_car.png')
     parser.add_argument("--angle-level-ratio", dest='angle_level_ratio', type=float, default=30,
                         help="the less value, the less one must turn the angle to change the direction")
     parser.add_argument("--engine-audio-folder", dest='engine_audio_folder',
                         default= os.path.join(os.path.dirname(__file__), 'assets/sounds/ford'))
+
     return parser.parse_args()
 
 
 if __name__ == "__main__":
     clock = pygame.time.Clock()
     args = parse_args()
+    pr.enable()
+
     pygame.display.init()
     pygame.font.init()
     game = TRiverGame(args)
     game.draw_game_intro()
     game.quit()
+
+    pr.disable()
+    s = io.StringIO()
+    sortby = SortKey.CUMULATIVE
+    ps = pstats.Stats(pr, stream=s).sort_stats(sortby)
+    ps.print_stats()
+    print(s.getvalue())
 
 #=========
 # Звук старта ( если есть)

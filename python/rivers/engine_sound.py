@@ -24,23 +24,25 @@ class TEngineSound:
         stable_file_path = os.path.join(engine_folder, props.get('stable', 'stable.wav'))
         self._engine_sound, self.orig_frame_rate = librosa.load(stable_file_path)
         self._engine_sound = self._engine_sound * props.get('init_volume_coef', 1.0)
+        self._stable_speed_cache = dict()
         self._increasing_engine_sound = None
         self._increase_engine_props: List[IncreaseProps] = list()
         self._decreasing_engine_sound = None
         self._max_speed = 10
-        self.log.info("Length {} is {} ms ".format(stable_file_path, len(self._engine_sound)))
+        self.log.info("limit_speed = {}, Length {} is {} ms ".format(
+            limit_speed, stable_file_path, len(self._engine_sound)))
+        self.idle_speed = 1.0
         self.limit_max_speed = limit_speed
-        self.limit_min_speed = 1.0
         self._engine_state = TEngineState.engine_stable
         self._current_speed = 0
-        self._speed_delta = 0.3
         self._create_increasing_and_decreasing()
         self._play_stream = None
+        self._save_prev_speed_debug = 0
 
     def set_idling_state(self):
-        self._current_speed = self.limit_min_speed
+        self._current_speed = self.idle_speed
         self._engine_state = TEngineState.engine_stable
-        self._create_sound(self.limit_min_speed)
+        self._create_sound(self.idle_speed)
 
     def start_play_stream(self):
         self.log.debug('start engine sound')
@@ -95,11 +97,14 @@ class TEngineSound:
             i += 1
         end_index = int((self.limit_max_speed - 1) * len(incr_segm) / self._max_speed) + 1
         self._increase_engine_props = self._increase_engine_props[:end_index]
-        incr_segm = incr_segm[:end_index]
-        self._increasing_engine_sound = np.array(incr_segm, dtype=np.float32)
+        self._increasing_engine_sound = np.array(incr_segm[:end_index], dtype=np.float32)
         self._decreasing_engine_sound = np.ascontiguousarray(np.flip(self._increasing_engine_sound))
+        assert len(self._increasing_engine_sound) == len(self._increasing_engine_sound)
 
     def create_stable_at_speed(self, speed):
+        cached_frames = self._stable_speed_cache.get(speed)
+        if cached_frames is not None:
+            return cached_frames
         segm = self._engine_sound[:]
         volume = self._get_volume_at_speed(speed)
         segm = segm * volume
@@ -107,6 +112,7 @@ class TEngineSound:
         segm = librosa.resample(y=segm, orig_sr=self.orig_frame_rate, target_sr=frame_rate)
         self.log.debug("_create_stable speed = {}, volume={}, time rate ={} ".format(
             speed, volume, frame_rate))
+        self._stable_speed_cache[speed] = segm
         return segm
 
     def _get_increasing_at_speed(self, speed):
@@ -135,10 +141,11 @@ class TEngineSound:
         return self._current_speed < self.limit_max_speed
 
     def _can_decrease(self):
-        return self._current_speed > self.limit_min_speed
+        return self._current_speed > self.idle_speed
 
     def stabilize_speed(self):
         if self._engine_state != TEngineState.engine_stable:
+            self.log.debug("switch to stable state")
             self._engine_state = TEngineState.engine_stable
             self._create_sound(self._current_speed)
 
@@ -146,18 +153,37 @@ class TEngineSound:
         if self._can_increase():
             if self._engine_state != TEngineState.engine_increase:
                 self._engine_state = TEngineState.engine_increase
+                self.log.debug("switch to increasing state")
                 self._create_sound(self._current_speed)
-            self._current_speed = min(self.limit_max_speed, self._current_speed + self._speed_delta)
-            self.log.info("increase speed to {}".format(self._current_speed))
 
     def decrease_speed(self):
         if self._can_decrease():
             if self._engine_state != TEngineState.engine_decrease:
                 self._engine_state = TEngineState.engine_decrease
+                self.log.debug("switch to decreasing state")
                 self._create_sound(self._current_speed)
-            self._current_speed = max(self.limit_min_speed, self._current_speed - self._speed_delta)
-            self.log.debug("decrease speed to {}".format(self._current_speed))
 
+    def update_speed(self):
+        if self._engine_state == TEngineState.engine_stable:
+            return
+        left_frames = len(self._play_stream.get_audio_buffer())
+        all_frames = len(self._increase_engine_props)
+        self._current_speed = (self.limit_max_speed - self.idle_speed) * (all_frames - left_frames) / all_frames + self.idle_speed
+        if self._save_prev_speed_debug != self._current_speed:
+            self.log.debug('change engine speed from {} to {}'.format(self._save_prev_speed_debug, self._current_speed))
+        self._save_prev_speed_debug = self._current_speed
+
+    def get_new_frames(self):
+        if self._engine_state == TEngineState.engine_increase:
+            self._engine_state = TEngineState.engine_stable
+            self._current_speed = self.limit_max_speed
+            return self.create_stable_at_speed(self.limit_max_speed)
+        elif self._engine_state == TEngineState.engine_decrease:
+            self._engine_state = TEngineState.engine_stable
+            self._current_speed = self.idle_speed
+            return self.create_stable_at_speed(self.idle_speed)
+        else:
+            return self.create_stable_at_speed(self._current_speed)
 
 #todo try time_stretch instead of resample
 #

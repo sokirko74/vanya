@@ -1,8 +1,8 @@
 from evdev import list_devices, InputDevice, ecodes
-from utils.logging_wrapper import setup_logging
+from python.utils.logging_wrapper import setup_logging
 import pygame
 import time
-import os
+
 
 class TRacingWheel:
     left_button = 295

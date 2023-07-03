@@ -30,24 +30,12 @@ class PyAudioStreamWrapper(threading.Thread):
         self._audio_buffer = self._audio_buffer[frame_count:]
         return buf
 
-    def add_frames(self, s):
-        self._audio_buffer = np.append(self._audio_buffer, s)
-
     def _gen_audio_callback(self, in_data, frame_count, time_info, status):
         if self._parent.get_current_speed() == 0:
             return np.zeros( (frame_count,), dtype=np.float32)
-        if len(self.get_audio_buffer()) < frame_count:
-            if self._engine_state == TEngineState.engine_increase:
-                self._engine_state = TEngineState.engine_stable
-                s = self._parent.create_stable_at_speed(self._parent.limit_max_speed)
-                self._current_speed = self._parent.limit_max_speed
-            elif self._engine_state == TEngineState.engine_decrease:
-                self._engine_state = TEngineState.engine_stable
-                s = self._parent.create_stable_at_speed(self._parent.limit_min_speed)
-                self._current_speed = self._parent.limit_min_speed
-            else:
-                s = self._parent.create_stable_at_speed(self._current_speed)
-            self.add_frames(s)
+        elif len(self.get_audio_buffer()) < frame_count:
+            s = self._parent.get_new_frames()
+            self._audio_buffer = np.append(self._audio_buffer, s)
         return self.pop_frames(frame_count), pyaudio.paContinue
 
     def run(self):
@@ -60,6 +48,7 @@ class PyAudioStreamWrapper(threading.Thread):
                             frames_per_buffer=self.frames_per_buffer
                         )
         while not self.stop and play_stream.is_active():
+            self._parent.update_speed()
             time.sleep(0.1)
 
         play_stream.close()

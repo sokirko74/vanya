@@ -1,4 +1,4 @@
-from utils.colors import TColors
+from python.utils.colors import TColors
 import math
 import pygame
 
