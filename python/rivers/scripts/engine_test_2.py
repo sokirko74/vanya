@@ -2,7 +2,7 @@ import logging
 
 import librosa
 
-from python.rivers.engine_sound_from_stable import TEngineSound
+from python.rivers.engine_sound import TEngineSound
 from python.utils.logging_wrapper import setup_logging
 
 import argparse
