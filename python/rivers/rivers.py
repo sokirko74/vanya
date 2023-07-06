@@ -54,7 +54,7 @@ class TRiverGame:
         self.stats = TGameRegisters(self.screen)
         self.game_intro = TGameIntro(self.screen, os.path.join(TSprite.SPRITES_DIR, 'background1.jpg'),  self.racing_wheel)
 
-        self.my_car = TMyCar(self.screen, self.args.my_sprite)
+        self.my_car = TMyCar(self.screen, self.args.my_sprite_folder)
         self.my_car_sprites.add(self.my_car)
         self.map_part = None
         self.map_part_next = None
@@ -379,7 +379,7 @@ def parse_args():
     parser.add_argument("--bridge-width", dest='bridge_width', default=300, type=int)
     parser.add_argument("--verbose", dest='verbose', default=False, action="store_true")
 
-    parser.add_argument("--car-sprite", dest='my_sprite', default='my_car.png')
+    parser.add_argument("--car-sprite-folder", dest='my_sprite_folder')
     parser.add_argument("--angle-level-ratio", dest='angle_level_ratio', type=float, default=30,
                         help="the less value, the less one must turn the angle to change the direction")
     parser.add_argument("--engine-audio-folder", dest='engine_audio_folder',

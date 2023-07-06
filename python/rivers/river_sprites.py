@@ -1,3 +1,5 @@
+import json
+
 from draw_road import draw_road
 from python.utils.colors import TColors
 
@@ -15,6 +17,8 @@ class TSprite(pygame.sprite.Sprite):
         self.parent = parent
         self.rect = rect
         if image_file_name is not None:
+            if not os.path.isabs(image_file_name):
+                image_file_name = os.path.join(TSprite.SPRITES_DIR, image_file_name)
             img = pygame.image.load(os.path.join(TSprite.SPRITES_DIR, image_file_name))
             self.image = pygame.transform.scale(img, (rect.width, rect.height))
         else:
@@ -189,12 +193,17 @@ class TMapPart:
             message += ", granny color: {}".format(self.grannies[0].color.get_color_str())
         return message
 
+
 class TMyCar(TSprite):
-    def __init__(self, parent, image_file_name, horizontal_speed=10):
-        car_width = 160
-        car_height = 160
-        if image_file_name.startswith('truck') or image_file_name.startswith('bus'):
-            car_height = 200
+    def __init__(self, parent, image_folder, horizontal_speed=10):
+        if not os.path.exists(image_folder):
+            image_folder = os.path.join(os.path.dirname(__file__), image_folder)
+        info_path = os.path.join(image_folder, "info.json")
+        with open(info_path) as inp:
+            info = json.load(inp)
+        car_width = info['width']
+        car_height = info['height']
+        image_file_name = os.path.abspath(os.path.join(image_folder, "body.png"))
         rct = pygame.Rect(0, 0, car_width, car_height)
         super().__init__(parent, image_file_name, rct)
         self.horizontal_speed = horizontal_speed
