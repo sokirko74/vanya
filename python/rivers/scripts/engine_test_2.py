@@ -60,9 +60,9 @@ def main():
     log = setup_logging("test_engine", console_level=logging.DEBUG)
     engine = TEngineSound(log, args.engine_folder, 5)
     engine.start_play_stream()
-    _test_engine_gui(engine)
-    #play_raw_frames(engine._engine_sound, engine.sr)
-    #play_raw_frames(engine._increasing_engine_sound, engine.sr)
+    #_test_engine_gui(engine)
+    #play_raw_frames(engine._engine_sound, engine.orig_frame_rate)
+    play_raw_frames(engine._increasing_engine_sound, engine.orig_frame_rate)
     #ngine.start_engine_thread()
     #_test_engine_gui(sound)
     #for i in range(10):
