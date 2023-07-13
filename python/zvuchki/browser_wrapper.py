@@ -11,16 +11,20 @@ import os
 import json
 import time
 
+
 class TBrowser:
     def __init__(self):
         self.browser = None
-        self.cache_path = "search_request_cache.txt"
+        self.cache_path = os.path.join(os.path.dirname(__file__), "search_request_cache.txt")
         self.all_requests = dict()
+        self.all_requests_without_spaces = dict()
         if os.path.exists(self.cache_path):
             with open(self.cache_path) as inp:
                 s = inp.read()
                 if len(s) > 0:
                     self.all_requests = json.loads(s)
+                    for k, v  in self.all_requests.items():
+                        self.all_requests_without_spaces[k.replace(' ', '')] = v
 
     def init_chrome(self):
         options = webdriver.ChromeOptions()
@@ -152,6 +156,17 @@ class TBrowser:
                         search_results.append(url)
         return search_results
 
+    def get_cached_request(self, request):
+        return self.all_requests_without_spaces.get(request.replace(' ', ''))
+
+    def _cache_request(self, request, search_results):
+        self.all_requests.get(request.replace(' ', ''))
+        self.all_requests[request] = search_results
+        self.all_requests_without_spaces[request.replace(' ', '')] = search_results
+        if search_results:
+            with open(self.cache_path, "w") as outp:
+                json.dump(self.all_requests, outp, ensure_ascii=False, indent=4)
+
     def send_request(self, search_engine_request):
         self.browser.get("https://www.google.ru/videohp?hl=ru")
         time.sleep(3)
@@ -161,10 +176,7 @@ class TBrowser:
         element.send_keys(Keys.RETURN)
         time.sleep(3)
         search_results = self._parse_serp()
-        self.all_requests[search_engine_request] = search_results
-        if search_results:
-            with open(self.cache_path, "w") as outp:
-                json.dump(self.all_requests, outp, ensure_ascii=False, indent=4)
+        self._cache_request(search_engine_request, search_results)
         return search_results
 
 

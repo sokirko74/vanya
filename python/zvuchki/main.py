@@ -10,6 +10,7 @@ import time
 import vlc
 from functools import partial
 import threading
+import re
 
 
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
@@ -47,6 +48,7 @@ class VideoPlayer (threading.Thread):
 
     def next_track(self):
         self.browser.send_shift_n()
+
     def prev_track(self):
         self.browser.send_shift_p()
 
@@ -55,6 +57,7 @@ class VideoPlayer (threading.Thread):
             if not self.parent.is_running or self._interrupted:
                 break
             self.browser = TBrowser()
+            self.parent.logger.info("Number of cached urls: {}".format(len(self.browser.all_requests)))
             self.browser.start_browser()
             res = self.browser.play_youtube(self.url, self.seconds)
             self.browser.close_browser()
@@ -169,7 +172,7 @@ class TZvuchki(tk.Frame):
 
     def get_url_video_from_google_or_cached(self, request, position):
         browser = TBrowser()
-        search_results = browser.all_requests.get(request)
+        search_results = browser.get_cached_request(request)
         if search_results is None:
             browser.start_browser()
             search_results = browser.send_request(request)
@@ -200,6 +203,7 @@ class TZvuchki(tk.Frame):
         add_query = ''
         add_sec = 0
         use_old_urls = False
+        test_drive = "тест драйв от первого лица"
         for i in range(2, len(words)):
             cmd = words[i]
             if cmd == 'Д':
@@ -207,7 +211,13 @@ class TZvuchki(tk.Frame):
             elif cmd == 'ДД':
                 add_sec = 240
             elif cmd == 'Т':
-                add_query = "тест драйв от первого лица"
+                add_query = test_drive
+            elif cmd == 'ТД':
+                add_query = test_drive
+                add_sec = 120
+            elif cmd == 'ТДД':
+                add_query = test_drive
+                add_sec = 240
             elif cmd == 'К':
                 add_query = "в кабине водителя"
             elif cmd == 'КРИК':
@@ -232,6 +242,9 @@ class TZvuchki(tk.Frame):
             duration = timeout + add_sec
         else:
             search_obj = car_brand.lower()
+            digit = re.search(r'(\d)', search_obj)
+            if digit is not None:
+                search_obj = search_obj[:digit.regs[0][0]]
             if search_obj not in CARS and search_obj not in BIRDS and search_obj not in COMPOSERS \
                 and search_obj not in OTHER_SRC:
                 self.logger.error("bad car brand")
