@@ -69,7 +69,7 @@ class VideoPlayer (threading.Thread):
 class TZvuchki(tk.Frame):
     def __init__(self, master=None):
         self.args = parse_args()
-        self.logger = setup_logging("office.log")
+        self.logger = setup_logging("zvuchki.log", append_mode=True)
         self.left_offset = 80
         self.is_running = True
         self.font_size = self.args.font_size
@@ -189,50 +189,63 @@ class TZvuchki(tk.Frame):
 
     def play_request(self, request):
         words = request.strip().split(' ')
-        if len(words) < 2:
-            self.logger.error("car and  video clip index must be specified")
-            return False
-        if not words[1].isdigit():
-            self.logger.error("video clip index must be integer")
-            return False
-        car_brand = words[0].strip()
-        if car_brand.lower() == 'усач':
-            car_brand = 'ТРАМВАЙ'
-
-        clip_index = int(words[1])
+        # if len(words) < 2:
+        #     self.logger.error("car and  video clip index must be specified")
+        #     return False
+        # if not words[1].isdigit():
+        #     self.logger.error("video clip index must be integer")
+        #     return False
+        #car_brand = words[0].strip()
+        #if car_brand.lower() == 'усач':
+        #    car_brand = 'ТРАМВАЙ'
+        query_words = list()
+        #clip_index = int(words[1])
+        clip_index = None
         add_query = ''
         add_sec = 0
         use_old_urls = False
         test_drive = "тест драйв от первого лица"
-        for i in range(2, len(words)):
-            cmd = words[i]
-            if cmd == 'Д':
+        for token in words:
+            if token.isdigit() and clip_index is None:
+                clip_index = int(token)
+                continue
+
+            if token == 'Д':
                 add_sec = 120
-            elif cmd == 'ДД':
+            elif token == 'ДД':
                 add_sec = 240
-            elif cmd == 'Т':
+            elif token == 'Т':
                 add_query = test_drive
-            elif cmd == 'ТД':
+            elif token == 'ТД':
                 add_query = test_drive
                 add_sec = 120
-            elif cmd == 'ТДД':
+            elif token == 'ТДД':
                 add_query = test_drive
                 add_sec = 240
-            elif cmd == 'К':
+            elif token == 'К':
                 add_query = "в кабине водителя"
-            elif cmd == 'КРИК':
+            elif token == 'КРИК':
                 add_query = "крик"
-            elif cmd == 'З':
+            elif token == 'З':
                 add_query = "звук двигателя"
-            elif cmd == 'ЗВУК':
+            elif token == 'ЗВУК':
                 add_query = "звук"
-            elif cmd == 'Э':
+            elif token == 'Э':
                 add_query = "эксплуатация"
-            elif cmd == 'П':
+            elif token == 'П':
                 use_old_urls = True
-        duration =  None
+            else:
+                if len(token) > 0:
+                    query_words.append(token)
+        if clip_index is None:
+            self.logger.error("specify video clip index (integer after query)")
+            return False
+        if len(query_words) == 0:
+            self.logger.error("no query")
+            return False
+        query = " ".join(query_words)
         if use_old_urls:
-            key = '{}{}'.format(car_brand, clip_index).lower()
+            key = '{}{}'.format(query, clip_index).lower()
             if key not in URLS:
                 self.logger.error("no stored key {}".format(key))
                 return False
@@ -241,7 +254,7 @@ class TZvuchki(tk.Frame):
                 timeout = self.args.max_play_seconds
             duration = timeout + add_sec
         else:
-            search_obj = car_brand.lower()
+            search_obj = query.lower()
             digit = re.search(r'(\d)', search_obj)
             if digit is not None:
                 search_obj = search_obj[:digit.regs[0][0]]
@@ -251,7 +264,7 @@ class TZvuchki(tk.Frame):
                 return False
             duration = 300 + add_sec
             #duration = 10 + add_sec
-            request = "{} {}".format(car_brand, add_query)
+            request = "{} {}".format(query, add_query)
             self.logger.info("req={}, dur={}, serp_index={}".format(request, duration, clip_index))
             url = self.get_url_video_from_google_or_cached(request, clip_index)
         self.play_youtube_video(url, duration)
