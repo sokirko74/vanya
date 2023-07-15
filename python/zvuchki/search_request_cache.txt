@@ -1000,5 +1000,17 @@
         "https://www.youtube.com/watch?v=qA2U9nqdpWw",
         "https://www.youtube.com/watch?v=-aaqbnj_bYE",
         "https://www.youtube.com/watch?v=tV4Z6_ExPHg"
+    ],
+    "ЛАДА САМАРА тест драйв от первого лица": [
+        "https://www.youtube.com/watch?v=-aaqbnj_bYE",
+        "https://www.youtube.com/watch?v=A04DfIMBrFY",
+        "https://www.youtube.com/watch?v=ItBrEZ9gEMY",
+        "https://www.youtube.com/watch?v=Bes92kW_MfA",
+        "https://www.youtube.com/watch?v=67x3wt__yd4",
+        "https://www.youtube.com/watch?v=e8t4sQMXNBI",
+        "https://www.youtube.com/watch?v=B86VPDEwG0Q",
+        "https://www.youtube.com/watch?v=WIdsJH66Yao",
+        "https://www.youtube.com/watch?v=vSx4QNWISaI",
+        "https://www.youtube.com/watch?v=1kJC6JNgqZs"
     ]
 }
