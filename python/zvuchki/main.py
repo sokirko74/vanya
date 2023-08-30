@@ -69,7 +69,8 @@ class VideoPlayer (threading.Thread):
 class TZvuchki(tk.Frame):
     def __init__(self, master=None):
         self.args = parse_args()
-        self.logger = setup_logging("zvuchki.log", append_mode=True)
+        log_path = os.path.join(os.path.dirname(__file__), "zvuchki.log")
+        self.logger = setup_logging(log_file_name=log_path, append_mode=True)
         self.left_offset = 80
         self.is_running = True
         self.font_size = self.args.font_size

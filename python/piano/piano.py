@@ -11,7 +11,7 @@ import logging
 ZYNADDSUBFX_BINARY = "zynaddsubfx"
 
 
-def setup_logging():
+def setup_logging():f
     logger = logging.getLogger("piano_logger")
     logger.setLevel(logging.DEBUG)
 

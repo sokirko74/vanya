@@ -1012,5 +1012,45 @@
         "https://www.youtube.com/watch?v=WIdsJH66Yao",
         "https://www.youtube.com/watch?v=vSx4QNWISaI",
         "https://www.youtube.com/watch?v=1kJC6JNgqZs"
+    ],
+    "ДЖИМНИ тест драйв от первого лица": [
+        "https://www.youtube.com/watch?v=FckU3GTLrAI",
+        "https://www.youtube.com/watch?v=KmW0GPh1kIE",
+        "https://www.youtube.com/watch?v=X1_TQV2jj-4",
+        "https://www.youtube.com/watch?v=e2dFBmqDKZs",
+        "https://www.youtube.com/watch?v=PmVqpXrJZyQ",
+        "https://www.youtube.com/watch?v=03J-TIBlMVQ",
+        "https://www.youtube.com/watch?v=pAnrCLrNmks",
+        "https://m.youtube.com/channel/UCqXeNLdjciB850MLDT-d32w",
+        "https://webcache.googleusercontent.com/search?q=cache:zSHk2tDyoLYJ:https://m.youtube.com/channel/UCqXeNLdjciB850MLDT-d32w&cd=8&hl=ru&ct=clnk&gl=ru",
+        "https://www.youtube.com/watch?v=wVsvLnYjY_k",
+        "https://www.youtube.com/channel/UCqXeNLdjciB850MLDT-d32w",
+        "https://webcache.googleusercontent.com/search?q=cache:4BjMd_OUww0J:https://www.youtube.com/channel/UCqXeNLdjciB850MLDT-d32w&cd=10&hl=ru&ct=clnk&gl=ru"
+    ],
+    "БАЛЕНО тест драйв от первого лица": [
+        "https://www.youtube.com/watch?v=uk87cgLEq7w",
+        "https://www.youtube.com/watch?v=mY6RtpXu4mY",
+        "https://www.youtube.com/watch?v=vU2YxoTAMpA",
+        "https://www.youtube.com/watch?v=ONi59U8G2wU",
+        "https://www.youtube.com/watch?v=t_NEy0EJckA",
+        "https://www.youtube.com/watch?v=uY1rE_8TRbY",
+        "https://www.google.ru/search?newwindow=1&hl=ru&q=related:https://www.youtube.com/watch%3Fv%3DuY1rE_8TRbY+%D0%91%D0%90%D0%9B%D0%95%D0%9D%D0%9E+%D1%82%D0%B5%D1%81%D1%82+%D0%B4%D1%80%D0%B0%D0%B9%D0%B2+%D0%BE%D1%82+%D0%BF%D0%B5%D1%80%D0%B2%D0%BE%D0%B3%D0%BE+%D0%BB%D0%B8%D1%86%D0%B0&sa=X&ved=2ahUKEwixm8WikpCAAxXvEBAIHRUkDsgQH3oECAwQCQ"
+    ],
+    "БАЛЕНО ": [
+        "https://www.youtube.com/watch?v=eIls0jdQOjI",
+        "https://www.youtube.com/watch?v=V_vJdPCXRDo",
+        "https://www.youtube.com/watch?v=mY6RtpXu4mY",
+        "https://www.youtube.com/watch?v=ZQI5MbvJ5Mg",
+        "https://www.youtube.com/watch?v=ONi59U8G2wU"
+    ],
+    "ПЛИМУТ тест драйв от первого лица": [
+        "https://www.youtube.com/watch?v=wFwtwKvFFKo",
+        "https://www.google.ru/search?newwindow=1&hl=ru&q=related:https://www.youtube.com/watch%3Fv%3DwFwtwKvFFKo+%D0%9F%D0%9B%D0%98%D0%9C%D0%A3%D0%A2+%D1%82%D0%B5%D1%81%D1%82+%D0%B4%D1%80%D0%B0%D0%B9%D0%B2+%D0%BE%D1%82+%D0%BF%D0%B5%D1%80%D0%B2%D0%BE%D0%B3%D0%BE+%D0%BB%D0%B8%D1%86%D0%B0&sa=X&ved=2ahUKEwii5I3bh6CAAxXeGxAIHS_-BkUQH3oECA4QCQ",
+        "https://www.youtube.com/watch?v=9RJ9Pztmyy8",
+        "https://www.youtube.com/watch?v=822CrEglZlU",
+        "https://www.youtube.com/watch?v=RutIorxAjSE"
+    ],
+    "ДАФ ": [
+        "https://www.youtube.com/watch?v=1Hbe_qDGclg"
     ]
 }

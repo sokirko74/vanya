@@ -16,6 +16,7 @@ OCTAVE_CHUNK_COUNT = 5
 START_FREQ = 16.35  #C0
 MULTIPLIER = math.pow(2, 1/OCTAVE_CHUNK_COUNT)
 
+
 def get_custom_note (octave_index, note_degree):
     start = START_FREQ * math.pow(2, octave_index)
     note = start * math.pow(MULTIPLIER, note_degree)
@@ -25,7 +26,7 @@ def get_custom_note (octave_index, note_degree):
 PIANO = 1
 ORGAN = 20
 SITAR = 105
-DEFAULT_INSTRUMENT = ORGAN + 4
+MIDI_INSTRUMENT = 29
 
 
 class BentNote:
@@ -56,13 +57,19 @@ class TKeyboardSynth:
         self.frame = tk.Frame(self.root, width=300, height=300)
         self.frame.pack()
         self.frame.focus_set()
-        self.key2note = dict()
+        key2note = dict()
         for degree, ch in enumerate(['q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p', 'bracketleft', 'bracketright', 'backslash']):
-            self.key2note[ch] = (3, degree)
+            key2note[ch] = (3, degree)
         for degree, ch in enumerate(['a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', 'semicolon', 'apostrophe']):
-            self.key2note[ch] = (4, degree)
+            key2note[ch] = (4, degree)
         for degree, ch in enumerate(['z', 'x', 'c', 'v', 'b', 'n', 'm', 'comma', 'period', 'slash']):
-            self.key2note[ch] = (5, degree)
+            key2note[ch] = (5, degree)
+        self.key2note = dict()
+        for i,v in key2note.items():
+            self.key2note[i] = v
+            if len(i) == 1:
+                self.key2note[i.upper()] = v
+
         self.is_running = False
         self.play_freqs = dict()
         self.channels_count = 1
@@ -99,9 +106,14 @@ class TKeyboardSynth:
         self.is_running = False
 
     def keydown(self, e):
+        global MIDI_INSTRUMENT
         print ('down {}'.format(e.keysym))
-        if e.keysym =='space':
+        if e.keysym == 'Escape':
             self.stop_all()
+        if e.keysym == 'F1':
+            MIDI_INSTRUMENT += 1
+            if MIDI_INSTRUMENT == 128:
+                MIDI_INSTRUMENT = 1
         if e.keysym in self.key2note:
             note = self.key2note[e.keysym]
             freq = get_custom_note(note[0], note[1])
@@ -110,7 +122,7 @@ class TKeyboardSynth:
                 for i in self.play_freqs.values():
                     free_channels.remove(i.channel)
                 free_channel = list(free_channels)[0]
-                self.synth.program_change(free_channel, DEFAULT_INSTRUMENT)
+                self.synth.program_change(free_channel, MIDI_INSTRUMENT)
                 bn = BentNote(self.synth, free_channel, freq)
                 self.play_freqs[freq] = bn
                 bn.play_note()
@@ -129,7 +141,6 @@ class TKeyboardSynth:
         for i in self.play_freqs.values():
             i.stop_note()
         self.play_freqs.clear()
-
 
 
 def main():

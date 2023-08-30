@@ -134,6 +134,7 @@ class TVanyaOffice(tk.Frame):
 
     def read_goal_words(self):
         path = os.path.join(os.path.dirname(__file__), "goal_words.txt")
+        path = os.path.join(os.path.dirname(__file__), "nouns5.txt")
         with open(path) as inp:
             for i in inp:
                 self.goal_words.append(i.strip())
