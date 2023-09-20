@@ -180,7 +180,7 @@ class TRiverGame:
             pygame.draw.rect(self.screen, TColors.white, dummy_rct)
         self.map_part_next = TMapPart(self.screen, -self.height, self.args.bridge_width, self.road_width,
                                             self.map_part.bridge.rect)
-        if self.car_needs_repair and random.random() > 0:
+        if self.car_needs_repair and random.random() > 0.5:
             self.map_part_next.generate_repair_station()
         else:
             gen_granny = self.get_granny_in_car_color() is None and random.random() > 0.5
