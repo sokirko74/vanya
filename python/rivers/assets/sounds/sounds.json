@@ -28,5 +28,8 @@
   },
   "granny_sea_voyage": {
     "volume": 0.4
+  },
+  "repair_car": {
+    "volume": 0.4
   }
 }

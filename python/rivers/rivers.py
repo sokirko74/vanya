@@ -5,7 +5,7 @@ from python.utils.colors import TColors
 from python.utils.game_sounds import TSounds
 from python.utils.game_intro import TGameIntro
 from python.rivers.engine_sound import TEngineSound
-from python.rivers.river_sprites import TSprite, TMyCar, TMapPart, TGrannySprite
+from python.rivers.river_sprites import TSprite, TMyCar, TMapPart, TGrannySprite, TRepairStation
 from python.rivers.river_registers import TGameRegisters
 
 import pygame
@@ -16,7 +16,6 @@ import math
 import random
 import logging
 # import cProfile, pstats, io
-# from pstats import SortKey
 # pr = cProfile.Profile()
 
 
@@ -32,7 +31,9 @@ class TRiverGame:
         self.start_time_on_the_road_side = None
         self.sounds = TSounds(SOUNDS_DIR, not args.silent)
         self.racing_wheel = TRacingWheel(self.logger, args.wheel_center, angle_level_ratio=args.angle_level_ratio)
-        self.engine_sound = TEngineSound(self.logger,  self.args.engine_audio_folder, args.max_car_speed_limit + 1)
+        self.engine_sound = None
+        self.car_needs_repair = False
+        self.init_engine_sound()
 
         self.river_sprites = pygame.sprite.Group()
         self.bridge_sprites = pygame.sprite.Group()
@@ -42,6 +43,7 @@ class TRiverGame:
         self.granny_sprites = pygame.sprite.Group()
         self.grannies_in_car = pygame.sprite.Group()
         self.last_pedal_event_time_stamp = 0
+        self.river_collisions_1 = 0
         if args.full_screen:
             self.screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
             pygame.display.toggle_fullscreen()
@@ -51,7 +53,7 @@ class TRiverGame:
             self.width = self.args.width
             self.height = self.args.height
             self.screen = pygame.display.set_mode((self.width, self.height))
-        self.stats = TGameRegisters(self.screen)
+        self.stats: TGameRegisters = None
         self.game_intro = TGameIntro(self.screen, os.path.join(TSprite.SPRITES_DIR, 'background1.jpg'),  self.racing_wheel)
 
         self.my_car = TMyCar(self.screen, self.args.my_sprite_folder)
@@ -60,6 +62,19 @@ class TRiverGame:
         self.map_part_next = None
         self.granny_in_car = None
         self.exit_game = False
+
+    def init_engine_sound(self):
+        if self.car_needs_repair:
+            folder = os.path.join(os.path.dirname(__file__), 'assets/sounds/vaz_wo_muffler')
+        else:
+            folder = self.args.engine_audio_folder
+        new_engine_sound = TEngineSound(self.logger, folder, self.args.max_car_speed_limit + 1)
+        old_engine_sound  = self.engine_sound
+        self.engine_sound = new_engine_sound
+        self.engine_sound.start_play_stream()
+        if old_engine_sound is not None:
+            old_engine_sound.stop_engine()
+
 
     def message(self, mess, colour, size, x, y):
         font = pygame.font.SysFont(None, size)
@@ -104,10 +119,14 @@ class TRiverGame:
         self.engine_sound.set_idling_state()
         river_sprite.collided = True
         self.stats.river_accident_count += 1
+        self.river_collisions_1 += 1
         if self.granny_in_car is not None:
             self.granny_in_car.river_fall_count += 1
             if self.granny_in_car.river_fall_count >= 3:
                 self.granny_leaves_car("granny_sea_voyage")
+        if self.river_collisions_1 == 2 and not self.car_needs_repair:
+            self.car_needs_repair = True
+            self.init_engine_sound()
 
     def get_car_speed(self):
         engine_speed = self.engine_sound.get_current_speed()
@@ -154,22 +173,28 @@ class TRiverGame:
             #first time
             dummy_rct = pygame.Rect(self.my_car.rect.center[0] - self.args.bridge_width/2,
                                     self.my_car.rect.top, self.args.bridge_width, 10)
-            self.map_part = TMapPart(self.screen, 0, self.args.bridge_width, self.road_width, dummy_rct, True)
+            self.map_part = TMapPart(self.screen, 0, self.args.bridge_width, self.road_width, dummy_rct)
+            self.map_part.generate_town(True)
             #self.logger.info("prev rect {}".format(dummy_rct))
             #self.logger.info("car rect {}".format(self.my_car.rect))
             pygame.draw.rect(self.screen, TColors.white, dummy_rct)
-        gen_granny = self.get_granny_in_car_color() is None and random.random() > 0.5
         self.map_part_next = TMapPart(self.screen, -self.height, self.args.bridge_width, self.road_width,
-                                            self.map_part.bridge.rect, gen_granny)
+                                            self.map_part.bridge.rect)
+        if self.car_needs_repair and random.random() > 0:
+            self.map_part_next.generate_repair_station()
+        else:
+            gen_granny = self.get_granny_in_car_color() is None and random.random() > 0.5
+            self.map_part_next.generate_town(gen_granny)
         self.river_sprites.add(self.map_part.river)
         self.bridge_sprites.add(self.map_part.bridge)
         self.road_sprites.add(self.map_part.road, self.map_part_next.road)
-        self.town_sprites.add(self.map_part.town, self.map_part_next.town)
+        self.town_sprites.add(self.map_part.car_stop, self.map_part_next.car_stop)
         self.map_part.add_grannies_to_group(self.granny_sprites)
         self.map_part_next.add_grannies_to_group(self.granny_sprites)
         self.logger.info(self.map_part.get_descr())
 
     def is_obstacle_finish(self, sprite: TSprite):
+
         return sprite.rect.top > min(self.height - 100, self.my_car.rect.bottom + 200)
 
     def change_obstacle_positions(self):
@@ -202,6 +227,13 @@ class TRiverGame:
         self.sounds.play_sound(sound_name, loops=0)
         time.sleep(1)
 
+    def repair_car(self):
+        self.car_needs_repair = False
+        self.sounds.play_sound("repair_car", loops=0)
+        self.init_engine_sound()
+        self.river_collisions_1 = 0
+
+
     def open_door(self):
         if self.get_car_speed() == 1:
             self.use_brakes()
@@ -211,11 +243,13 @@ class TRiverGame:
             town = pygame.sprite.spritecollideany(self.my_car, self.town_sprites, collided=pygame.sprite.collide_mask)
             granny = pygame.sprite.spritecollideany(self.my_car, self.granny_sprites,
                                                     collided=pygame.sprite.collide_mask)
-            if town or granny:
+            if self.car_needs_repair and isinstance(town, TRepairStation):
+                self.repair_car()
+            elif town or granny:
                 self.logger.info("open door")
                 left_granny_color = None
                 if self.granny_in_car is not None :
-                    if self.map_part.town.color.color == self.get_granny_in_car_color():
+                    if self.map_part.car_stop.color.color == self.get_granny_in_car_color():
                         self.logger.info("granny leaves the car")
                         self.sounds.play_sound("door_open", loops=0)
                         time.sleep(2)
@@ -317,7 +351,7 @@ class TRiverGame:
         pygame.draw.line(self.screen, TColors.white, (0, self.finish_top),
                          (self.width, self.finish_top))
 
-        self.stats.draw_params(self.my_car.rect.top, self.get_car_speed())
+        self.stats.draw_params(self.my_car.rect.top, self.get_car_speed(), self.car_needs_repair)
         #pygame.draw.rect(self.screen, TColors.black, self.other_car.rect, width=1)
         #pygame.draw.rect(self.screen, TColors.black, self.my_car.rect, width=1)
         self.my_car_sprites.draw(self.screen)
@@ -339,7 +373,6 @@ class TRiverGame:
         self.road_sprites.empty()
         self.town_sprites.empty()
         self.granny_sprites.empty()
-        self.granny_in_car_color = None
         self.my_car.rect.left = self.width / 2
         self.my_car.rect.top = self.height - 250
         if self.map_part is not None:
@@ -348,8 +381,10 @@ class TRiverGame:
         #self.my_car.rect.top = self.height - 650
         self.stats = TGameRegisters(self.screen)
         self.redraw_background()
+        self.car_needs_repair = False
         self.init_new_river()
         self.engine_sound.start_play_stream()
+        self.river_collisions_1 = 0
 
     def game_loop(self):
         self.init_game_loop()
@@ -405,3 +440,6 @@ if __name__ == "__main__":
 # пробование на ванином
 #todo
 # почему бабушки иногда не забираются?
+
+# Звук починки
+# причина поломки

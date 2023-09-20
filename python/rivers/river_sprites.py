@@ -61,8 +61,8 @@ class TRoadSprite(TSprite):
         srf.fill(TSprite.BACKGROUND_COLOR)
         #pygame.draw.rect(srf, TColors.white,   min(x1, x2) + abs(x1-x2)/2  pygame.Rect(1,1, rct.width-2, rct.top-2), width=1 )
         draw_road(srf, x1-rct.left, y1-rct.top, x2-rct.left, y2-rct.top, width=road_width)
-        self.town_position = (min(x1, x2) + abs(x1 - x2)/2, min(y1, y2) + abs(y1 - y2)/2)
-        self.granny_position = (self.town_position[0] + 50,  self.town_position[1] - 75)
+        self.car_stop_position = (min(x1, x2) + abs(x1 - x2) / 2, min(y1, y2) + abs(y1 - y2) / 2)
+        self.granny_position = (self.car_stop_position[0] + 50, self.car_stop_position[1] - 75)
         super().__init__(parent, None, rct, surface=srf)
 
 
@@ -131,8 +131,25 @@ class TTownSprite(TSprite):
         self.collided = False
 
 
+class TRepairStation(TSprite):
+    def __init__(self, parent, left, top, width=300, replicate_width=1):
+        img = pygame.image.load(os.path.join(TSprite.SPRITES_DIR, "repair.png"))
+        img = pygame.transform.scale(img, (width, width))
+        srf = pygame.Surface((width*replicate_width, width))
+        srf.fill(TSprite.BACKGROUND_COLOR)
+        for i in range(replicate_width):
+            srf.blit(img, (i*width, 0))
+        super().__init__(parent,
+                         None,
+                         pygame.Rect(left-srf.get_width()/2, top-width/2, srf.get_width(), srf.get_height()),
+                         surface=srf
+                         )
+        self.collided = False
+
+
 class TMapPart:
-    def __init__(self, parent, top, bridge_width, road_width, prev_bridge_rect, generate_granny: bool):
+    def __init__(self, parent, top, bridge_width, road_width, prev_bridge_rect):
+        self.parent = parent
         self.bridge_width = bridge_width
         self.road_width = road_width
         self.river = TRiver(parent, 0, top)
@@ -142,10 +159,16 @@ class TMapPart:
         anchor1 = (self.bridge.rect.left + bridge_width/2 - road_width, self.bridge.rect.bottom)
         anchor2 = (prev_bridge_rect.left + bridge_width / 2 - road_width, prev_bridge_rect.top)
         self.road = TRoadSprite(parent, anchor1, anchor2)
-        self.town = TTownSprite(parent, self.road.town_position[0], self.road.town_position[1])
+        self.car_stop = None
         self.grannies = list()
+
+    def generate_town(self, generate_granny: bool):
+        self.car_stop = TTownSprite(self.parent, self.road.car_stop_position[0], self.road.car_stop_position[1])
         if generate_granny:
-            self.generate_granny(minus_color=self.town.color.color)
+            self.generate_granny(minus_color=self.car_stop.color.color)
+
+    def generate_repair_station(self):
+        self.car_stop = TRepairStation(self.parent, self.road.car_stop_position[0], self.road.car_stop_position[1])
 
     def destroy_sprites(self):
         self.river.kill()
@@ -154,15 +177,15 @@ class TMapPart:
         self.bridge = None
         self.road.kill()
         self.road = None
-        self.town.kill()
-        self.town = None
+        self.car_stop.kill()
+        self.car_stop = None
         self.kill_grannies()
 
     def change_spite_position(self, delta):
         self.river.change_spite_position(delta)
         self.bridge.change_spite_position(delta)
         self.road.change_spite_position(delta)
-        self.town.change_spite_position(delta)
+        self.car_stop.change_spite_position(delta)
         for g in self.grannies:
             g.change_spite_position(delta)
 
@@ -179,19 +202,22 @@ class TMapPart:
             grp.add(g)
 
     def generate_granny(self, color=None, minus_color=None):
-        if self.town.rect.left < self.town.parent.get_width() / 2:
-            x = self.town.rect.left + self.town.rect.width + len(self.grannies)*20
+        if self.car_stop.rect.left < self.car_stop.parent.get_width() / 2:
+            x = self.car_stop.rect.left + self.car_stop.rect.width + len(self.grannies) * 20
         else:
-            x = self.town.rect.left - self.town.rect.width + len(self.grannies) * 20
+            x = self.car_stop.rect.left - self.car_stop.rect.width + len(self.grannies) * 20
 
-        g = TGrannySprite(self.road.parent, x, self.town.rect.top, color=color, minus_color=minus_color)
+        g = TGrannySprite(self.road.parent, x, self.car_stop.rect.top, color=color, minus_color=minus_color)
         self.grannies.append(g)
 
     def get_descr(self):
-        message = "town color: {}".format(self.town.color.get_color_str())
-        if len(self.grannies) > 0:
-            message += ", granny color: {}".format(self.grannies[0].color.get_color_str())
-        return message
+        if  isinstance(self.car_stop, TTownSprite):
+            message = "town color: {}".format(self.car_stop.color.get_color_str())
+            if len(self.grannies) > 0:
+                message += ", granny color: {}".format(self.grannies[0].color.get_color_str())
+            return message
+        else:
+            return "Repair station"
 
 
 class TMyCar(TSprite):
