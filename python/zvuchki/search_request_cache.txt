@@ -1052,5 +1052,26 @@
     ],
     "ДАФ ": [
         "https://www.youtube.com/watch?v=1Hbe_qDGclg"
+    ],
+    "ГАЗ69 тест драйв от первого лица": [
+        "https://www.youtube.com/watch?v=1Ormb2qUjuo",
+        "https://translate.google.com/translate?hl=ru&sl=en&u=https://www.youtube.com/watch%3Fv%3D1Ormb2qUjuo&prev=search&pto=aue",
+        "https://www.youtube.com/watch?v=CoLprtwJ1YQ",
+        "https://www.youtube.com/watch?v=TAdKYrrcWbc",
+        "https://www.youtube.com/watch?v=s6taqt1R1Uw",
+        "https://translate.google.com/translate?hl=ru&sl=en&u=https://www.youtube.com/watch%3Fv%3Ds6taqt1R1Uw&prev=search&pto=aue",
+        "https://www.youtube.com/watch?v=1DLV0SMu0tc",
+        "https://www.youtube.com/watch?v=Hcrdeqpx1pg",
+        "https://www.youtube.com/watch?v=PKOJzOWyhPI&vl=ru",
+        "https://www.youtube.com/watch?v=KKGD3mZPS6k",
+        "https://www.youtube.com/watch?v=cRojFhRFxj0",
+        "https://translate.google.com/translate?hl=ru&sl=en&u=https://www.youtube.com/watch%3Fv%3DcRojFhRFxj0&prev=search&pto=aue",
+        "https://www.youtube.com/watch?v=zTO8tdQcsNM"
+    ],
+    "ГАЗ ": [
+        "https://www.youtube.com/watch?v=CyZthSZVn-Q",
+        "https://www.youtube.com/watch?v=FnejkbVxoOA",
+        "https://www.youtube.com/watch?v=oJu4gnX2HPA",
+        "https://www.youtube.com/watch?v=pFBRA6YQAdY"
     ]
 }
