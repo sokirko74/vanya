@@ -123,6 +123,8 @@ class TEngineSound:
 
     def _get_decreasing_at_speed(self, speed):
         index = len(self._decreasing_engine_sound) - self._speed_to_frame_index(speed)
+        if index >= len(self._increase_engine_props):
+            index = len(self._increase_engine_props) - 1
         p = self._increase_engine_props[index]
         self.log.debug("_get_increasing_at_speed speed = {}, index={}, frame_rate={}".format(
             speed, index, p.frame_rate))
