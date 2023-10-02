@@ -5,7 +5,7 @@ from python.utils.colors import TColors
 from python.utils.game_sounds import TSounds
 from python.utils.game_intro import TGameIntro
 from python.rivers.engine_sound import TEngineSound
-from python.rivers.river_sprites import TSprite, TMyCar, TMapPart, TGrannySprite, TRepairStation
+from python.rivers.river_sprites import TSprite, TMyCar, TMapPart, TGrannySprite, TRepairStation, TGirlSprite
 from python.rivers.river_registers import TGameRegisters
 
 import pygame
@@ -15,8 +15,6 @@ import os
 import math
 import random
 import logging
-# import cProfile, pstats, io
-# pr = cProfile.Profile()
 
 
 SOUNDS_DIR = os.path.join(os.path.dirname(__file__), "assets", 'sounds')
@@ -40,8 +38,8 @@ class TRiverGame:
         self.my_car_sprites = pygame.sprite.Group()
         self.road_sprites = pygame.sprite.Group()
         self.town_sprites = pygame.sprite.Group()
-        self.granny_sprites = pygame.sprite.Group()
-        self.grannies_in_car = pygame.sprite.Group()
+        self.passengers_at_car_stop_sprites = pygame.sprite.Group()
+        self.passengers_in_car_sprites = pygame.sprite.Group()
         self.last_pedal_event_time_stamp = 0
         self.river_collisions_1 = 0
         if args.full_screen:
@@ -58,9 +56,9 @@ class TRiverGame:
 
         self.my_car = TMyCar(self.screen, self.args.my_sprite_folder)
         self.my_car_sprites.add(self.my_car)
-        self.map_part = None
+        self.map_part: TMapPart = None
         self.map_part_next = None
-        self.granny_in_car = None
+        self.passenger_in_car = None
         self.exit_game = False
 
     def init_engine_sound(self):
@@ -120,10 +118,10 @@ class TRiverGame:
         river_sprite.collided = True
         self.stats.river_accident_count += 1
         self.river_collisions_1 += 1
-        if self.granny_in_car is not None:
-            self.granny_in_car.river_fall_count += 1
-            if self.granny_in_car.river_fall_count >= 3:
-                self.granny_leaves_car("granny_sea_voyage")
+        if self.car_has_granny():
+            self.passenger_in_car.river_fall_count += 1
+            if self.passenger_in_car.river_fall_count >= 3:
+                self.passenger_goes_to_river("granny_sea_voyage")
         if self.river_collisions_1 == 2 and not self.car_needs_repair:
             self.car_needs_repair = True
             self.init_engine_sound()
@@ -157,10 +155,23 @@ class TRiverGame:
         self.stats.bridge_passing_count += 1
         self.sounds.play_sound("bridge_passing", loops=0)
 
+    def car_has_passenger(self):
+        return self.passenger_in_car is not None
+
+    def car_has_granny(self):
+        if self.passenger_in_car is None:
+            return False
+        return isinstance(self.passenger_in_car, TGrannySprite)
+
+    def car_has_girl(self):
+        if self.passenger_in_car is None:
+            return False
+        return isinstance(self.passenger_in_car, TGirlSprite)
+
     def get_granny_in_car_color(self):
-        if self.granny_in_car is None:
+        if not self.car_has_granny():
             return None
-        return self.granny_in_car.color.color
+        return self.passenger_in_car.color.color
 
     def init_new_river(self):
         self.logger.debug("init_new_river")
@@ -183,18 +194,17 @@ class TRiverGame:
         if self.car_needs_repair and random.random() > 0.5:
             self.map_part_next.generate_repair_station()
         else:
-            gen_granny = self.get_granny_in_car_color() is None and random.random() > 0.5
+            gen_granny = not self.car_has_passenger() and random.random() > 0.5
             self.map_part_next.generate_town(gen_granny)
         self.river_sprites.add(self.map_part.river)
         self.bridge_sprites.add(self.map_part.bridge)
         self.road_sprites.add(self.map_part.road, self.map_part_next.road)
         self.town_sprites.add(self.map_part.car_stop, self.map_part_next.car_stop)
-        self.map_part.add_grannies_to_group(self.granny_sprites)
-        self.map_part_next.add_grannies_to_group(self.granny_sprites)
+        self.map_part.add_passengers_to_sprite_group(self.passengers_at_car_stop_sprites)
+        self.map_part_next.add_passengers_to_sprite_group(self.passengers_at_car_stop_sprites)
         self.logger.info(self.map_part.get_descr())
 
     def is_obstacle_finish(self, sprite: TSprite):
-
         return sprite.rect.top > min(self.height - 100, self.my_car.rect.bottom + 200)
 
     def change_obstacle_positions(self):
@@ -213,18 +223,29 @@ class TRiverGame:
         self.sounds.play_sound("brakes", loops=0)
         self.engine_sound.set_idling_state()
 
-    def init_granny_in_car(self, color):
-        self.grannies_in_car.empty()
-        g = TGrannySprite(self.screen,
-                          self.width - TGrannySprite.GRANNY_WIDTH,
-                          self.height - TGrannySprite.GRANNY_WIDTH, color=color)
-        self.granny_in_car = g
-        self.grannies_in_car.add(g)
+    def passenger_gets_on_the_car(self, sprite: TSprite):
+        self.passengers_in_car_sprites.empty()
+        sprite.parent = self.screen
+        sprite.rect.top = self.height - sprite.rect.height
+        sprite.rect.left = self.width - sprite.rect.width
+        self.passenger_in_car = sprite
+        self.passengers_in_car_sprites.add(sprite)
+        self.passengers_at_car_stop_sprites.empty()
+        self.map_part.passengers.clear()
 
-    def granny_leaves_car(self, sound_name):
-        self.granny_in_car.kill()
-        self.granny_in_car = None
+    def passenger_leaves_car(self, sound_name):
+        #self.passenger_in_car.kill()
         self.sounds.play_sound(sound_name, loops=0)
+        time.sleep(1)
+        self.map_part.passenger_goes_to_car_stop(self.passenger_in_car)
+        self.map_part.add_passengers_to_sprite_group(self.passengers_in_car_sprites)
+        self.passenger_in_car = None
+
+    def passenger_goes_to_river(self, sound_name):
+        self.passenger_in_car.kill()
+        self.passengers_in_car_sprites.empty()
+        self.sounds.play_sound(sound_name, loops=0)
+        self.passenger_in_car = None
         time.sleep(1)
 
     def repair_car(self):
@@ -233,48 +254,56 @@ class TRiverGame:
         self.init_engine_sound()
         self.river_collisions_1 = 0
 
+    def granny_leaves_the_car(self):
+        if self.map_part.car_stop.color.color == self.get_granny_in_car_color():
+            self.logger.info("granny leaves the car")
+            self.sounds.play_sound("door_open", loops=0)
+            time.sleep(2)
+            self.passenger_leaves_car("thank")
+            self.stats.success_tasks_count += 1
+        else:
+            self.logger.info("granny refuses to leave the car")
+            self.sounds.play_sound("door_open", loops=0)
+            time.sleep(2)
+            self.sounds.play_sound("wrong_stop", loops=0)
+            time.sleep(1)
 
     def open_door(self):
         if self.get_car_speed() == 1:
             self.use_brakes()
             time.sleep(2)
 
-        if self.get_car_speed() == 0:
-            town = pygame.sprite.spritecollideany(self.my_car, self.town_sprites, collided=pygame.sprite.collide_mask)
-            granny = pygame.sprite.spritecollideany(self.my_car, self.granny_sprites,
-                                                    collided=pygame.sprite.collide_mask)
-            if self.car_needs_repair and isinstance(town, TRepairStation):
-                self.repair_car()
-            elif town or granny:
-                self.logger.info("open door")
-                left_granny_color = None
-                if self.granny_in_car is not None :
-                    if self.map_part.car_stop.color.color == self.get_granny_in_car_color():
-                        self.logger.info("granny leaves the car")
-                        self.sounds.play_sound("door_open", loops=0)
-                        time.sleep(2)
-                        left_granny_color = self.granny_in_car.color.color
-                        self.granny_leaves_car("thank")
-                        self.stats.transfered_grannies_count += 1
-                    else:
-                        self.logger.info("granny refuses to leave the car")
-                        self.sounds.play_sound("door_open", loops=0)
-                        time.sleep(2)
-                        self.sounds.play_sound("wrong_stop", loops=0)
-                        time.sleep(1)
-                else:
-                    self.logger.info("no granny on board")
+        if self.get_car_speed() != 0:
+            return
 
-                if self.get_granny_in_car_color() is None and self.map_part.has_grannies():
-                    self.logger.info("granny comes to the car")
-                    self.sounds.play_sound("door_open", loops=0)
-                    time.sleep(1)
-                    self.init_granny_in_car(self.map_part.grannies[0].color.color)
-                    self.map_part.kill_grannies()
-                    self.map_part_next.kill_grannies()
-                if left_granny_color is not None:
-                    self.map_part.generate_granny(left_granny_color)
-                    self.map_part.add_grannies_to_group(self.granny_sprites)
+        town = pygame.sprite.spritecollideany(self.my_car, self.town_sprites, collided=pygame.sprite.collide_mask)
+        if self.car_needs_repair and isinstance(town, TRepairStation):
+            self.repair_car()
+            return
+
+        passenger_at_car_stop = pygame.sprite.spritecollideany(self.my_car, self.passengers_at_car_stop_sprites,
+                                                collided=pygame.sprite.collide_mask)
+        if town or passenger_at_car_stop:
+            self.logger.info("open door")
+            if self.map_part.has_passengers() and not self.car_has_passenger():
+                self.logger.info("granny comes to the car")
+                self.sounds.play_sound("door_open", loops=0)
+                time.sleep(1)
+                self.passenger_gets_on_the_car(self.map_part.passengers[0])
+                self.map_part_next.kill_passengers()
+            elif self.car_has_granny():
+                self.granny_leaves_the_car()
+            elif self.car_has_girl():
+                self.logger.info("girl refuses to leave the car")
+                self.sounds.play_sound("door_open", loops=0)
+                time.sleep(2)
+                self.sounds.play_sound("gde_voda", loops=0)
+                time.sleep(1)
+
+        bridge = pygame.sprite.spritecollideany(self.my_car, self.bridge_sprites, collided=pygame.sprite.collide_mask)
+        if bridge and self.car_has_girl():
+            self.stats.success_tasks_count += 1
+            self.passenger_goes_to_river("hurra")
 
 
     def process_keyboard_and_wheel_events(self, x_change):
@@ -346,8 +375,8 @@ class TRiverGame:
         self.bridge_sprites.draw(self.screen)
         self.road_sprites.draw(self.screen)
         self.town_sprites.draw(self.screen)
-        self.granny_sprites.draw(self.screen)
-        self.grannies_in_car.draw(self.screen)
+        self.passengers_at_car_stop_sprites.draw(self.screen)
+        self.passengers_in_car_sprites.draw(self.screen)
         pygame.draw.line(self.screen, TColors.white, (0, self.finish_top),
                          (self.width, self.finish_top))
 
@@ -372,7 +401,7 @@ class TRiverGame:
         self.bridge_sprites.empty()
         self.road_sprites.empty()
         self.town_sprites.empty()
-        self.granny_sprites.empty()
+        self.passengers_at_car_stop_sprites.empty()
         self.my_car.rect.left = self.width / 2
         self.my_car.rect.top = self.height - 250
         if self.map_part is not None:
@@ -441,5 +470,3 @@ if __name__ == "__main__":
 #todo
 # почему бабушки иногда не забираются?
 
-# Звук починки
-# причина поломки

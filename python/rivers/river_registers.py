@@ -9,7 +9,7 @@ class TGameRegisters:
         self.game_over = False
         self.river_accident_count = 0
         self.bridge_passing_count = 0
-        self.transfered_grannies_count = 0
+        self.success_tasks_count = 0
         self.paused = False
         self.font = pygame.font.SysFont(None, 30)
 
@@ -18,7 +18,7 @@ class TGameRegisters:
         self.screen.blit(screen_text, (x, y))
 
     def get_score(self):
-        return self.bridge_passing_count - self.river_accident_count + self.transfered_grannies_count
+        return self.bridge_passing_count - self.river_accident_count + self.success_tasks_count
 
     def draw_params(self, my_car_top, game_speed, car_is_broken):
         self.print_text('score: {}'.format(self.get_score()), 30, 0)
@@ -26,7 +26,7 @@ class TGameRegisters:
         self.print_text('position: {}'.format(my_car_top), 30, 60)
         self.print_text('rivers: {}'.format(self.river_accident_count), 30, 90)
         self.print_text('bridges: {}'.format(self.bridge_passing_count), 30, 120)
-        self.print_text('grannies: {}'.format(self.transfered_grannies_count), 30, 150)
+        self.print_text('success tasks: {}'.format(self.success_tasks_count), 30, 150)
         self.print_text('broken: {}'.format(car_is_broken), 30, 180)
         if self.paused:
             s = pygame.display.get_surface()

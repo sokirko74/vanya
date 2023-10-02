@@ -111,6 +111,23 @@ class TGrannySprite(TSprite):
                          )
         self.collided = False
 
+    def get_description(self):
+        return self.color.get_color_str() + " granny"
+
+class TGirlSprite(TSprite):
+    GIRL_WIDTH = 150
+
+    def __init__(self, parent, left, top, width=None):
+        if width is None:
+            width = TGirlSprite.GIRL_WIDTH
+        fname = "girl.png"
+        super().__init__(parent,
+                         fname,
+                         pygame.Rect(left, top, width, width),
+                         )
+        self.collided = False
+    def get_description(self):
+        return "girl"
 
 class TTownSprite(TSprite):
     def __init__(self, parent, left, top, width=300, replicate_width=3):
@@ -160,12 +177,12 @@ class TMapPart:
         anchor2 = (prev_bridge_rect.left + bridge_width / 2 - road_width, prev_bridge_rect.top)
         self.road = TRoadSprite(parent, anchor1, anchor2)
         self.car_stop = None
-        self.grannies = list()
+        self.passengers = list()
 
-    def generate_town(self, generate_granny: bool):
+    def generate_town(self, generate_passenger: bool):
         self.car_stop = TTownSprite(self.parent, self.road.car_stop_position[0], self.road.car_stop_position[1])
-        if generate_granny:
-            self.generate_granny(minus_color=self.car_stop.color.color)
+        if generate_passenger:
+            self.generate_passenger(minus_color=self.car_stop.color.color)
 
     def generate_repair_station(self):
         self.car_stop = TRepairStation(self.parent, self.road.car_stop_position[0], self.road.car_stop_position[1])
@@ -179,42 +196,55 @@ class TMapPart:
         self.road = None
         self.car_stop.kill()
         self.car_stop = None
-        self.kill_grannies()
+        self.kill_passengers()
 
     def change_spite_position(self, delta):
         self.river.change_spite_position(delta)
         self.bridge.change_spite_position(delta)
         self.road.change_spite_position(delta)
         self.car_stop.change_spite_position(delta)
-        for g in self.grannies:
+        for g in self.passengers:
             g.change_spite_position(delta)
 
-    def has_grannies(self):
-        return len(self.grannies) > 0
+    def has_passengers(self):
+        return len(self.passengers) > 0
 
-    def kill_grannies(self):
-        for g in self.grannies:
+    def kill_passengers(self):
+        for g in self.passengers:
             g.kill()
-        self.grannies = list()
+        self.passengers = list()
 
-    def add_grannies_to_group(self, grp):
-        for g in self.grannies:
+    def add_passengers_to_sprite_group(self, grp: pygame.sprite.Group):
+        for g in self.passengers:
             grp.add(g)
 
-    def generate_granny(self, color=None, minus_color=None):
+    def _get_passenger_position_at_car_stop(self):
         if self.car_stop.rect.left < self.car_stop.parent.get_width() / 2:
-            x = self.car_stop.rect.left + self.car_stop.rect.width + len(self.grannies) * 20
+            x = self.car_stop.rect.left + self.car_stop.rect.width + len(self.passengers) * 20
         else:
-            x = self.car_stop.rect.left - self.car_stop.rect.width + len(self.grannies) * 20
+            x = self.car_stop.rect.left - self.car_stop.rect.width + len(self.passengers) * 20
+        return x, self.car_stop.rect.top
 
-        g = TGrannySprite(self.road.parent, x, self.car_stop.rect.top, color=color, minus_color=minus_color)
-        self.grannies.append(g)
+    def generate_passenger(self, color=None, minus_color=None):
+        left, top = self._get_passenger_position_at_car_stop()
+        if random.random() < 0.25:
+            g = TGirlSprite(self.road.parent, left, top)
+        else:
+            g = TGrannySprite(self.road.parent, left, top, color=color, minus_color=minus_color)
+        self.passengers.append(g)
+
+    def  passenger_goes_to_car_stop(self, passenger: TSprite):
+        passenger.parent = self.road.parent
+        self.passengers.append(passenger)
+        left, top = self._get_passenger_position_at_car_stop()
+        passenger.rect.left = left
+        passenger.rect.top = top
 
     def get_descr(self):
         if  isinstance(self.car_stop, TTownSprite):
             message = "town color: {}".format(self.car_stop.color.get_color_str())
-            if len(self.grannies) > 0:
-                message += ", granny color: {}".format(self.grannies[0].color.get_color_str())
+            if len(self.passengers) > 0:
+                message += self.passengers[0].get_description()
             return message
         else:
             return "Repair station"
