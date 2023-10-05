@@ -202,7 +202,7 @@ class TZvuchki(tk.Frame):
         query_words = list()
         #clip_index = int(words[1])
         clip_index = None
-        add_query = ''
+        add_to_query = list()
         add_sec = 0
         use_old_urls = False
         test_drive = "тест драйв от первого лица"
@@ -216,23 +216,27 @@ class TZvuchki(tk.Frame):
             elif token == 'ДД':
                 add_sec = 240
             elif token == 'Т':
-                add_query = test_drive
+                add_to_query.append(test_drive)
             elif token == 'ТД':
-                add_query = test_drive
+                add_to_query.append( test_drive)
                 add_sec = 120
             elif token == 'ТДД':
-                add_query = test_drive
+                add_to_query.append( test_drive)
                 add_sec = 240
             elif token == 'К':
-                add_query = "в кабине водителя"
+                add_to_query.append("в кабине водителя")
             elif token == 'КРИК':
-                add_query = "крик"
+                add_to_query.append( "крик")
             elif token == 'З':
-                add_query = "звук двигателя"
+                add_to_query.append( "звук двигателя")
             elif token == 'ЗВУК':
-                add_query = "звук"
+                add_to_query.append( "звук")
+            elif token == 'СТ':
+                add_to_query.append("СТАРЫЙ")
+            elif token == 'М':
+                add_to_query.append("МАШИНА")
             elif token == 'Э':
-                add_query = "эксплуатация"
+                add_to_query.append( "эксплуатация")
             elif token == 'П':
                 use_old_urls = True
             else:
@@ -265,9 +269,10 @@ class TZvuchki(tk.Frame):
                 return False
             duration = 300 + add_sec
             #duration = 10 + add_sec
-            request = "{} {}".format(query, add_query)
-            self.logger.info("req={}, dur={}, serp_index={}".format(request, duration, clip_index))
-            url = self.get_url_video_from_google_or_cached(request, clip_index)
+            if add_to_query:
+                query += " " + " ".join(add_to_query)
+            self.logger.info("req={}, dur={}, serp_index={}".format(query, duration, clip_index))
+            url = self.get_url_video_from_google_or_cached(query, clip_index)
         self.play_youtube_video(url, duration)
         return True
 

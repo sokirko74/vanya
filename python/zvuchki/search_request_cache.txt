@@ -1073,5 +1073,55 @@
         "https://www.youtube.com/watch?v=FnejkbVxoOA",
         "https://www.youtube.com/watch?v=oJu4gnX2HPA",
         "https://www.youtube.com/watch?v=pFBRA6YQAdY"
+    ],
+    "ШЕЙКВЕЛ ": [
+        "https://www.youtube.com/watch?v=aexeIs4cCE4",
+        "https://www.youtube.com/watch?v=NU_yNQB4BAc",
+        "https://www.youtube.com/watch?v=b9aYAJvhjtM",
+        "https://www.youtube.com/watch?v=b9aYAJvhjtM&t=0",
+        "https://www.youtube.com/watch?v=b9aYAJvhjtM&t=158",
+        "https://www.youtube.com/watch?v=b9aYAJvhjtM&t=276",
+        "https://www.youtube.com/watch?v=b9aYAJvhjtM&t=390",
+        "https://www.youtube.com/watch?v=b9aYAJvhjtM&t=495",
+        "https://www.youtube.com/watch?v=b9aYAJvhjtM&t=660",
+        "https://www.youtube.com/watch?v=b9aYAJvhjtM&t=771",
+        "https://www.youtube.com/watch?v=b9aYAJvhjtM&t=913",
+        "https://www.youtube.com/watch?v=b9aYAJvhjtM&t=980",
+        "https://www.youtube.com/watch?v=b9aYAJvhjtM&t=1061",
+        "https://www.youtube.com/watch?v=b9aYAJvhjtM&t=1365",
+        "https://www.youtube.com/watch?v=rlcYqXl84sw",
+        "https://www.youtube.com/watch?v=-LYYh9Yk61s",
+        "https://www.youtube.com/watch?v=N43AjFRnoiQ",
+        "https://www.youtube.com/watch?v=oi1FVbJL7ro"
+    ],
+    "СНУПДОГ ": [
+        "https://m.youtube.com/live/OetbU9-tmrE",
+        "https://www.youtube.com/watch?guid=ON&gl=GH&hl=ru&client=fi&v=Y1PVmANeyAg",
+        "https://m.youtube.com/live/OetbU9-tmrE?si=sXnaAE6Cd78r28C9",
+        "https://www.youtube.com/watch?v=ZRJJAWy0_BY",
+        "https://m.youtube.com/watch?guid=ON&gl=GH&hl=ru&client=fi&v=_FE194VN6c4"
+    ],
+    "СОБОЛЬ СТАРЫЙ": [
+        "https://www.youtube.com/watch?v=ZkizK9L-IQs",
+        "https://www.youtube.com/watch?v=YoH8fFJIZ9c"
+    ],
+    "СОБОЛЬ МАШИНА": [
+        "https://www.youtube.com/watch?v=PzJ9h476DMo",
+        "https://www.youtube.com/watch?v=bBRr8pSRSNs",
+        "https://www.youtube.com/watch?v=BjCgtMh0NwM",
+        "https://www.youtube.com/watch?v=diV6EB9WXTQ",
+        "https://www.youtube.com/watch?v=wwP9hiYUnh4",
+        "https://www.youtube.com/watch?v=DlBGUFpOOx0",
+        "https://www.youtube.com/watch?v=fOTXOypBrZM"
+    ],
+    "СОБОЛЬ СТАРЫЙ МАШИНА": [
+        "https://www.youtube.com/watch?v=Uj_pqe7cftI",
+        "https://www.youtube.com/watch?v=PzJ9h476DMo",
+        "https://www.youtube.com/watch?v=bBRr8pSRSNs",
+        "https://www.youtube.com/watch?v=WBqsSDaXvtg",
+        "https://www.youtube.com/watch?v=BfmcJ0Dqjxs",
+        "https://www.youtube.com/watch?v=05kBNOBL47o",
+        "https://www.youtube.com/watch?v=XstwzvqFC6g",
+        "https://www.youtube.com/watch?v=LyZtCR2TZlI"
     ]
 }
