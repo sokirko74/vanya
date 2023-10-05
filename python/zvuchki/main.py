@@ -109,14 +109,23 @@ class TZvuchki(tk.Frame):
         self.keys = dict()
         self.last_char = None
         self.last_char_timestamp = time.time()
-        self.init_all_abc_keyboard()
+        if self.args.abc == "ru":
+            self.init_all_abc_keyboard_ru()
+        else:
+            self.init_all_abc_keyboard_en()
         self.video_player_thread = None
 
-    def init_all_abc_keyboard(self):
+    def init_all_abc_keyboard_ru(self):
         self.add_keyboard_row(1, "123456780" + TChars.BACKSPACE)
         self.add_keyboard_row(2, "ЙЦУКЕНГШЩЗХ")
         self.add_keyboard_row(3, "ФЫВАПРОЛДЖЭ")
         self.add_keyboard_row(4, "ЯЧСМИТЬБЮ"+TChars.SPACE)
+
+    def init_all_abc_keyboard_en(self):
+        self.add_keyboard_row(1, "123456780" + TChars.BACKSPACE)
+        self.add_keyboard_row(2, "QWERTYUIOP")
+        self.add_keyboard_row(3, "ASDFGHJKL")
+        self.add_keyboard_row(4, "ZXCVBNM"+TChars.SPACE)
 
     def add_keyboard_row(self, row_index, chars):
         self.last_char_timestamp = time.time()
@@ -231,6 +240,8 @@ class TZvuchki(tk.Frame):
                 add_to_query.append( "звук двигателя")
             elif token == 'ЗВУК':
                 add_to_query.append( "звук")
+            elif token == 'R':
+                add_to_query.append("rapper")
             elif token == 'СТ':
                 add_to_query.append("СТАРЫЙ")
             elif token == 'М':
@@ -325,7 +336,7 @@ class TZvuchki(tk.Frame):
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--fullscreen", dest='fullscreen', default=False, action="store_true")
-    parser.add_argument("--row1", dest='row1', default='')
+    parser.add_argument("--abc", dest='abc', default='ru', help="cam be en or ru")
     parser.add_argument("--row2", dest='row2', default='МПАВЯЛОНЕ𝄞 ')
     parser.add_argument("--font-size", dest='font_size', default=90, type=int)
     parser.add_argument("--max-play-seconds", dest='max_play_seconds', default=540, type=int)
