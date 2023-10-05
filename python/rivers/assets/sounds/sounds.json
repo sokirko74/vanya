@@ -31,5 +31,11 @@
   },
   "repair_car": {
     "volume": 0.4
+  },
+  "hurra": {
+    "volume": 0.4
+  },
+  "gde_voda": {
+    "volume": 0.4
   }
 }
