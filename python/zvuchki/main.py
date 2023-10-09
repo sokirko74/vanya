@@ -1,5 +1,6 @@
-from car_brands import CARS, URLS, BIRDS, COMPOSERS, OTHER_SRC
+from car_brands import CARS, URLS, BIRDS, COMPOSERS, OTHER_SRC, YANDEX_MUSIC_ARTISTS
 from browser_wrapper import TBrowser
+from yandex_mus import TYandexMusic
 
 import os
 import sys
@@ -75,6 +76,7 @@ class TZvuchki(tk.Frame):
         self.is_running = True
         self.font_size = self.args.font_size
         self.master = tk.Tk()
+        self.yandex_music_client = TYandexMusic()
         super().__init__(master)
 
         if self.args.fullscreen:
@@ -90,6 +92,7 @@ class TZvuchki(tk.Frame):
             self.main_wnd_height = 800
             self.master.geometry("{}x{}".format(self.main_wnd_width, self.main_wnd_height))
         self.audioplayer = None
+        self.music_player_pid = None
         self.editor_font = ("DejaVu Sans Mono", self.args.font_size+20)
         self.key_font = tkFont.Font(family="DejaVu Sans Mono", size=self.args.font_size)
         self.key_font_umlaut = tkFont.Font(family="DejaVu Sans Mono", size=self.args.font_size - 20)
@@ -176,6 +179,8 @@ class TZvuchki(tk.Frame):
         if self.video_player_thread is not None:
             self.video_player_thread.stop_playing()
             self.on_video_finish()
+        elif  self.yandex_music_client.is_playing():
+            self.yandex_music_client.stop_player()
         else:
             s = self.text_widget.get(1.0, tk.END).strip("\n")
             self.play_request(s)
@@ -214,6 +219,7 @@ class TZvuchki(tk.Frame):
         add_to_query = list()
         add_sec = 0
         use_old_urls = False
+        use_yandex_music = False
         test_drive = "тест драйв от первого лица"
         for token in words:
             if token.isdigit() and clip_index is None:
@@ -250,6 +256,8 @@ class TZvuchki(tk.Frame):
                 add_to_query.append( "эксплуатация")
             elif token == 'П':
                 use_old_urls = True
+            elif token == 'Я':
+                use_yandex_music = True
             else:
                 if len(token) > 0:
                     query_words.append(token)
@@ -275,15 +283,25 @@ class TZvuchki(tk.Frame):
             if digit is not None:
                 search_obj = search_obj[:digit.regs[0][0]]
             if search_obj not in CARS and search_obj not in BIRDS and search_obj not in COMPOSERS \
-                and search_obj not in OTHER_SRC:
-                self.logger.error("bad car brand")
+                and search_obj not in OTHER_SRC and search_obj not in YANDEX_MUSIC_ARTISTS:
+                self.logger.error("bad query search")
                 return False
-            duration = 300 + add_sec
-            #duration = 10 + add_sec
-            if add_to_query:
-                query += " " + " ".join(add_to_query)
-            self.logger.info("req={}, dur={}, serp_index={}".format(query, duration, clip_index))
-            url = self.get_url_video_from_google_or_cached(query, clip_index)
+            if use_yandex_music:
+                artist_id = YANDEX_MUSIC_ARTISTS.get(search_obj)
+                if artist_id is None:
+                    self.logger.error("bad artist")
+                    return False
+                pid = self.yandex_music_client.play_track(artist_id, clip_index)
+                if pid is not None:
+                    self.text_widget.delete(1.0, tk.END)
+                return True
+            else:
+                duration = 300 + add_sec
+                #duration = 10 + add_sec
+                if add_to_query:
+                    query += " " + " ".join(add_to_query)
+                self.logger.info("req={}, dur={}, serp_index={}".format(query, duration, clip_index))
+                url = self.get_url_video_from_google_or_cached(query, clip_index)
         self.play_youtube_video(url, duration)
         return True
 
@@ -337,7 +355,6 @@ def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--fullscreen", dest='fullscreen', default=False, action="store_true")
     parser.add_argument("--abc", dest='abc', default='ru', help="cam be en or ru")
-    parser.add_argument("--row2", dest='row2', default='МПАВЯЛОНЕ𝄞 ')
     parser.add_argument("--font-size", dest='font_size', default=90, type=int)
     parser.add_argument("--max-play-seconds", dest='max_play_seconds', default=540, type=int)
     return parser.parse_args()
