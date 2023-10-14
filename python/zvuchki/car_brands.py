@@ -13,7 +13,7 @@ COMPOSERS = {
     "шейквел",
     "снупдог",
     'штраус',
-    
+
     'shakewell',
     'snoopdogg'
 

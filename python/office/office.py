@@ -15,7 +15,7 @@ from logging_wrapper import setup_logging
 from tkinter.messagebox import askyesno
 
 
-MAX_WORD_FAIL_COUNT = 12
+MAX_WORD_FAIL_COUNT = 10
 MAX_VICTORIES_COUNT = 20
 
 
@@ -222,6 +222,8 @@ class TVanyaOffice(tk.Frame):
         self.new_game()
 
     def play_char(self, ch, custom_instrument=None):
+        return
+
         name, octave, instrument = KEY_2_NOTE[ch]
         self.print_to_log("play {}\n".format(name))
         if custom_instrument is not None:

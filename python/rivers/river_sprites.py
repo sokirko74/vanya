@@ -227,7 +227,7 @@ class TMapPart:
 
     def generate_passenger(self, color=None, minus_color=None):
         left, top = self._get_passenger_position_at_car_stop()
-        if random.random() < 0.25:
+        if random.random() < 0.4:
             g = TGirlSprite(self.road.parent, left, top)
         else:
             g = TGrannySprite(self.road.parent, left, top, color=color, minus_color=minus_color)
