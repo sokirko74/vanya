@@ -10,6 +10,7 @@ from selenium.webdriver.common.action_chains import ActionChains, ActionBuilder
 import os
 import json
 import time
+import urllib.parse
 
 
 class TBrowser:
@@ -167,13 +168,21 @@ class TBrowser:
             with open(self.cache_path, "w") as outp:
                 json.dump(self.all_requests, outp, ensure_ascii=False, indent=4)
 
-    def send_request(self, search_engine_request):
+    def send_request_old(self, search_engine_request):
         self.browser.get("https://www.google.ru/videohp?hl=ru")
         time.sleep(3)
         element = self.browser.switch_to.active_element
         element.send_keys(search_engine_request)
         time.sleep(1)
         element.send_keys(Keys.RETURN)
+        time.sleep(3)
+        search_results = self._parse_serp()
+        self._cache_request(search_engine_request, search_results)
+        return search_results
+    def send_request(self, search_engine_request):
+        q = urllib.parse.quote(search_engine_request)
+        url  = "https://www.google.ru/search?hl=ru&tbm=vid&q=" + q
+        self.browser.get(url)
         time.sleep(3)
         search_results = self._parse_serp()
         self._cache_request(search_engine_request, search_results)

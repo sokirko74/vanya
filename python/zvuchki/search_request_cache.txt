@@ -1153,5 +1153,16 @@
         "https://translate.google.com/translate?hl=ru&sl=en&u=https://www.youtube.com/watch%3Fv%3D1YrVG_zBXVU&prev=search&pto=aue",
         "https://www.youtube.com/watch?v=VA7P7RcqWWc",
         "https://translate.google.com/translate?hl=ru&sl=en&u=https://www.youtube.com/watch%3Fv%3DVA7P7RcqWWc&prev=search&pto=aue"
+    ],
+    "ЗИЛ тест драйв от первого лица": [
+        "https://www.youtube.com/watch?v=lgtFvqH0b8A",
+        "https://www.youtube.com/watch?v=_yKthcpfJPU",
+        "https://www.youtube.com/watch?v=iHN3pACW66I",
+        "https://www.youtube.com/watch?v=PKOJzOWyhPI&vl=ru",
+        "https://www.youtube.com/watch?v=NjV2KTrzjhk",
+        "https://www.youtube.com/watch?v=DB_J1st37Ss",
+        "https://www.youtube.com/watch?v=AaPkeVJ-ESI",
+        "https://m.youtube.com/watch?v=PKOJzOWyhPI&vl=es",
+        "https://www.youtube.com/watch?v=Ge-CG6LHXHE"
     ]
 }

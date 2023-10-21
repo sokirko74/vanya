@@ -1,11 +1,20 @@
+import json
 import os
 from yandex_music import Client
 import vlc
 from subprocess import Popen
 
+YANDEX_MUSIC_ARTISTS = {
+ "шейквелл": 4331744,
+ "шейквел": 4331744,
+ "снупдог": 6165,
+ "цой": 953565
+}
+
 
 class TYandexMusic:
-    def __init__(self):
+    def __init__(self, logger):
+        self.logger = logger
         with open(os.path.join(os.path.dirname(__file__), "yandex_music_access_token.txt")) as inp:
             token = inp.read().strip()
         self.client = Client(token)
@@ -15,8 +24,44 @@ class TYandexMusic:
             os.mkdir(self.track_folder)
         self.totem_player = None
         #self.totem_player = Popen(['/usr/bin/totem'])  # something long running
+        self.artist_info_path = os.path.join(os.path.join(os.path.dirname(__file__)), 'yandex_music_artist.json')
+        self.artist_info = dict()
+        self.read_artist_info()
+    def read_artist_info(self):
+        if os.path.exists(self.artist_info_path):
+            with open(self.artist_info_path) as inp:
+                self.artist_info =  json.load(inp)
+    def write_artist_info(self):
+        with open(self.artist_info_path, "w") as outp:
+            json.dump(self.artist_info, outp)
 
-    def play_track(self, artist_id:int, track_id: int):
+    def _get_artist_id(self, query):
+        saved = self.artist_info.get(query)
+        if saved is not None:
+            return saved
+        search_result = self.client.search(query)
+        if search_result.artists:
+            for res in search_result.artists.results:
+                if 'rusrap' in res.genres or 'foreignrap' in res.genres or 'rap' in res.genres:
+                    artist_id = res.id
+                    r = {
+                        'id': artist_id,
+                        'name': res.name,
+                    }
+                    if res.cover is not None:
+                        r['cover_uri'] = res.cover.uri
+                    self.artist_info[query] = r
+                    self.write_artist_info()
+                    self.logger.info('new artist id={} name={}'.format(artist_id, res.name))
+                    return r
+
+    def play_track(self, artist_str: str, track_id: int):
+        artist_info = self._get_artist_id(artist_str)
+        if artist_info is None:
+            return None
+        artist_id = artist_info['id']
+        self.logger.info('play id={} name={}'.format(artist_id, artist_info['name']))
+
         file_path  =   os.path.join(self.track_folder, "{}_{}.mp3".format(artist_id, track_id))
         if not os.path.exists(file_path):
             try:
@@ -36,6 +81,7 @@ class TYandexMusic:
         #self.totem_player = Popen(['/usr/bin/totem', '--play', file_path])
         self.totem_player = Popen(['/usr/bin/vlc', '--play-and-exit', file_path])
         return self.totem_player
+
 
     def is_playing(self):
         if self.totem_player is None:

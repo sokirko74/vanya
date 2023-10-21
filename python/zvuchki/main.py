@@ -1,4 +1,4 @@
-from car_brands import CARS, URLS, BIRDS, COMPOSERS, OTHER_SRC, YANDEX_MUSIC_ARTISTS
+from car_brands import CARS, URLS, BIRDS, COMPOSERS, OTHER_SRC
 from browser_wrapper import TBrowser
 from yandex_mus import TYandexMusic
 
@@ -76,7 +76,7 @@ class TZvuchki(tk.Frame):
         self.is_running = True
         self.font_size = self.args.font_size
         self.master = tk.Tk()
-        self.yandex_music_client = TYandexMusic()
+        self.yandex_music_client = TYandexMusic(self.logger)
         super().__init__(master)
 
         if self.args.fullscreen:
@@ -256,7 +256,7 @@ class TZvuchki(tk.Frame):
                 add_to_query.append( "эксплуатация")
             elif token == 'П':
                 use_old_urls = True
-            elif token == 'Я':
+            elif token.lower() == 'я':
                 use_yandex_music = True
             else:
                 if len(token) > 0:
@@ -282,20 +282,18 @@ class TZvuchki(tk.Frame):
             digit = re.search(r'(\d)', search_obj)
             if digit is not None:
                 search_obj = search_obj[:digit.regs[0][0]]
-            if search_obj not in CARS and search_obj not in BIRDS and search_obj not in COMPOSERS \
-                and search_obj not in OTHER_SRC and search_obj not in YANDEX_MUSIC_ARTISTS:
-                self.logger.error("bad query search")
-                return False
             if use_yandex_music:
-                artist_id = YANDEX_MUSIC_ARTISTS.get(search_obj)
-                if artist_id is None:
-                    self.logger.error("bad artist")
-                    return False
-                pid = self.yandex_music_client.play_track(artist_id, clip_index)
+                pid = self.yandex_music_client.play_track(search_obj, clip_index)
                 if pid is not None:
                     self.text_widget.delete(1.0, tk.END)
-                return True
+                else:
+                    self.logger.error("bad artist")
+                    return False
             else:
+                if search_obj not in CARS and search_obj not in BIRDS and search_obj not in COMPOSERS \
+                        and search_obj not in OTHER_SRC and search_obj:
+                    self.logger.error("bad query search")
+                    return False
                 duration = 300 + add_sec
                 #duration = 10 + add_sec
                 if add_to_query:
