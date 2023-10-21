@@ -221,8 +221,8 @@ class TZvuchki(tk.Frame):
         use_old_urls = False
         use_yandex_music = False
         test_drive = "тест драйв от первого лица"
-        for token in words:
-            if token.isdigit() and clip_index is None:
+        for token_index, token in enumerate(words):
+            if token.isdigit() and clip_index is None and int(token) < 10 and token_index > 0:
                 clip_index = int(token)
                 continue
 
@@ -281,9 +281,6 @@ class TZvuchki(tk.Frame):
             duration = timeout + add_sec
         else:
             search_obj = query.lower()
-            digit = re.search(r'(\d)', search_obj)
-            if digit is not None:
-                search_obj = search_obj[:digit.regs[0][0]]
             if use_yandex_music:
                 pid = self.yandex_music_client.play_track(search_obj, clip_index)
                 if pid is not None:
@@ -293,6 +290,10 @@ class TZvuchki(tk.Frame):
                     self.logger.error("bad artist")
                     return False
             else:
+                #digit = re.search(r'(\d)', search_obj)
+                #if digit is not None:
+                #    search_obj = search_obj[:digit.regs[0][0]]
+
                 if search_obj not in CARS and search_obj not in BIRDS and search_obj not in COMPOSERS \
                         and search_obj not in OTHER_SRC and search_obj:
                     self.logger.error("bad query search")
