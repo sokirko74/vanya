@@ -60,12 +60,16 @@ class TYandexMusic:
         if artist_info is None:
             return None
         artist_id = artist_info['id']
-        self.logger.info('play id={} name={}'.format(artist_id, artist_info['name']))
+        self.logger.info('play id={} name={} track_id={}'.format(artist_id,
+                                                                 artist_info['name'],
+                                                                 track_id))
 
-        file_path  =   os.path.join(self.track_folder, "{}_{}.mp3".format(artist_id, track_id))
+        file_path = os.path.join(self.track_folder, "{}_{}.mp3".format(artist_id, track_id))
         if not os.path.exists(file_path):
             try:
+                self.logger.info('download track ...')
                 self.client.artists_tracks(artist_id).tracks[track_id - 1].download(file_path)
+                self.logger.info('success')
             except IndexError as exp:
                 # track not found
                 return None

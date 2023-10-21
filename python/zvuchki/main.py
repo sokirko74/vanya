@@ -258,6 +258,8 @@ class TZvuchki(tk.Frame):
                 use_old_urls = True
             elif token.lower() == 'я':
                 use_yandex_music = True
+            elif token.lower() == 'y':
+                use_yandex_music = True
             else:
                 if len(token) > 0:
                     query_words.append(token)
@@ -286,6 +288,7 @@ class TZvuchki(tk.Frame):
                 pid = self.yandex_music_client.play_track(search_obj, clip_index)
                 if pid is not None:
                     self.text_widget.delete(1.0, tk.END)
+                    return True
                 else:
                     self.logger.error("bad artist")
                     return False
