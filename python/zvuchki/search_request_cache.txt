@@ -1164,5 +1164,42 @@
         "https://www.youtube.com/watch?v=AaPkeVJ-ESI",
         "https://m.youtube.com/watch?v=PKOJzOWyhPI&vl=es",
         "https://www.youtube.com/watch?v=Ge-CG6LHXHE"
+    ],
+    "ШЕВИНОВА тест драйв от первого лица": [
+        "https://www.youtube.com/watch?v=hlvCwg6Etds",
+        "https://www.youtube.com/watch?v=nntCoTMNfOo",
+        "https://www.youtube.com/watch?v=KqgeiCoNp50",
+        "https://www.youtube.com/watch?v=X6CjyrSfbKQ",
+        "https://www.youtube.com/watch?v=OPsBjes-t14",
+        "https://www.youtube.com/watch?v=EPrtNegRT3A",
+        "https://www.youtube.com/watch?v=7MNokSf3IL8",
+        "https://www.youtube.com/watch?v=MudrSk2ISiU"
+    ],
+    "ШЕВИ НОВА": [
+        "https://www.youtube.com/watch?v=S67xrsWvsSs",
+        "https://www.youtube.com/watch?v=LwAfFnnI32Y",
+        "https://www.youtube.com/watch?v=LwAfFnnI32Y&t=0",
+        "https://www.youtube.com/watch?v=LwAfFnnI32Y&t=30",
+        "https://www.youtube.com/watch?v=LwAfFnnI32Y&t=75",
+        "https://www.youtube.com/watch?v=LwAfFnnI32Y&t=160",
+        "https://www.youtube.com/watch?v=LwAfFnnI32Y&t=237",
+        "https://www.youtube.com/watch?v=LwAfFnnI32Y&t=285",
+        "https://www.youtube.com/watch?v=LwAfFnnI32Y&t=340",
+        "https://www.youtube.com/watch?v=LwAfFnnI32Y&t=375",
+        "https://www.youtube.com/watch?v=LwAfFnnI32Y&t=450",
+        "https://www.youtube.com/watch?v=LwAfFnnI32Y&t=555",
+        "https://www.youtube.com/watch?v=LwAfFnnI32Y&t=780",
+        "https://www.youtube.com/watch?v=LwAfFnnI32Y&t=900",
+        "https://www.youtube.com/watch?v=LwAfFnnI32Y&t=1000",
+        "https://www.youtube.com/watch?v=LwAfFnnI32Y&t=1035",
+        "https://www.youtube.com/watch?v=3uoSczOTtbg",
+        "https://www.youtube.com/watch?v=jhitgxY6OAk",
+        "https://translate.google.com/translate?hl=ru&sl=en&u=https://www.youtube.com/watch%3Fv%3DjhitgxY6OAk&prev=search&pto=aue",
+        "https://www.youtube.com/watch?v=ffB2TEUp98w",
+        "https://www.youtube.com/watch?v=KL9r39UxGiw",
+        "https://www.youtube.com/watch?v=NH7lAXZXxew",
+        "https://translate.google.com/translate?hl=ru&sl=en&u=https://www.youtube.com/watch%3Fv%3DNH7lAXZXxew&prev=search&pto=aue",
+        "https://www.youtube.com/watch?v=ayMeJobkuNk",
+        "https://translate.google.com/translate?hl=ru&sl=en&u=https://www.youtube.com/watch%3Fv%3DayMeJobkuNk&prev=search&pto=aue"
     ]
 }

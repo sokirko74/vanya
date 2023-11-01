@@ -75,40 +75,46 @@ class TZvuchki(tk.Frame):
         self.left_offset = 80
         self.is_running = True
         self.font_size = self.args.font_size
+        self.keyboard_column_count = 12
         self.master = tk.Tk()
         self.yandex_music_client = TYandexMusic(self.logger)
         super().__init__(master)
-
         if self.args.fullscreen:
+            if self.master.winfo_screenwidth() > 2000:
+                self.master.geometry("1600x800+2000+0")
             self.master.attributes("-fullscreen", True)
-            self.main_wnd_left = 0
-            self.main_wnd_top = 0
-            self.main_wnd_width = self.master.winfo_screenwidth()
-            self.main_wnd_height = self.master.winfo_screenheight()
         else:
-            self.main_wnd_left = 0
-            self.main_wnd_top = 0
-            self.main_wnd_width = 1600
-            self.main_wnd_height = 800
-            self.master.geometry("{}x{}".format(self.main_wnd_width, self.main_wnd_height))
+            self.master.geometry("1600x800")
         self.audioplayer = None
         self.music_player_pid = None
-        self.editor_font = ("DejaVu Sans Mono", self.args.font_size+20)
-        self.key_font = tkFont.Font(family="DejaVu Sans Mono", size=self.args.font_size)
-        self.key_font_umlaut = tkFont.Font(family="DejaVu Sans Mono", size=self.args.font_size - 20)
-
-        self.master.grid_columnconfigure((0, 1, 2, 4, 5, 6, 7, 8, 9, 10, 11, 12 ), weight=1)
-        self.master.grid_rowconfigure(0, weight=1)
-        self.master.grid_rowconfigure((1, 2, 3), weight=2)
-
+        self.editor_coef_height = 0.28
+        editor_font_size = int(self.args.font_size * (1.0 + self.editor_coef_height))
+        self.editor_font = tkFont.Font(family="DejaVu Sans Mono", size=editor_font_size)
         self.text_widget = tk.Text(self.master,
-                                   width=100,
+                                   width=15,
                                    height=1,
                                    font=self.editor_font)
-        self.text_widget.grid(column=0,  columnspan=13)
+
+        self.text_widget.place(relx=0, rely=0, relwidth=1, relheight=self.editor_coef_height)
         self.text_widget.bind("<Button-1>", self.on_text_click)
         self.text_widget.tag_config('green_tag', background='lightgreen')
 
+        self.keyb_window = tk.Frame(
+            self.master,
+            #background="yellow"
+        )
+        self.keyb_window.place(
+            relx=0,
+            rely=self.editor_coef_height,
+            relwidth=1,
+            relheight=(1.0-self.editor_coef_height),
+
+        )
+        self.master.update()
+        self.key_font = tkFont.Font(family="DejaVu Sans Mono", size=self.args.font_size)
+        self.key_font_umlaut = tkFont.Font(family="DejaVu Sans Mono", size=int(self.args.font_size * 0.7))
+
+        self.key_row_count = 4
         self.keys = dict()
         self.last_char = None
         self.last_char_timestamp = time.time()
@@ -119,54 +125,56 @@ class TZvuchki(tk.Frame):
         self.video_player_thread = None
 
     def init_all_abc_keyboard_ru(self):
-        self.add_keyboard_row(1, "123456780" + TChars.BACKSPACE)
-        self.add_keyboard_row(2, "ЙЦУКЕНГШЩЗХ")
-        self.add_keyboard_row(3, "ФЫВАПРОЛДЖЭ")
-        self.add_keyboard_row(4, "ЯЧСМИТЬБЮ"+TChars.SPACE)
+        self.add_keyboard_row(0, "123456780" + TChars.BACKSPACE)
+        self.add_keyboard_row(1, "ЙЦУКЕНГШЩЗХ")
+        self.add_keyboard_row(2, "ФЫВАПРОЛДЖЭ")
+        self.add_keyboard_row(3, "ЯЧСМИТЬБЮ"+TChars.SPACE)
 
     def init_all_abc_keyboard_en(self):
-        self.add_keyboard_row(1, "123456780" + TChars.BACKSPACE)
-        self.add_keyboard_row(2, "QWERTYUIOP")
-        self.add_keyboard_row(3, "ASDFGHJKL")
-        self.add_keyboard_row(4, "ZXCVBNM"+TChars.SPACE)
+        self.add_keyboard_row(0, "123456780" + TChars.BACKSPACE)
+        self.add_keyboard_row(1, "QWERTYUIOP")
+        self.add_keyboard_row(2, "ASDFGHJKL")
+        self.add_keyboard_row(3, "ZXCVBNM"+TChars.SPACE)
+
+    def get_key_row_height(self):
+        h = self.keyb_window.winfo_height() / self.key_row_count
+        return int(h)
 
     def add_keyboard_row(self, row_index, chars):
-        self.last_char_timestamp = time.time()
-        column_index = 0
-        for char_index, char in enumerate(chars):
-            colspan = 1
-            width = 1
+        normal_btn_width = self.master.winfo_width() / self.keyboard_column_count
+        left = row_index * normal_btn_width / 3.0
+        top = row_index * (self.get_key_row_height() + 5)
+
+        for char in chars:
             background = None
-            if column_index == 0:
-                padx = (30, 0)
-            else:
-                padx = 0
-            if char == TChars.SPACE:
-                colspan *= 2
-                width *= 2
-                background = "lightgreen"
-
-            if char == TChars.BACKSPACE:
-                colspan *= 3
-                width *= 5
-                background = "red"
-                padx = (0, 0)
-
-            if char_index == len(chars) - 1:
-                padx = (0, 100)
-
             font = self.key_font
-            if char == "Й" or char == "Ё":
+            key_title = char
+            title_top = -15
+            if key_title == TChars.SPACE:
+                key_title = '   '
+                background = "lightgreen"
+            elif key_title == TChars.BACKSPACE:
+                key_title = ' ' + TChars.BACKSPACE + '  '
+                background = "red"
+            elif key_title == "Й" or key_title == "Ё":
                 font = self.key_font_umlaut
+                title_top = 0
 
-            button = tk.Button(self.master,
-                               background=background,
-                               text=char, width=width, relief="raised", height=1,
-                               font=font,
-                               command=partial(self.keyboard_click, char))
-            self.keys[char] = button
-            button.grid(column=column_index, row=row_index, columnspan=colspan, padx=padx, pady=2)
-            column_index += colspan
+            button_width = len(key_title) * normal_btn_width
+            canvas = tk.Canvas(
+                self.keyb_window,
+                background=background,
+                width=button_width
+            )
+            canvas.create_text(0, title_top, text=key_title, font=font, anchor=tk.NW)
+            canvas.place(
+                x=left,
+                y=top,
+                width=button_width,
+                relheight=1 / self.key_row_count
+            )
+            canvas.bind("<Button-1>", partial(self.keyboard_click, char))
+            left += button_width
 
     def on_video_finish(self):
         self.logger.info('on_video_finish...')
@@ -323,7 +331,7 @@ class TZvuchki(tk.Frame):
         tags = 'green_tag' if char == ' ' else None
         self.text_widget.insert(tk.END, char, tags)
 
-    def keyboard_click(self, char):
+    def keyboard_click(self, char, event):
         if self.video_player_thread is not None:
             if char and char.upper() == 'Н':
                 self.video_player_thread.next_track()
@@ -357,7 +365,7 @@ def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--fullscreen", dest='fullscreen', default=False, action="store_true")
     parser.add_argument("--abc", dest='abc', default='ru', help="cam be en or ru")
-    parser.add_argument("--font-size", dest='font_size', default=90, type=int)
+    parser.add_argument("--font-size", dest='font_size', default=100, type=int)
     parser.add_argument("--max-play-seconds", dest='max_play_seconds', default=540, type=int)
     return parser.parse_args()
 

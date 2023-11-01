@@ -1,5 +1,7 @@
 import json
 import os
+import time
+
 from yandex_music import Client
 import vlc
 from subprocess import Popen
@@ -83,6 +85,7 @@ class TYandexMusic:
         if self.totem_player is not None:
             self.stop_player()
         #self.totem_player = Popen(['/usr/bin/totem', '--play', file_path])
+        time.sleep(2)
         self.totem_player = Popen(['/usr/bin/vlc', '--play-and-exit', file_path])
         return self.totem_player
 
