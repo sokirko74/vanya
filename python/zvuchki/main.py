@@ -188,6 +188,7 @@ class TZvuchki(tk.Frame):
             self.video_player_thread.stop_playing()
             self.on_video_finish()
         elif  self.yandex_music_client.is_playing():
+            self.logger.info("stop yandex music player")
             self.yandex_music_client.stop_player()
         else:
             s = self.text_widget.get(1.0, tk.END).strip("\n")
@@ -212,17 +213,7 @@ class TZvuchki(tk.Frame):
 
     def play_request(self, request):
         words = request.strip().split(' ')
-        # if len(words) < 2:
-        #     self.logger.error("car and  video clip index must be specified")
-        #     return False
-        # if not words[1].isdigit():
-        #     self.logger.error("video clip index must be integer")
-        #     return False
-        #car_brand = words[0].strip()
-        #if car_brand.lower() == 'усач':
-        #    car_brand = 'ТРАМВАЙ'
         query_words = list()
-        #clip_index = int(words[1])
         clip_index = None
         add_to_query = list()
         add_sec = 0

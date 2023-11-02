@@ -29,6 +29,8 @@ class TYandexMusic:
         self.artist_info_path = os.path.join(os.path.join(os.path.dirname(__file__)), 'yandex_music_artist.json')
         self.artist_info = dict()
         self.read_artist_info()
+        self.start_time_stamp = None
+
     def read_artist_info(self):
         if os.path.exists(self.artist_info_path):
             with open(self.artist_info_path) as inp:
@@ -57,7 +59,10 @@ class TYandexMusic:
                     self.logger.info('new artist id={} name={}'.format(artist_id, res.name))
                     return r
 
-    def play_track(self, artist_str: str, track_id: int):
+    def _prepare_play(self, artist_str: str, track_id: int):
+        if self.totem_player is not None:
+            self.stop_player()
+
         artist_info = self._get_artist_id(artist_str)
         if artist_info is None:
             return None
@@ -77,21 +82,31 @@ class TYandexMusic:
                 return None
         if not os.path.exists(file_path):
             return None
-        #p = vlc.MediaPlayer("file://{}".format(file_path))
-        #p.play()
-        #p = Popen(['/usr/bin/totem', file_path])  # something long running
+        # p = vlc.MediaPlayer("file://{}".format(file_path))
+        # p.play()
+        # p = Popen(['/usr/bin/totem', file_path])  # something long running
         # ... do other stuff while subprocess is running
-        #pid = os.system('/usr/bin/totem {}'.format(file_path))
-        if self.totem_player is not None:
-            self.stop_player()
-        #self.totem_player = Popen(['/usr/bin/totem', '--play', file_path])
+        # pid = os.system('/usr/bin/totem {}'.format(file_path))
+        # self.totem_player = Popen(['/usr/bin/totem', '--play', file_path])
         time.sleep(2)
-        self.totem_player = Popen(['/usr/bin/vlc', '--play-and-exit', file_path])
-        return self.totem_player
+        return file_path
 
+    def play_track(self, artist_str: str, track_id: int):
+        self.start_time_stamp = None
+        file_path = self._prepare_play(artist_str, track_id)
+        if file_path is not None:
+            self.totem_player = Popen(['/usr/bin/vlc', '--play-and-exit', file_path])
+            self.start_time_stamp = time.time()
+            return self.totem_player
+        else:
+            return None
 
     def is_playing(self):
         if self.totem_player is None:
+            return False
+        obligatory_seconds = 10
+        if self.start_time_stamp is not None and time.time() < self.start_time_stamp + obligatory_seconds:
+            self.logger.info("hear at least {} seconds before stop".format(obligatory_seconds))
             return False
         if self.totem_player.poll() is None:
             return True
