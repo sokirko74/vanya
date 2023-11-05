@@ -33,6 +33,10 @@
       "background": null
     },
     {
+      "char": "0",
+      "background": null
+    },
+    {
       "char": "⌫",
       "background": "red",
       "long": true
@@ -49,7 +53,7 @@
     },
     {
       "char": "E",
-      "background": "yellow1"
+      "background": "yellow2"
     },
     {
       "char": "R",
@@ -65,11 +69,11 @@
     },
     {
       "char": "U",
-      "background": null
+      "background": "yellow2"
     },
     {
       "char": "I",
-      "background": null
+      "background": "yellow2"
     },
     {
       "char": "P"
@@ -78,7 +82,7 @@
   [
     {
       "char": "A",
-      "background": null
+      "background": "yellow2"
     },
     {
       "char": "S",
