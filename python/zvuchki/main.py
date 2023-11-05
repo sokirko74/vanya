@@ -1,3 +1,5 @@
+import json
+
 from car_brands import CARS, URLS, BIRDS, COMPOSERS, OTHER_SRC
 from browser_wrapper import TBrowser
 from yandex_mus import TYandexMusic
@@ -118,45 +120,34 @@ class TZvuchki(tk.Frame):
         self.keys = dict()
         self.last_char = None
         self.last_char_timestamp = time.time()
-        if self.args.abc == "ru":
-            self.init_all_abc_keyboard_ru()
-        else:
-            self.init_all_abc_keyboard_en()
+        self.init_all_abc_keyboard_layout(self.args.layout)
         self.video_player_thread = None
 
-    def init_all_abc_keyboard_ru(self):
-        self.add_keyboard_row(0, "123456780" + TChars.BACKSPACE)
-        self.add_keyboard_row(1, "ЙЦУКЕНГШЩЗХ")
-        self.add_keyboard_row(2, "ФЫВАПРОЛДЖЭ")
-        self.add_keyboard_row(3, "ЯЧСМИТЬБЮ"+TChars.SPACE)
-
-    def init_all_abc_keyboard_en(self):
-        self.add_keyboard_row(0, "123456780" + TChars.BACKSPACE)
-        self.add_keyboard_row(1, "QWERTYUIOP")
-        self.add_keyboard_row(2, "ASDFGHJKL")
-        self.add_keyboard_row(3, "ZXCVBNM"+TChars.SPACE)
+    def init_all_abc_keyboard_layout(self, layout_path):
+        with open(layout_path) as inp:
+            keyb_layout = json.load(inp)
+        assert len(keyb_layout) == self.key_row_count
+        for row_index, row in enumerate(keyb_layout):
+            self.add_keyboard_row(row_index, row)
 
     def get_key_row_height(self):
         h = self.keyb_window.winfo_height() / self.key_row_count
         return int(h)
 
-    def add_keyboard_row(self, row_index, chars):
+    def add_keyboard_row(self, row_index, row):
         normal_btn_width = self.master.winfo_width() / self.keyboard_column_count
         left = row_index * normal_btn_width / 3.0
         top = row_index * (self.get_key_row_height() + 5)
 
-        for char in chars:
-            background = None
+        for key_info in row:
+            key_title = key_info['char']
+            if key_info.get("long"):
+                key_title = " " + key_title + " "
+            background = key_info.get("background")
             font = self.key_font
-            key_title = char
-            title_top = -15
-            if key_title == TChars.SPACE:
-                key_title = '   '
-                background = "lightgreen"
-            elif key_title == TChars.BACKSPACE:
-                key_title = ' ' + TChars.BACKSPACE + '  '
-                background = "red"
-            elif key_title == "Й" or key_title == "Ё":
+            title_top = -5
+
+            if key_info.get("umlaut"):
                 font = self.key_font_umlaut
                 title_top = 0
 
@@ -166,14 +157,18 @@ class TZvuchki(tk.Frame):
                 background=background,
                 width=button_width
             )
-            canvas.create_text(0, title_top, text=key_title, font=font, anchor=tk.NW)
+            canvas.create_text(
+                15,
+                title_top,
+                text=key_title,
+                font=font, anchor=tk.NW)
             canvas.place(
                 x=left,
                 y=top,
                 width=button_width,
                 relheight=1 / self.key_row_count
             )
-            canvas.bind("<Button-1>", partial(self.keyboard_click, char))
+            canvas.bind("<Button-1>", partial(self.keyboard_click, key_info['char']))
             left += button_width
 
     def on_video_finish(self):
@@ -355,7 +350,7 @@ class TZvuchki(tk.Frame):
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--fullscreen", dest='fullscreen', default=False, action="store_true")
-    parser.add_argument("--abc", dest='abc', default='ru', help="cam be en or ru")
+    parser.add_argument("--layout", dest='layout', default='anc_ru.json')
     parser.add_argument("--font-size", dest='font_size', default=100, type=int)
     parser.add_argument("--max-play-seconds", dest='max_play_seconds', default=540, type=int)
     return parser.parse_args()
