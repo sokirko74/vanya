@@ -332,6 +332,8 @@ class TRiverGame:
                     self.open_door()
                 elif event.key == pygame.K_F1:
                     self.racing_wheel.save_wheel_center()
+                elif event.key == pygame.K_F2:
+                    self.sounds.play_sound("door_open", loops=0)
 
             if event.type == pygame.KEYUP:
                 if event.key == pygame.K_LEFT or event.key == pygame.K_RIGHT:

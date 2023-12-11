@@ -79,7 +79,7 @@ class TZvuchki(tk.Frame):
         self.font_size = self.args.font_size
         self.keyboard_column_count = 12
         self.master = tk.Tk()
-        self.yandex_music_client = TYandexMusic(self.logger)
+        self.yandex_music_client = TYandexMusic(self.logger, self.args.prefer_rap)
         super().__init__(master)
         if self.args.fullscreen:
             if self.master.winfo_screenwidth() > 2000:
@@ -92,14 +92,19 @@ class TZvuchki(tk.Frame):
         self.editor_coef_height = 0.28
         editor_font_size = int(self.args.font_size * (1.0 + self.editor_coef_height))
         self.editor_font = tkFont.Font(family="DejaVu Sans Mono", size=editor_font_size)
-        self.text_widget = tk.Text(self.master,
+        self.entry_text = tk.StringVar()
+        self.text_widget = tk.Entry(self.master,
                                    width=15,
-                                   height=1,
+                                   textvariable = self.entry_text,
                                    font=self.editor_font)
 
+        self.text_widget.bind('<Return>', self.on_text_click)
+        self.text_widget.bind('<Escape>', self.on_text_click)
+        self.text_widget.bind('<F1>', self.on_backspace)
+        self.bind('<Return>', self.on_text_click)
+        self.bind('<Escape>', self.on_text_click)
         self.text_widget.place(relx=0, rely=0, relwidth=1, relheight=self.editor_coef_height)
         self.text_widget.bind("<Button-1>", self.on_text_click)
-        self.text_widget.tag_config('green_tag', background='lightgreen')
 
         self.keyb_window = tk.Frame(
             self.master,
@@ -175,9 +180,15 @@ class TZvuchki(tk.Frame):
         self.logger.info('on_video_finish...')
         #self.video_player_thread.join(0.1)
         self.video_player_thread = None
-        self.text_widget.delete(1.0, tk.END)
+        self.entry_text.set("")
+
+    def on_backspace(self, event):
+        s = self.entry_text.get()
+        self.entry_text.set(s[:-1])
+        self.text_widget.select_clear()
 
     def on_text_click(self, event):
+        self.text_widget.select_clear()
         self.logger.info("clicked")
         if self.video_player_thread is not None:
             self.video_player_thread.stop_playing()
@@ -186,7 +197,7 @@ class TZvuchki(tk.Frame):
             self.logger.info("stop yandex music player")
             self.yandex_music_client.stop_player()
         else:
-            s = self.text_widget.get(1.0, tk.END).strip("\n")
+            s = self.entry_text.get()
             self.play_request(s)
 
     def get_url_video_from_google_or_cached(self, request, position):
@@ -214,6 +225,7 @@ class TZvuchki(tk.Frame):
         add_sec = 0
         use_old_urls = False
         use_yandex_music = False
+        free_request = False
         test_drive = "тест драйв от первого лица"
         for token_index, token in enumerate(words):
             if token.isdigit() and clip_index is None and int(token) < 10 and token_index > 0:
@@ -250,6 +262,8 @@ class TZvuchki(tk.Frame):
                 add_to_query.append( "эксплуатация")
             elif token == 'П':
                 use_old_urls = True
+            elif token == 'Г':
+                free_request = True
             elif token.lower() == 'я':
                 use_yandex_music = True
             elif token.lower() == 'y':
@@ -278,7 +292,7 @@ class TZvuchki(tk.Frame):
             if use_yandex_music:
                 pid = self.yandex_music_client.play_track(search_obj, clip_index)
                 if pid is not None:
-                    self.text_widget.delete(1.0, tk.END)
+                    self.entry_text.set("")
                     return True
                 else:
                     self.logger.error("bad artist")
@@ -288,10 +302,11 @@ class TZvuchki(tk.Frame):
                 #if digit is not None:
                 #    search_obj = search_obj[:digit.regs[0][0]]
 
-                if search_obj not in CARS and search_obj not in BIRDS and search_obj not in COMPOSERS \
-                        and search_obj not in OTHER_SRC and search_obj:
-                    self.logger.error("bad query search")
-                    return False
+                if not free_request:
+                    if search_obj not in CARS and search_obj not in BIRDS and search_obj not in COMPOSERS \
+                            and search_obj not in OTHER_SRC:
+                        self.logger.error("bad query search")
+                        return False
                 duration = 300 + add_sec
                 #duration = 10 + add_sec
                 if add_to_query:
@@ -301,21 +316,16 @@ class TZvuchki(tk.Frame):
         self.play_youtube_video(url, duration)
         return True
 
-    def get_text_str(self):
-        return self.text_widget.get(1.0, tk.END).strip("\n")
-
     def backspace(self):
-        s = self.get_text_str()
+        s = self.entry_text.get()
         if len(s) > 0:
-            self.text_widget.delete(1.0, tk.END)
-            self.text_widget.insert(tk.END, s[:-1])
+            self.entry_text.set(s[:-1])
 
     def add_char(self, char):
-        s = self.get_text_str()
+        s = self.entry_text.get()
         if len(s) > MAX_TEXT_LEN:
             return
-        tags = 'green_tag' if char == ' ' else None
-        self.text_widget.insert(tk.END, char, tags)
+        self.entry_text.set(s + char)
 
     def keyboard_click(self, char, event):
         if self.video_player_thread is not None:
@@ -323,6 +333,9 @@ class TZvuchki(tk.Frame):
                 self.video_player_thread.next_track()
             if char and char.upper() == 'П':
                 self.video_player_thread.prev_track()
+        if char == TChars.BACKSPACE:
+            self.on_backspace()
+            self.play_audio("key_sound.wav")
         if char == TChars.BACKSPACE:
             self.backspace()
             self.play_audio("key_sound.wav")
@@ -334,7 +347,7 @@ class TZvuchki(tk.Frame):
             self.last_char = char
             self.play_audio("key_sound.wav")
             self.add_char(char)
-        self.logger.info("text={}".format(self.text_widget.get(1.0, tk.END).strip("\n")))
+        self.logger.info("text={}".format(self.entry_text.get()))
 
     def play_audio(self, file_path):
         file_path = os.path.join(os.path.dirname(__file__), "sound", file_path)
@@ -353,6 +366,7 @@ def parse_args():
     parser.add_argument("--layout", dest='layout', default='anc_ru.json')
     parser.add_argument("--font-size", dest='font_size', default=100, type=int)
     parser.add_argument("--max-play-seconds", dest='max_play_seconds', default=540, type=int)
+    parser.add_argument("--prefer-rap", dest='prefer_rap', default=False, action="store_true")
     return parser.parse_args()
 
 

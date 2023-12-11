@@ -131,13 +131,17 @@ class TEngineSound:
         return self._decreasing_engine_sound[index:]
 
     def _create_sound(self, speed):
-        if self._engine_state == TEngineState.engine_stable:
-            s = self.create_stable_at_speed(speed)
-        elif self._engine_state == TEngineState.engine_increase:
-            s = self._get_increasing_at_speed(speed)
-        else:
-            s = self._get_decreasing_at_speed(speed)
-        self._play_stream.set_audio_buffer(s)
+        try:
+            if self._engine_state == TEngineState.engine_stable:
+                s = self.create_stable_at_speed(speed)
+            elif self._engine_state == TEngineState.engine_increase:
+                s = self._get_increasing_at_speed(speed)
+            else:
+                s = self._get_decreasing_at_speed(speed)
+            self._play_stream.set_audio_buffer(s)
+        except IndexError as exp:
+            self.log.debug("unknown exception {}, speed = {}, fix me in 2024".format(exp, speed))
+
 
     def _can_increase(self):
         return self._current_speed < self.limit_max_speed

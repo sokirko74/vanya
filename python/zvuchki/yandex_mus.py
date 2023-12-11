@@ -15,8 +15,9 @@ YANDEX_MUSIC_ARTISTS = {
 
 
 class TYandexMusic:
-    def __init__(self, logger):
+    def __init__(self, logger, prefer_rap):
         self.logger = logger
+        self.prefer_rap = prefer_rap
         with open(os.path.join(os.path.dirname(__file__), "yandex_music_access_token.txt")) as inp:
             token = inp.read().strip()
         self.client = Client(token)
@@ -46,7 +47,7 @@ class TYandexMusic:
         search_result = self.client.search(query)
         if search_result.artists:
             for res in search_result.artists.results:
-                if 'rusrap' in res.genres or 'foreignrap' in res.genres or 'rap' in res.genres:
+                if not self.prefer_rap or ('rusrap' in res.genres) or ('foreignrap' in res.genres) or ('rap' in res.genres):
                     artist_id = res.id
                     r = {
                         'id': artist_id,

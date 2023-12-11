@@ -1201,5 +1201,17 @@
         "https://translate.google.com/translate?hl=ru&sl=en&u=https://www.youtube.com/watch%3Fv%3DNH7lAXZXxew&prev=search&pto=aue",
         "https://www.youtube.com/watch?v=ayMeJobkuNk",
         "https://translate.google.com/translate?hl=ru&sl=en&u=https://www.youtube.com/watch%3Fv%3DayMeJobkuNk&prev=search&pto=aue"
+    ],
+    "МАМА": [
+        "https://www.youtube.com/watch?v=L4gJRP8nVLY",
+        "https://www.youtube.com/watch?v=iEp-TYWoJJ0",
+        "https://www.youtube.com/watch?v=mPmXbiGQs2U",
+        "https://www.youtube.com/watch?v=desybwNT5Y8",
+        "https://www.youtube.com/watch?v=FJjHnMXDdfQ",
+        "https://www.youtube.com/watch?v=_4FvARQkhV8",
+        "https://www.youtube.com/watch?v=_-pIVd4lGMw",
+        "https://www.youtube.com/watch?v=iCwuW3yClO4",
+        "https://www.youtube.com/watch?v=shU4Vce_jJQ",
+        "https://www.youtube.com/watch?v=_cyFHPA7zGk"
     ]
 }
