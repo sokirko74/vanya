@@ -79,7 +79,8 @@ class TZvuchki(tk.Frame):
         self.font_size = self.args.font_size
         self.keyboard_column_count = 12
         self.master = tk.Tk()
-        self.yandex_music_client = TYandexMusic(self.logger, self.args.prefer_rap)
+        self.master.title("ZvuchkiApp")
+        self.yandex_music_client = TYandexMusic(self, self.args.prefer_rap)
         super().__init__(master)
         if self.args.fullscreen:
             if self.master.winfo_screenwidth() > 2000:
@@ -213,10 +214,18 @@ class TZvuchki(tk.Frame):
             position = len(search_results) - 1
         return search_results[position]
 
+    def set_focus_to_text(self):
+        time.sleep(1)
+        self.logger.info("set focus to text window")
+        r = os.system('/usr/bin/wmctrl -v  -a ZvuchkiApp')
+        self.logger.info("result = " + str(r))
+        self.text_widget.focus_force()
+
     def play_youtube_video(self, url, seconds):
         self.video_player_thread = VideoPlayer(self, url, seconds)
+        self.logger.info("video_player_thread.start()")
         self.video_player_thread.start()
-
+        self.set_focus_to_text()
     def play_request(self, request):
         words = request.strip().split(' ')
         query_words = list()
@@ -293,6 +302,7 @@ class TZvuchki(tk.Frame):
                 pid = self.yandex_music_client.play_track(search_obj, clip_index)
                 if pid is not None:
                     self.entry_text.set("")
+                    self.set_focus_to_text()
                     return True
                 else:
                     self.logger.error("bad artist")
@@ -373,6 +383,7 @@ def parse_args():
 if __name__ == "__main__":
     game = TZvuchki()
     game.main_loop()
+
 
 # shift N
 

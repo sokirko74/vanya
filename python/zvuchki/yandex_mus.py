@@ -15,8 +15,9 @@ YANDEX_MUSIC_ARTISTS = {
 
 
 class TYandexMusic:
-    def __init__(self, logger, prefer_rap):
-        self.logger = logger
+    def __init__(self, parent, prefer_rap):
+        self.parent = parent
+        self.logger = parent.logger
         self.prefer_rap = prefer_rap
         with open(os.path.join(os.path.dirname(__file__), "yandex_music_access_token.txt")) as inp:
             token = inp.read().strip()
@@ -98,6 +99,8 @@ class TYandexMusic:
         if file_path is not None:
             self.totem_player = Popen(['/usr/bin/vlc', '--play-and-exit', file_path])
             self.start_time_stamp = time.time()
+            time.sleep(0.5)
+            #self.parent
             return self.totem_player
         else:
             return None
@@ -105,7 +108,7 @@ class TYandexMusic:
     def is_playing(self):
         if self.totem_player is None:
             return False
-        obligatory_seconds = 10
+        obligatory_seconds = 5
         if self.start_time_stamp is not None and time.time() < self.start_time_stamp + obligatory_seconds:
             self.logger.info("hear at least {} seconds before stop".format(obligatory_seconds))
             return False
