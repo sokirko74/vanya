@@ -285,8 +285,9 @@ class TRiverGame:
             self.repair_car()
             return
 
-        if not self.stats.is_full_tank() and isinstance(town, TGasStation):
-            self.refuel_car()
+        if isinstance(town, TGasStation):
+            if not self.stats.is_full_tank():
+                self.refuel_car()
             return
 
         passenger_at_car_stop = pygame.sprite.spritecollideany(self.my_car, self.passengers_at_car_stop_sprites,

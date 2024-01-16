@@ -20,7 +20,7 @@ class TGameRegisters:
         self.fuel_volume = MAX_FUEL_VOLUME
         self.map_parts_count = 0
         self.font = pygame.font.SysFont(None, 30)
-        self.red_lamp_font = pygame.font.SysFont(None, 130)
+        self.red_lamp_font = pygame.font.SysFont(None, 230)
         #self.font_fade_event = pygame.USEREVENT + 1
         #pygame.time.set_timer(self.font_fade_event, 200)
         self.count_call = 0
@@ -40,7 +40,7 @@ class TGameRegisters:
 
     def should_generation_gas_station(self):
         #return self.fuel_volume <= RED_LAMP_FUEL_MIN_LEVEL #test
-        return self.fuel_volume <= RED_LAMP_FUEL_MIN_LEVEL and random.random() > self.fuel_volume / MAX_FUEL_VOLUME #prod
+        return self.fuel_volume <= RED_LAMP_FUEL_MIN_LEVEL and random.random() > 1.5 * self.fuel_volume / MAX_FUEL_VOLUME #prod
 
     def increment_map_parts_count(self):
         self.map_parts_count += 1
@@ -68,7 +68,7 @@ class TGameRegisters:
             else:
                 text = ' '
             screen_text = self.red_lamp_font.render(text, True, TColors.red)
-            self.screen.blit(screen_text, (self.screen.get_width() - 60, 0))
+            self.screen.blit(screen_text, (self.screen.get_width() - 100, 0))
 
         if self.paused:
             s = pygame.display.get_surface()
