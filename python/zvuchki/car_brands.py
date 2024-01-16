@@ -254,4 +254,4 @@ URLS = {
     'ваз41': ('https://www.youtube.com/watch?v=pDVrRaJqGio', 350),
     'ваз42': ("https://www.youtube.com/watch?v=M_ZGFwWSsfA", 90)
 
-}
+} 
