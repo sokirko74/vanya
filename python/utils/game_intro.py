@@ -1,6 +1,6 @@
-from python.utils.colors import TColors
-from python.utils.racing_wheel import TRacingWheel
-from python.utils.pygame_button import PygameButton
+from utils.colors import TColors
+from utils.racing_wheel import TRacingWheel
+from utils.pygame_button import PygameButton
 
 import pygame
 import time
@@ -35,7 +35,7 @@ class TGameIntro:
     def set_start_game_action(self):
         self.action = TGameIntro.start_game_action
 
-    def get_next_action(self, prev_score=None):
+    def get_next_action(self, message_text=None):
         self.screen.blit(self.image, (0, 0))
         pygame.display.update()
         self.action = None
@@ -58,8 +58,8 @@ class TGameIntro:
                         self.action = TGameIntro.exit_game_action
                         break
 
-            if prev_score is not None:
-                self.message("Очки: {}".format(prev_score), TColors.black, 250, 100, 100)
+            if message_text is not None:
+                self.message(message_text, TColors.black, 250, 100, 100)
             self.go_button.process()
             self.exit_button.process()
             pygame.display.update()

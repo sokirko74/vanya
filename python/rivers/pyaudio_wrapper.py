@@ -1,4 +1,4 @@
-from python.rivers.engine_state import TEngineState
+from engine_state import TEngineState
 
 import time
 import threading

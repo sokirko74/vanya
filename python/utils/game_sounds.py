@@ -22,10 +22,14 @@ class TSounds:
             k.stop()
 
     def play_sound(self, sound_type, loops=0, volume=None):
+        length = 0
         if self.enable_sounds:
             if volume is not None:
                 self.sounds[sound_type].set_volume(volume)
             self.sounds[sound_type].play(loops=loops)
+            length = self.sounds[sound_type].get_length()
+        return length
+
 
     def stop_all_and_play(self, sound_type, loops=1000, volume=None):
         self.stop_sounds()

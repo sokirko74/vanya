@@ -1,5 +1,5 @@
 from evdev import list_devices, InputDevice, ecodes
-from python.utils.logging_wrapper import setup_logging
+from utils.logging_wrapper import setup_logging
 import pygame
 import time
 

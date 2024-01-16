@@ -1,13 +1,13 @@
-from python.rivers.pyaudio_wrapper import PyAudioStreamWrapper
-from python.rivers.engine_state import TEngineState
+from pyaudio_wrapper import PyAudioStreamWrapper
+from engine_state import TEngineState
 import json
 import os
 
-import  librosa
+import librosa
 import numpy as np
 from collections import namedtuple
 from typing import List
-import threading
+
 
 
 IncreaseProps = namedtuple('IncreaseProps', ['frame_rate', 'volume'])
@@ -43,6 +43,7 @@ class TEngineSound:
         self._current_speed = self.idle_speed
         self._engine_state = TEngineState.engine_stable
         self._create_sound(self.idle_speed)
+
 
     def start_play_stream(self):
         self.log.debug('start engine sound')
@@ -141,7 +142,6 @@ class TEngineSound:
             self._play_stream.set_audio_buffer(s)
         except IndexError as exp:
             self.log.debug("unknown exception {}, speed = {}, fix me in 2024".format(exp, speed))
-
 
     def _can_increase(self):
         return self._current_speed < self.limit_max_speed

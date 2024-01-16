@@ -1,7 +1,7 @@
 import json
 
 from draw_road import draw_road
-from python.utils.colors import TColors
+from utils.colors import TColors
 
 import pygame
 import os
@@ -129,6 +129,7 @@ class TGirlSprite(TSprite):
     def get_description(self):
         return "girl"
 
+
 class TTownSprite(TSprite):
     def __init__(self, parent, left, top, width=300, replicate_width=3):
         self.color = TTownColor()
@@ -148,9 +149,9 @@ class TTownSprite(TSprite):
         self.collided = False
 
 
-class TRepairStation(TSprite):
-    def __init__(self, parent, left, top, width=300, replicate_width=1):
-        img = pygame.image.load(os.path.join(TSprite.SPRITES_DIR, "repair.png"))
+class TStation(TSprite):
+    def __init__(self, parent, left, top, image_file_name, width=300, replicate_width=1):
+        img = pygame.image.load(os.path.join(TSprite.SPRITES_DIR, image_file_name))
         img = pygame.transform.scale(img, (width, width))
         srf = pygame.Surface((width*replicate_width, width))
         srf.fill(TSprite.BACKGROUND_COLOR)
@@ -162,6 +163,16 @@ class TRepairStation(TSprite):
                          surface=srf
                          )
         self.collided = False
+
+
+class TRepairStation(TStation):
+    def __init__(self, parent, left, top, width=300, replicate_width=1):
+        super().__init__(parent, left, top, "repair.png", width=width, replicate_width=replicate_width)
+
+
+class TGasStation(TStation):
+    def __init__(self, parent, left, top, width=300, replicate_width=1):
+        super().__init__(parent, left, top, "gas_station.png", width=width, replicate_width=replicate_width)
 
 
 class TMapPart:
@@ -187,6 +198,8 @@ class TMapPart:
     def generate_repair_station(self):
         self.car_stop = TRepairStation(self.parent, self.road.car_stop_position[0], self.road.car_stop_position[1])
 
+    def generate_gas_station(self):
+        self.car_stop = TGasStation(self.parent, self.road.car_stop_position[0], self.road.car_stop_position[1])
     def destroy_sprites(self):
         self.river.kill()
         self.river = None
@@ -246,8 +259,12 @@ class TMapPart:
             if len(self.passengers) > 0:
                 message += self.passengers[0].get_description()
             return message
-        else:
+        elif isinstance(self.car_stop, TGasStation):
+            return "Gas station"
+        elif isinstance(self.car_stop, TRepairStation):
             return "Repair station"
+        else:
+            return "unknown object"
 
 
 class TMyCar(TSprite):
