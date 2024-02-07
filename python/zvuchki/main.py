@@ -3,6 +3,7 @@ import json
 from car_brands import CARS, URLS, BIRDS, COMPOSERS, OTHER_SRC
 from browser_wrapper import TBrowser
 from yandex_mus import TYandexMusic
+import selenium
 
 import os
 import sys
@@ -209,8 +210,11 @@ class TZvuchki(tk.Frame):
         self.text_widget.select_clear()
         self.logger.info("clicked")
         if self.video_player_thread is not None:
-            self.video_player_thread.stop_playing()
-            self.on_video_finish()
+            try:
+                self.video_player_thread.stop_playing()
+                self.on_video_finish()
+            except selenium.common.exceptions.WebDriverException:
+                pass
         elif  self.yandex_music_client.is_playing():
             self.logger.info("stop yandex music player")
             self.yandex_music_client.stop_player()
