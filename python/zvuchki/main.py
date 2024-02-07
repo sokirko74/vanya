@@ -13,7 +13,6 @@ import time
 import vlc
 from functools import partial
 import threading
-import re
 
 
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
@@ -87,7 +86,10 @@ class TZvuchki(tk.Frame):
                 self.master.geometry("1600x800+2000+0")
             self.master.attributes("-fullscreen", True)
         else:
-            self.master.geometry("1600x800")
+            if self.args.gui_keyboard:
+                self.master.geometry("1600x800")
+            else:
+                self.master.geometry("1600x200")
         self.audioplayer = None
         self.music_player_pid = None
         self.editor_coef_height = 0.28
@@ -104,30 +106,45 @@ class TZvuchki(tk.Frame):
         self.text_widget.bind('<F1>', self.on_backspace)
         self.bind('<Return>', self.on_text_click)
         self.bind('<Escape>', self.on_text_click)
-        self.text_widget.place(relx=0, rely=0, relwidth=1, relheight=self.editor_coef_height)
         self.text_widget.bind("<Button-1>", self.on_text_click)
+        if self.args.audio_keys:
+            self.master.bind_all('<KeyPress>', self.report_key_press)
+        if not self.args.gui_keyboard:
+            self.text_widget.place(relx=0, rely=0, relwidth=1,
+                                   relheight=1)
+            self.master.update()
+        else:
+            self.text_widget.place(relx=0, rely=0, relwidth=1, relheight=self.editor_coef_height)
+            self.keyb_window = tk.Frame(
+                self.master,
+                #background="yellow"
+            )
+            self.keyb_window.place(
+                relx=0,
+                rely=self.editor_coef_height,
+                relwidth=1,
+                relheight=(1.0-self.editor_coef_height),
+            )
+            self.master.update()
+            self.key_font = tkFont.Font(family="DejaVu Sans Mono", size=self.args.font_size)
+            self.key_font_umlaut = tkFont.Font(family="DejaVu Sans Mono", size=int(self.args.font_size * 0.7))
 
-        self.keyb_window = tk.Frame(
-            self.master,
-            #background="yellow"
-        )
-        self.keyb_window.place(
-            relx=0,
-            rely=self.editor_coef_height,
-            relwidth=1,
-            relheight=(1.0-self.editor_coef_height),
-
-        )
-        self.master.update()
-        self.key_font = tkFont.Font(family="DejaVu Sans Mono", size=self.args.font_size)
-        self.key_font_umlaut = tkFont.Font(family="DejaVu Sans Mono", size=int(self.args.font_size * 0.7))
-
-        self.key_row_count = 4
-        self.keys = dict()
-        self.last_char = None
-        self.last_char_timestamp = time.time()
-        self.init_all_abc_keyboard_layout(self.args.layout)
+            self.key_row_count = 4
+            self.keys = dict()
+            self.last_char = None
+            self.last_char_timestamp = time.time()
+            self.init_all_abc_keyboard_layout(self.args.layout)
         self.video_player_thread = None
+
+    def report_key_press(self, e):
+        ch = e.char.upper()
+        print ('press '+ ch)
+        if ch == ' ':
+            ch = 'space'
+        filename = 'char.' + ch + '.mp3'
+        path = os.path.join(os.path.dirname(__file__), 'sound', filename)
+        if os.path.exists(path):
+            self.play_audio(filename)
 
     def init_all_abc_keyboard_layout(self, layout_path):
         with open(layout_path) as inp:
@@ -377,6 +394,8 @@ def parse_args():
     parser.add_argument("--font-size", dest='font_size', default=100, type=int)
     parser.add_argument("--max-play-seconds", dest='max_play_seconds', default=540, type=int)
     parser.add_argument("--prefer-rap", dest='prefer_rap', default=False, action="store_true")
+    parser.add_argument("--no-gui-keyboard", dest='gui_keyboard', default=True, action="store_false")
+    parser.add_argument("--audio-keys", dest='audio_keys', default=False, action="store_true")
     return parser.parse_args()
 
 

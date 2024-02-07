@@ -1292,5 +1292,15 @@
         "https://m.youtube.com/watch?v=fLF7XBRrPGU&pp=ygUXI9C_0YDRj9C80L7RgtC-0LrQstCw0Lc%3D&t=566",
         "https://m.youtube.com/watch?v=fLF7XBRrPGU&pp=ygUXI9C_0YDRj9C80L7RgtC-0LrQstCw0Lc%3D&t=677",
         "https://m.youtube.com/watch?v=fLF7XBRrPGU&pp=ygUXI9C_0YDRj9C80L7RgtC-0LrQstCw0Lc%3D&t=834"
+    ],
+    "ЛЕКСУС тест драйв от первого лица": [
+        "https://www.youtube.com/watch?v=1_S6xXkG5LY",
+        "https://www.youtube.com/watch?v=xtI4SW1K_XA",
+        "https://www.youtube.com/watch?v=OA43gDoYCtM",
+        "https://www.youtube.com/watch?v=IZ9lyk-mRQ8",
+        "https://www.youtube.com/watch?v=8XovOQYyFBw",
+        "https://www.youtube.com/watch?v=MvOa0WPhQ_M",
+        "https://www.youtube.com/watch?v=G9HgX-5fHM4",
+        "https://www.youtube.com/watch?v=I7PzrqtZYkY"
     ]
 }
