@@ -171,14 +171,20 @@ class TRepairStation(TStation):
         super().__init__(parent, left, top, "repair.png", width=width, replicate_width=replicate_width)
 
 
+class THospital(TStation):
+    def __init__(self, parent, left, top, width=300, replicate_width=1):
+        super().__init__(parent, left, top, "hospital.png", width=width, replicate_width=replicate_width)
+
+
 class TGasStation(TStation):
     def __init__(self, parent, left, top, width=300, replicate_width=1):
         super().__init__(parent, left, top, "gas_station.png", width=width, replicate_width=replicate_width)
 
 
 class TMapPart:
-    def __init__(self, parent, top, bridge_width, road_width, prev_bridge_rect):
+    def __init__(self, parent, top, bridge_width, road_width, prev_bridge_rect, girl_probability):
         self.parent = parent
+        self.girl_probability = girl_probability
         self.bridge_width = bridge_width
         self.road_width = road_width
         self.river = TRiver(parent, 0, top)
@@ -201,6 +207,9 @@ class TMapPart:
 
     def generate_gas_station(self):
         self.car_stop = TGasStation(self.parent, self.road.car_stop_position[0], self.road.car_stop_position[1])
+
+    def generate_hospital(self):
+        self.car_stop = THospital(self.parent, self.road.car_stop_position[0], self.road.car_stop_position[1])
 
     def destroy_sprites(self):
         self.river.kill()
@@ -242,13 +251,13 @@ class TMapPart:
 
     def generate_passenger(self, color=None, minus_color=None):
         left, top = self._get_passenger_position_at_car_stop()
-        if random.random() < 0.4:
+        if random.random() < self.girl_probability:
             g = TGirlSprite(self.road.parent, left, top)
         else:
             g = TGrannySprite(self.road.parent, left, top, color=color, minus_color=minus_color)
         self.passengers.append(g)
 
-    def  passenger_goes_to_car_stop(self, passenger: TSprite):
+    def passenger_goes_to_car_stop(self, passenger: TSprite):
         passenger.parent = self.road.parent
         self.passengers.append(passenger)
         left, top = self._get_passenger_position_at_car_stop()
@@ -257,14 +266,16 @@ class TMapPart:
 
     def get_descr(self):
         if  isinstance(self.car_stop, TTownSprite):
-            message = "town color: {}".format(self.car_stop.color.get_color_str())
+            message = "a {} town ".format(self.car_stop.color.get_color_str())
             if len(self.passengers) > 0:
-                message += self.passengers[0].get_description()
+                message += " with a " + self.passengers[0].get_description()
             return message
         elif isinstance(self.car_stop, TGasStation):
             return "Gas station"
         elif isinstance(self.car_stop, TRepairStation):
             return "Repair station"
+        elif isinstance(self.car_stop, THospital):
+            return "Hospital"
         else:
             return "unknown object"
 

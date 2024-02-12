@@ -40,5 +40,11 @@
   },
   "gas_station": {
     "volume": 0.8
+  },
+  "siren": {
+    "volume": 0.1
+  },
+  "granny_wants_to_hospital": {
+    "volume": 0.8
   }
 }

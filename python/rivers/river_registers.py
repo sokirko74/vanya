@@ -38,7 +38,7 @@ class TGameRegisters:
     def is_full_tank(self):
         return self.fuel_volume == MAX_FUEL_VOLUME
 
-    def should_generation_gas_station(self):
+    def should_generate_gas_station(self):
         #return self.fuel_volume <= RED_LAMP_FUEL_MIN_LEVEL #test
         return self.fuel_volume <= RED_LAMP_FUEL_MIN_LEVEL and random.random() > 1.5 * self.fuel_volume / MAX_FUEL_VOLUME #prod
 
