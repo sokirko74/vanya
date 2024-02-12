@@ -1302,5 +1302,17 @@
         "https://www.youtube.com/watch?v=MvOa0WPhQ_M",
         "https://www.youtube.com/watch?v=G9HgX-5fHM4",
         "https://www.youtube.com/watch?v=I7PzrqtZYkY"
+    ],
+    "МОСКВИЧ412 тест драйв от первого лица": [
+        "https://www.youtube.com/watch?v=GJ_umrmhlQU",
+        "https://www.youtube.com/watch?v=Hu5iojA4C_Y",
+        "https://www.youtube.com/watch?v=3et0eHnas9A",
+        "https://www.youtube.com/watch?v=nTUlnrvODB8",
+        "https://www.youtube.com/watch?v=dEd1tN5mMCo",
+        "https://www.youtube.com/watch?v=zTO8tdQcsNM",
+        "https://www.youtube.com/watch?v=YweNLZ7cVRo",
+        "https://www.youtube.com/watch?v=n8Ltq1VjSBw",
+        "https://www.youtube.com/watch?v=iMad7Gi1NKY",
+        "https://m.youtube.com/watch?v=hu0BnG7ZHps"
     ]
 }
