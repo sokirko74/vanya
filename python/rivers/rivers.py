@@ -204,7 +204,7 @@ class TRiverGame:
         elif self.car_needs_repair and random.random() > 0.5:
             self.map_part_next.generate_repair_station()
         else:
-            gen_granny = not self.car_has_passenger() and random.random() > 0.5
+            gen_granny = not self.car_has_passenger() and random.random() > 0.3
             self.map_part_next.generate_town(gen_granny)
         self.sprites.rivers.add(self.map_part.river)
         self.sprites.bridges.add(self.map_part.bridge)
@@ -417,6 +417,7 @@ class TRiverGame:
         time.sleep(3)
         self.init_my_car()
         self.init_engine_sound()
+        self.stats.refuel_car()
 
     def make_normal_car(self):
         self.car_is_ambulance = False
