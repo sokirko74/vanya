@@ -486,7 +486,7 @@ def parse_args():
     parser.add_argument("--engine-audio-folder", dest='engine_audio_folder',
                         default= os.path.join(os.path.dirname(__file__), 'assets/sounds/ford'))
     parser.add_argument("--girl-probability", dest='girl_probability', default=0.4, type=float)
-    parser.add_argument("--granny-heart-attack-probability", dest='granny_heart_attack_probability', default=0.1, type=float)
+    parser.add_argument("--granny-heart-attack-probability", dest='granny_heart_attack_probability', default=0.01, type=float)
 
 
     return parser.parse_args()
