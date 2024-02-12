@@ -114,6 +114,7 @@ class TGrannySprite(TSprite):
     def get_description(self):
         return self.color.get_color_str() + " granny"
 
+
 class TGirlSprite(TSprite):
     GIRL_WIDTH = 150
 
@@ -200,6 +201,7 @@ class TMapPart:
 
     def generate_gas_station(self):
         self.car_stop = TGasStation(self.parent, self.road.car_stop_position[0], self.road.car_stop_position[1])
+
     def destroy_sprites(self):
         self.river.kill()
         self.river = None
@@ -283,3 +285,28 @@ class TMyCar(TSprite):
         self.horizontal_speed_increase_with_get_speed = True
 
 
+class TRiverSprites:
+    def __init__(self):
+        self.rivers = pygame.sprite.Group()
+        self.bridges = pygame.sprite.Group()
+        self.my_car = pygame.sprite.Group()
+        self.roads = pygame.sprite.Group()
+        self.towns = pygame.sprite.Group()
+        self.passengers_at_car_stop = pygame.sprite.Group()
+        self.passengers_in_car = pygame.sprite.Group()
+
+    def clear_groups(self):
+        self.rivers.empty()
+        self.bridges.empty()
+        self.roads.empty()
+        self.towns.empty()
+        self.passengers_at_car_stop.empty()
+        self.passengers_in_car.empty()
+
+    def redraw_without_my_car(self, screen):
+        self.rivers.draw(screen)
+        self.bridges.draw(screen)
+        self.roads.draw(screen)
+        self.towns.draw(screen)
+        self.passengers_at_car_stop.draw(screen)
+        self.passengers_in_car.draw(screen)
