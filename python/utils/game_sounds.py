@@ -30,6 +30,10 @@ class TSounds:
             length = self.sounds[sound_type].get_length()
         return length
 
+    def stop_sound(self, sound_type):
+        sound = self.sounds.get(sound_type)
+        if sound:
+            sound.stop()
 
     def stop_all_and_play(self, sound_type, loops=1000, volume=None):
         self.stop_sounds()
