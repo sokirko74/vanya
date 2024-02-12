@@ -432,7 +432,7 @@ class TRiverGame:
         elif river is not None:
             self.check_river_collision(river)
         if self.car_has_granny() and not self.car_is_ambulance:
-            if (int(time.time()) % 10 == 0)  and random.random() < self.args.granny_heart_attack_probability:
+            if (int(time.time()) % 20 == 0) and random.random() < self.args.granny_heart_attack_probability:
                 self.make_ambulance()
 
     def init_game_loop(self):
