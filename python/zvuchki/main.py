@@ -1,6 +1,6 @@
 import json
 
-from car_brands import CARS, URLS, BIRDS, COMPOSERS, OTHER_SRC
+from car_brands import CARS, URLS, BIRDS, COMPOSERS, OTHER_SRC, CAR_EN
 from browser_wrapper import TBrowser
 from yandex_mus import TYandexMusic
 import selenium
@@ -14,7 +14,7 @@ import time
 import vlc
 from functools import partial
 import threading
-
+import unidecode
 
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 from utils.logging_wrapper import setup_logging
@@ -69,6 +69,10 @@ class VideoPlayer (threading.Thread):
         self.parent.on_video_finish()
 
 
+def transliterate(s):
+    return unidecode.unidecode(s)
+
+
 class TZvuchki(tk.Frame):
     def __init__(self, master=None):
         self.args = parse_args()
@@ -108,6 +112,7 @@ class TZvuchki(tk.Frame):
         self.bind('<Return>', self.on_text_click)
         self.bind('<Escape>', self.on_text_click)
         self.text_widget.bind("<Button-1>", self.on_text_click)
+        self.text_widget.focus_force()
         if self.args.audio_keys:
             self.master.bind_all('<KeyPress>', self.report_key_press)
         if not self.args.gui_keyboard:
@@ -139,7 +144,9 @@ class TZvuchki(tk.Frame):
 
     def report_key_press(self, e):
         ch = e.char.upper()
-        print ('press '+ ch)
+        if ch == '*':
+            return
+        #print ('press '+ ch)
         if ch == ' ':
             ch = 'space'
         filename = 'char.' + ch + '.mp3'
@@ -208,7 +215,7 @@ class TZvuchki(tk.Frame):
 
     def on_text_click(self, event):
         self.text_widget.select_clear()
-        self.logger.info("clicked")
+        self.logger.info("on_text_click")
         if self.video_player_thread is not None:
             try:
                 self.video_player_thread.stop_playing()
@@ -242,11 +249,23 @@ class TZvuchki(tk.Frame):
         self.logger.info("result = " + str(r))
         self.text_widget.focus_force()
 
+    def is_relevant(self, w):
+        return w in CARS or w in BIRDS or w in COMPOSERS or w in OTHER_SRC or w in CAR_EN
+
+    def is_relevant_plus(self, w ):
+        if self.is_relevant(w):
+            return True
+        for i in w.split(' '):
+            if self.is_relevant(i):
+                return True
+        return False
+
     def play_youtube_video(self, url, seconds):
         self.video_player_thread = VideoPlayer(self, url, seconds)
         self.logger.info("video_player_thread.start()")
         self.video_player_thread.start()
         self.set_focus_to_text()
+
     def play_request(self, request):
         words = request.strip().split(' ')
         query_words = list()
@@ -255,19 +274,26 @@ class TZvuchki(tk.Frame):
         add_sec = 0
         use_old_urls = False
         use_yandex_music = False
-        free_request = False
+        free_request = self.args.free_request
         test_drive = "тест драйв от первого лица"
+        test_drive_en  = "test drive"
         for token_index, token in enumerate(words):
             if token.isdigit() and clip_index is None and int(token) < 10 and token_index > 0:
                 clip_index = int(token)
                 continue
-
+            token = token.upper()
             if token == 'Д':
                 add_sec = 120
             elif token == 'ДД':
                 add_sec = 240
             elif token == 'Т':
-                add_to_query.append(test_drive)
+                if self.args.transliterate:
+                    add_to_query.append(test_drive_en)
+                else:
+                    add_to_query.append(test_drive)
+            elif token == 'T':
+                self.logger.info('add en test drive')
+                add_to_query.append(test_drive_en)
             elif token == 'ТД':
                 add_to_query.append( test_drive)
                 add_sec = 120
@@ -282,6 +308,8 @@ class TZvuchki(tk.Frame):
                 add_to_query.append( "звук двигателя")
             elif token == 'ЗВУК':
                 add_to_query.append( "звук")
+            elif token == 'ЗПМ':
+                add_to_query.append("звук пишущей машинки")
             elif token == 'R':
                 add_to_query.append("rapper")
             elif token == 'СТ':
@@ -329,17 +357,14 @@ class TZvuchki(tk.Frame):
                     self.logger.error("bad artist")
                     return False
             else:
-                #digit = re.search(r'(\d)', search_obj)
-                #if digit is not None:
-                #    search_obj = search_obj[:digit.regs[0][0]]
-
                 if not free_request:
-                    if search_obj not in CARS and search_obj not in BIRDS and search_obj not in COMPOSERS \
-                            and search_obj not in OTHER_SRC:
-                        self.logger.error("bad query search")
+                    if not self.is_relevant_plus(search_obj):
+                        self.logger.error("bad query search: " + search_obj)
                         return False
                 duration = 300 + add_sec
                 #duration = 10 + add_sec
+                if self.args.transliterate:
+                    query = transliterate(query)
                 if add_to_query:
                     query += " " + " ".join(add_to_query)
                 self.logger.info("req={}, dur={}, serp_index={}".format(query, duration, clip_index))
@@ -367,9 +392,8 @@ class TZvuchki(tk.Frame):
         if char == TChars.BACKSPACE:
             self.on_backspace()
             self.play_audio("key_sound.wav")
-        if char == TChars.BACKSPACE:
-            self.backspace()
-            self.play_audio("key_sound.wav")
+        elif char == '*':
+            pass
         else:
             ts = time.time()
             if ts - self.last_char_timestamp < 1 and char == self.last_char:
@@ -400,14 +424,14 @@ def parse_args():
     parser.add_argument("--prefer-rap", dest='prefer_rap', default=False, action="store_true")
     parser.add_argument("--no-gui-keyboard", dest='gui_keyboard', default=True, action="store_false")
     parser.add_argument("--audio-keys", dest='audio_keys', default=False, action="store_true")
+    parser.add_argument("--transliterate", dest='transliterate', default=False, action="store_true")
+    parser.add_argument("--free", dest='free_request', default=False, action="store_true")
+
     return parser.parse_args()
 
 
 if __name__ == "__main__":
     game = TZvuchki()
     game.main_loop()
-
-
-# shift N
 
 

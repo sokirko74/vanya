@@ -129,6 +129,7 @@ class TGameRegisters:
         self.broken = False
         self.paused = False
         self.font = pygame.font.SysFont(None, 30)
+        self.large_font = pygame.font.SysFont(None, 150)
 
     def print_text(self, text, x, y):
         screen_text = self.font.render(text, True, TColors.white)
@@ -144,6 +145,9 @@ class TGameRegisters:
         if self.paused:
             s = pygame.display.get_surface()
             self.print_text("pause (press spacebar to play)", s.get_width()/2, s.get_height()/2)
+
+        screen_text = self.large_font.render(str(self.score), True, TColors.white)
+        self.screen.blit(screen_text, (30, 240))
 
 
 class TRacesGame:
@@ -164,8 +168,8 @@ class TRacesGame:
             self.width = pygame.display.get_window_size()[0]
             self.height = pygame.display.get_window_size()[1]
         else:
-            self.width = 1600
-            self.height = 1000
+            self.width = self.args.width
+            self.height = self.args.height
             self.screen = pygame.display.set_mode((self.width, self.height))
         self.stats = TGameRegisters(self.screen)
         self.game_intro = TGameIntro(self.screen, os.path.join(SPRITES_DIR, 'background1.jpg'),  self.racing_wheel)
@@ -290,7 +294,12 @@ class TRacesGame:
 
     def set_other_car_random_position(self, sprite: TSprite, padding):
         sprite.rect.top = 0
-        sprite.rect.left = random.randrange(self.roadside_width + padding, self.width - self.roadside_width - self.car_width - padding)
+        left1 =  self.roadside_width + padding
+        left2 = self.width - self.roadside_width - self.car_width - padding
+        if left1 >= left2:
+            sprite.rect.left = left1
+        else:
+            sprite.rect.left = random.randrange(left1, left2)
 
     def is_broken_driving(self):
         return self.stats.broken
@@ -510,6 +519,9 @@ def parse_args():
     parser.add_argument("--great-victory-level", dest='great_victory_level', default=15, type=int)
     parser.add_argument("--full-screen", dest='full_screen', default=False, action="store_true")
     parser.add_argument("--mode", dest='mode', default="normal_mode", required=False, help="can be normal_mode,gangster_mode")
+    parser.add_argument("--width", dest='width', default=1600, type=int)
+    parser.add_argument("--height", dest='height', default=1000, type=int)
+
     return parser.parse_args()
 
 

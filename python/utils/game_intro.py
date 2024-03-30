@@ -25,6 +25,7 @@ class TGameIntro:
 
     def message(self, mess, colour, size, x, y):
         font = pygame.font.SysFont(None, size)
+        mess = str(mess)
         screen_text = font.render(mess, True, colour)
         self.screen.blit(screen_text, (x, y))
         pygame.display.update()

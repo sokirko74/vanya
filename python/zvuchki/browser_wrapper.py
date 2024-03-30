@@ -29,16 +29,15 @@ class TBrowser:
 
     def init_chrome(self):
         options = webdriver.ChromeOptions()
-        options.add_argument("start-maximized")
+        #options.add_argument("start-maximized")
         options.add_argument("enable-automation")
         options.add_argument("--no-sandbox")
         options.add_argument("--disable-dev-shm-usage")
         options.add_argument("--disable-browser-side-navigation")
         options.add_argument("--disable-gpu")
         self.browser = webdriver.Chrome(options=options)
-        self.browser.set_page_load_timeout(10)
-        self.browser.set_script_timeout(30)
-        self.browser.set_page_load_timeout(40)
+        self.browser.set_page_load_timeout(20)
+        self.browser.set_script_timeout(18)
         self.browser.set_window_position(0, 0)
 
     def init_firefox(self):
@@ -92,7 +91,7 @@ class TBrowser:
         try:
             self.browser.get(url)
         except selenium.common.exceptions.TimeoutException as e:
-            print(e)
+            print("exception in navigate: {}".format(e))
             time.sleep(2)
 
     def play_youtube(self, url, max_duration):
@@ -128,9 +127,9 @@ class TBrowser:
             element.send_keys("k")
             time.sleep(1)
 
-            time.sleep(0.5)
-            print ("send f")
-            element.send_keys("f")
+            #time.sleep(0.5)
+            #print ("send f")
+            #element.send_keys("f")
 
             #time.sleep(0.5)
             #print ("send p")
@@ -179,11 +178,12 @@ class TBrowser:
         search_results = self._parse_serp()
         self._cache_request(search_engine_request, search_results)
         return search_results
+
     def send_request(self, search_engine_request):
         q = urllib.parse.quote(search_engine_request)
         url  = "https://www.google.ru/search?hl=ru&tbm=vid&q=" + q
-        self.browser.get(url)
-        time.sleep(3)
+        self.navigate(url)
+        time.sleep(1)
         search_results = self._parse_serp()
         self._cache_request(search_engine_request, search_results)
         return search_results
