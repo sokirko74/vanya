@@ -73,7 +73,7 @@ class TRacingWheel:
                 self.pressed_buttons.add(TRacingWheel.left_button)
             elif event.code == TRacingWheel.right_button:
                 tm = time.time()
-                if tm - self.right_button_time > 3:
+                if tm - self.right_button_time > 2:
                     self.right_button_time = tm
                     self.logger.info("right_button")
                     self.pressed_buttons.add(TRacingWheel.right_button)
