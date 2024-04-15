@@ -387,12 +387,12 @@ class TRiverGame:
                 if event.key == pygame.K_UP:
                     self.engine_sound.decrease_speed()
 
-        # if TRacingWheel.right_button in self.racing_wheel.pressed_buttons:
-        #     self.racing_wheel.pressed_buttons.remove(TRacingWheel.left_hat_button)
-        #     if self.stats.is_on_alarm:
-        #         self.set_alarm_off()
-        #     else:
-        #         self.set_alarm_on()
+        if TRacingWheel.right_button in self.racing_wheel.pressed_buttons:
+            self.racing_wheel.pressed_buttons.remove(TRacingWheel.right_button)
+            if self.stats.is_on_alarm:
+                self.set_alarm_off()
+            else:
+                self.set_alarm_on()
 
         if TRacingWheel.left_hat_button in self.racing_wheel.pressed_buttons:
             self.open_door()
