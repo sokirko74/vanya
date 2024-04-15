@@ -334,6 +334,18 @@ class TRiverGame:
             self.stats.success_tasks_count += 1
             self.passenger_goes_to_river("hurra")
 
+    def set_alarm_on(self):
+        self.stats.is_on_alarm = True
+        self.sounds.stop_sound("alarm")
+        self.sounds.play_sound("set_on_alarm", loops=0)
+        time.sleep(1)
+
+    def set_alarm_off(self):
+        self.stats.is_on_alarm = False
+        self.sounds.stop_sound("alarm")
+        self.sounds.play_sound("set_off_alarm", loops=0)
+        time.sleep(1)
+
     def process_keyboard_and_wheel_events(self, x_change):
         wheel_angle = self.racing_wheel.get_angle()
         if wheel_angle is not None:
@@ -350,6 +362,12 @@ class TRiverGame:
                 elif event.key == pygame.K_UP:
                     self.logger.info("pygame.K_UP")
                     self.engine_sound.increase_speed()
+                elif event.key == pygame.K_s:
+                    self.logger.info("pygame.К_s")
+                    self.set_alarm_on()
+                elif event.key == pygame.K_f:
+                    self.logger.info("pygame.К_f")
+                    self.set_alarm_off()
                 elif event.key == pygame.K_DOWN:
                     self.use_brakes()
                 elif event.key == pygame.K_ESCAPE:
@@ -368,9 +386,18 @@ class TRiverGame:
                     x_change = 0
                 if event.key == pygame.K_UP:
                     self.engine_sound.decrease_speed()
+
+        # if TRacingWheel.right_button in self.racing_wheel.pressed_buttons:
+        #     self.racing_wheel.pressed_buttons.remove(TRacingWheel.left_hat_button)
+        #     if self.stats.is_on_alarm:
+        #         self.set_alarm_off()
+        #     else:
+        #         self.set_alarm_on()
+
         if TRacingWheel.left_hat_button in self.racing_wheel.pressed_buttons:
             self.open_door()
             self.racing_wheel.pressed_buttons.remove(TRacingWheel.left_hat_button)
+
         if self.my_car.horizontal_speed_increase_with_get_speed:
             car_speed = self.get_car_speed()
             if car_speed > 0:
@@ -455,6 +482,7 @@ class TRiverGame:
         self.init_game_loop()
         x_change = 0
         #self.make_ambulance()
+        cycle_index = 0
         while not self.stats.game_over and not self.exit_game:
             self.process_wheel_pedals()
             x_change = self.process_keyboard_and_wheel_events(x_change)
@@ -467,6 +495,9 @@ class TRiverGame:
             #pygame.time.delay(200)
             if self.my_car.rect.top + 30 > self.height:
                 self.my_car.rect.top = self.height - 30
+            cycle_index += 1
+            if (cycle_index % 300 == 0) and self.stats.is_on_alarm and self.get_car_speed() > 0:
+                self.sounds.play_sound("alarm")
 
 
 def parse_args():

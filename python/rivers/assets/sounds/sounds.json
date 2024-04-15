@@ -46,5 +46,17 @@
   },
   "granny_wants_to_hospital": {
     "volume": 1.2
+  },
+  "granny_wants_to_hospital": {
+    "volume": 1.2
+  },
+  "set_on_alarm": {
+    "volume": 1.2
+  },
+  "set_off_alarm": {
+    "volume": 1.2
+  },
+  "alarm": {
+    "volume": 0.8
   }
 }
