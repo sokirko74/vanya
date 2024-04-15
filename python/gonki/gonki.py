@@ -129,7 +129,7 @@ class TGameRegisters:
         self.broken = False
         self.paused = False
         self.font = pygame.font.SysFont(None, 30)
-        self.large_font = pygame.font.SysFont(None, 150)
+        self.large_font = pygame.font.SysFont(None, 220)
 
     def print_text(self, text, x, y):
         screen_text = self.font.render(text, True, TColors.white)

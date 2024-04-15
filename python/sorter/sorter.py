@@ -251,8 +251,8 @@ class TApplication(tk.Frame):
     def set_main_window_geometry(self):
         if self.args.fullscreen:
             self.master.attributes('-fullscreen', True)
-            TSpriteForm.sprite_width = 500
-            TSpriteForm.sprite_height = 500
+            TSpriteForm.sprite_width = 200
+            TSpriteForm.sprite_height = 200
             TSpriteForm.font_size = 180
         else:
             TSpriteForm.sprite_width = 100

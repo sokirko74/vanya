@@ -1790,5 +1790,31 @@
         "https://www.youtube.com/watch?v=32c9WwexjSU",
         "https://www.youtube.com/watch?v=nYCykDETIFk",
         "https://www.youtube.com/watch?v=R4FhVYgZY4A"
+    ],
+    "ЛЕФАН тест драйв от первого лица": [
+        "https://www.youtube.com/watch?v=M9awFF5f7Jk",
+        "https://translate.google.com/translate?hl=ru&sl=pt&u=https://www.youtube.com/watch%3Fv%3DM9awFF5f7Jk&prev=search&pto=aue",
+        "https://www.youtube.com/watch?v=3EymPrGhkX0",
+        "https://www.youtube.com/watch?v=X51ipjwsiWk",
+        "https://www.youtube.com/watch?v=4Sy77XBJd5Q",
+        "https://translate.google.com/translate?hl=ru&sl=en&u=https://www.youtube.com/watch%3Fv%3D4Sy77XBJd5Q&prev=search&pto=aue",
+        "https://www.youtube.com/watch?v=wzDPMpPWUv4",
+        "https://www.youtube.com/watch?v=KBfnPpt7KD0",
+        "https://www.youtube.com/watch?v=CO3IGMjQ9zQ",
+        "https://www.youtube.com/watch?v=MJi1l_TKuHA",
+        "https://www.youtube.com/watch?v=aTyqTRfMEWw",
+        "https://www.youtube.com/watch?v=fhFTLWP2Oak"
+    ],
+    "АРЛАНДА тест драйв от первого лица": [
+        "https://www.youtube.com/watch?v=hlvCwg6Etds",
+        "https://www.youtube.com/watch?v=wmO3sjTKRhw",
+        "https://www.youtube.com/watch?v=MAu3hcsAt6Y",
+        "https://www.youtube.com/watch?v=4G3xK39adKw",
+        "https://www.youtube.com/watch?v=Oh63cUI-R2A",
+        "https://www.youtube.com/watch?v=0beLXcxBWyE",
+        "https://www.youtube.com/watch?v=dExZ9DORnlM",
+        "https://www.youtube.com/watch?v=HPOBflWrH6A",
+        "https://www.youtube.com/watch?v=VcLjmNbespM",
+        "https://www.youtube.com/watch?v=tg402pAE_6g"
     ]
 }
