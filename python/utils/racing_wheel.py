@@ -18,6 +18,7 @@ class TRacingWheel:
         self.level = level
         self.pressed_buttons = set()
         self.last_left_hat_button_time = 0
+        self.right_button_time = 0
         self.sound_pedals = sound_pedals
         self.device = None
         self.angle_level_ratio = angle_level_ratio
@@ -60,7 +61,6 @@ class TRacingWheel:
         while event is not None:
             #print(event)
             if event.type == ecodes.EV_ABS and event.code == ecodes.ABS_HAT0X or event.code == ecodes.ABS_HAT0Y:
-                tm = time.time()
                 if tm - self.last_left_hat_button_time > 6:
                     self.last_left_hat_button_time = tm
                     self.logger.info("left_hat_button event.code={}, time={}".format(event.code, tm))
@@ -72,8 +72,11 @@ class TRacingWheel:
                 self.logger.debug("left_button")
                 self.pressed_buttons.add(TRacingWheel.left_button)
             elif event.code == TRacingWheel.right_button:
-                self.logger.debug("right_button")
-                self.pressed_buttons.add(TRacingWheel.right_button)
+                tm = time.time()
+                if tm - self.right_button_time > 3:
+                    self.right_button_time = tm
+                    self.logger.info("right_button")
+                    self.pressed_buttons.add(TRacingWheel.right_button)
             elif event.code == TRacingWheel.left_pedal:
                 if event.value > self.level:
                     self.logger.info("left pedal")
