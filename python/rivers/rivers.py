@@ -33,7 +33,7 @@ class TRiverGame:
         self.racing_wheel = TRacingWheel(self.logger, args.wheel_center, angle_level_ratio=args.angle_level_ratio)
         self.engine_sound = None
         self.car_needs_repair = False
-        self.init_engine_sound()
+        self.init_engine_sound(False)
 
         self.last_pedal_event_time_stamp = 0
         self.river_collisions_1 = 0
@@ -70,7 +70,7 @@ class TRiverGame:
         if save_rect:
             self.my_car.rect = save_rect
 
-    def init_engine_sound(self):
+    def init_engine_sound(self, start_playing=True):
         if self.car_is_ambulance:
             folder = os.path.join(os.path.dirname(__file__), 'assets/sounds/ambulance')
         elif self.car_needs_repair:
@@ -80,7 +80,8 @@ class TRiverGame:
         new_engine_sound = TEngineSound(self.logger, folder, self.args.max_car_speed_limit + 1)
         old_engine_sound = self.engine_sound
         self.engine_sound = new_engine_sound
-        self.engine_sound.start_play_stream()
+        if start_playing:
+            self.engine_sound.start_play_stream()
         if old_engine_sound is not None:
             old_engine_sound.stop_engine()
 
@@ -91,7 +92,7 @@ class TRiverGame:
         win = self.finish_top > self.my_car.rect.top
         loose = self.my_car.rect.top > self.height - 100
         if win or loose:
-            self.engine_sound.stop_engine()
+            self.stop_engine()
             font = pygame.font.SysFont(None, 100)
             if win:
                 if self.stats.get_score() < self.args.great_victory_level:
@@ -133,6 +134,10 @@ class TRiverGame:
             self.init_engine_sound()
 
     def get_car_speed(self):
+        if self.engine_sound is None:
+            return 0
+        if not self.stats.engine:
+            return 0
         engine_speed = self.engine_sound.get_current_speed()
         #self.logger.debug('engine speed = {}'.format(engine_speed))
         return engine_speed - 1
@@ -143,7 +148,7 @@ class TRiverGame:
 
     def draw_game_intro(self, message_text=None):
         self.sounds.stop_sounds()
-        self.engine_sound.stop_engine()
+        self.stop_engine()
         self.game_intro.get_next_action(message_text)
         if self.game_intro.action == TGameIntro.exit_game_action:
             self.quit()
@@ -229,9 +234,10 @@ class TRiverGame:
                 self.init_new_map_part()
 
     def use_brakes(self):
-        self.logger.info("use brakes")
-        self.sounds.play_sound("brakes", loops=0)
-        self.engine_sound.set_idling_state()
+        if self.stats.engine:
+            self.logger.info("use brakes")
+            self.sounds.play_sound("brakes", loops=0)
+            self.engine_sound.set_idling_state()
 
     def passenger_gets_on_the_car(self, sprite: TSprite):
         self.sprites.passengers_in_car.empty()
@@ -264,11 +270,14 @@ class TRiverGame:
         self.river_collisions_1 = 0
 
     def refuel_car(self):
-        self.engine_sound.stop_engine()
-        length = self.sounds.play_sound("gas_station", loops=0)
-        time.sleep(length)
-        self.stats.refuel_car()
-        self.init_engine_sound()
+        #self.engine_sound.stop_engine()
+        if not self.stats.engine:
+            length = self.sounds.play_sound("gas_station", loops=0)
+            time.sleep(length)
+            self.stats.refuel_car()
+        else:
+            self.logger("stop engine, before refuel")
+        #self.init_engine_sound()
 
     def granny_leaves_the_car(self):
         if self.car_is_ambulance:
@@ -346,6 +355,34 @@ class TRiverGame:
         self.sounds.play_sound("set_off_alarm", loops=0)
         time.sleep(1)
 
+    def start_engine(self):
+        self.stats.engine = True
+        self.sounds.stop_sound("engine_start_volga_v8")
+        length = self.sounds.play_sound("engine_start_volga_v8", loops=0)
+        time.sleep(length)
+        self.engine_sound.start_play_stream()
+
+    def stop_engine(self):
+        if self.stats is None:
+            return
+        self.stats.engine = False
+        if self.engine_sound is not None:
+            self.engine_sound.stop_engine()
+
+    def press_engine_button(self):
+        if self.stats.engine:
+            self.stop_engine()
+        else:
+            self.start_engine()
+
+    def _increase_speed(self):
+        if self.stats.engine:
+            self.engine_sound.increase_speed()
+
+    def _decrease_speed(self):
+        if self.stats.engine:
+            self.engine_sound.decrease_speed()
+
     def process_keyboard_and_wheel_events(self, x_change):
         wheel_angle = self.racing_wheel.get_angle()
         if wheel_angle is not None:
@@ -361,13 +398,16 @@ class TRiverGame:
                     x_change = +self.my_car.horizontal_speed
                 elif event.key == pygame.K_UP:
                     self.logger.info("pygame.K_UP")
-                    self.engine_sound.increase_speed()
+                    self._increase_speed()
                 elif event.key == pygame.K_s:
                     self.logger.info("pygame.К_s")
                     self.set_alarm_on()
                 elif event.key == pygame.K_f:
                     self.logger.info("pygame.К_f")
                     self.set_alarm_off()
+                elif event.key == pygame.K_e:
+                    self.logger.info("pygame.К_e")
+                    self.press_engine_button()
                 elif event.key == pygame.K_DOWN:
                     self.use_brakes()
                 elif event.key == pygame.K_ESCAPE:
@@ -385,7 +425,7 @@ class TRiverGame:
                 if event.key == pygame.K_LEFT or event.key == pygame.K_RIGHT:
                     x_change = 0
                 if event.key == pygame.K_UP:
-                    self.engine_sound.decrease_speed()
+                    self._decrease_speed()
 
         if TRacingWheel.right_button in self.racing_wheel.pressed_buttons:
             self.racing_wheel.pressed_buttons.remove(TRacingWheel.right_button)
@@ -394,9 +434,11 @@ class TRiverGame:
             else:
                 self.set_alarm_on()
 
-        if TRacingWheel.left_hat_button in self.racing_wheel.pressed_buttons:
+        if self.racing_wheel.left_hat_was_pressed():
             self.open_door()
-            self.racing_wheel.pressed_buttons.remove(TRacingWheel.left_hat_button)
+
+        if self.racing_wheel.right_hat_was_pressed():
+            self.press_engine_button()
 
         if self.my_car.horizontal_speed_increase_with_get_speed:
             car_speed = self.get_car_speed()
@@ -417,10 +459,10 @@ class TRiverGame:
             return
         if self.racing_wheel.is_left_pedal_pressed():
             #self.logger.info("left pedal is on")
-            self.engine_sound.increase_speed()
+            self._increase_speed()
         else:
             #self.logger.info("left pedal is off    ")
-            self.engine_sound.decrease_speed()
+            self._decrease_speed()
 
         if self.racing_wheel.is_right_pedal_pressed():
             #self.logger.info("right pedal is on")
@@ -459,7 +501,7 @@ class TRiverGame:
         elif river is not None:
             self.check_river_collision(river)
         if self.car_has_granny() and not self.car_is_ambulance:
-            if (int(time.time()) % 20 == 0) and random.random() < self.args.granny_heart_attack_probability:
+            if (int(time.time()) % 25 == 0) and random.random() < self.args.granny_heart_attack_probability:
                 self.make_ambulance()
 
     def init_game_loop(self):
@@ -475,7 +517,7 @@ class TRiverGame:
         self.redraw_background()
         self.car_needs_repair = False
         self.init_new_map_part()
-        self.engine_sound.start_play_stream()
+        #self.engine_sound.start_play_stream()
         self.river_collisions_1 = 0
 
     def game_loop(self):
@@ -518,7 +560,7 @@ def parse_args():
     parser.add_argument("--engine-audio-folder", dest='engine_audio_folder',
                         default= os.path.join(os.path.dirname(__file__), 'assets/sounds/ford'))
     parser.add_argument("--girl-probability", dest='girl_probability', default=0.4, type=float)
-    parser.add_argument("--granny-heart-attack-probability", dest='granny_heart_attack_probability', default=0.01, type=float)
+    parser.add_argument("--granny-heart-attack-probability", dest='granny_heart_attack_probability', default=0.007, type=float)
 
 
     return parser.parse_args()

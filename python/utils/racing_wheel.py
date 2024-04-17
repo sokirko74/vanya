@@ -1,15 +1,19 @@
-from evdev import list_devices, InputDevice, ecodes
+from evdev import list_devices, InputDevice, ecodes, InputEvent, KeyEvent
 from utils.logging_wrapper import setup_logging
 import pygame
 import time
+from collections import  defaultdict
 
 
 class TRacingWheel:
-    left_button = 295
     right_button = 294
-    left_pedal = 10
+    left_button = 295
     right_pedal = 9
-    left_hat_button = 17
+    left_pedal = 10
+    left_hat_button_x = ecodes.ABS_HAT0X
+    left_hat_button_y = ecodes.ABS_HAT0Y
+    right_hat_button_x = 298
+    right_hat_button_y = 299
 
     def __init__(self, logger, center, level=120, sound_pedals=False, angle_level_ratio=30):
         self.logger = logger
@@ -17,8 +21,10 @@ class TRacingWheel:
         self.center = center
         self.level = level
         self.pressed_buttons = set()
+        self.last_press_times = defaultdict(int)
         self.last_left_hat_button_time = 0
         self.right_button_time = 0
+
         self.sound_pedals = sound_pedals
         self.device = None
         self.angle_level_ratio = angle_level_ratio
@@ -55,28 +61,66 @@ class TRacingWheel:
                     time.sleep(0.3)
                     self.init_device()
 
+    def _key_is_pressed(self, event: InputEvent, key_code):
+        check_type = event.type == ecodes.EV_ABS or event.type == ecodes.EV_KEY
+        check_down = event.value != 0
+        if check_type and (event.code == key_code) and check_down:
+            tm = time.time()
+            last_time = self.last_press_times[key_code]
+            if tm - last_time > 2:
+                self.last_press_times[key_code] = tm
+                return True
+        return False
+
+    def _left_hat_is_pressed(self, event):
+        return self._key_is_pressed(event, TRacingWheel.left_hat_button_x) or \
+            self._key_is_pressed(event, TRacingWheel.left_hat_button_y)
+
+    def left_hat_was_pressed(self):
+        for k in [TRacingWheel.left_hat_button_x, TRacingWheel.left_hat_button_y]:
+            if k in self.pressed_buttons:
+                self.pressed_buttons.remove(k)
+                return True
+        return False
+
+    def right_hat_was_pressed(self):
+        for k in [TRacingWheel.right_hat_button_x, TRacingWheel.right_hat_button_y]:
+            if k in self.pressed_buttons:
+                self.pressed_buttons.remove(k)
+                return True
+        return False
+
+    def _right_hat_is_pressed(self, event):
+        return self._key_is_pressed(event, TRacingWheel.right_hat_button_x) or \
+        self._key_is_pressed(event, TRacingWheel.right_hat_button_y)
+
+    def _left_small_button_is_pressed(self, event):
+        return self._key_is_pressed(event, TRacingWheel.left_button)
+
+    def _right_small_button_is_pressed(self, event):
+        return self._key_is_pressed(event, TRacingWheel.right_button)
+
     def read_events(self):
         event = self.read_one_event()
 
         while event is not None:
-            #print(event)
-            if event.type == ecodes.EV_ABS and event.code == ecodes.ABS_HAT0X or event.code == ecodes.ABS_HAT0Y:
-                if tm - self.last_left_hat_button_time > 6:
-                    self.last_left_hat_button_time = tm
-                    self.logger.info("left_hat_button event.code={}, time={}".format(event.code, tm))
-                    self.pressed_buttons.add(TRacingWheel.left_hat_button)
+            #if event.code != 0:
+            #    self.logger.info("{}".format(event))
+            if self._left_hat_is_pressed(event):
+                self.logger.info("left_hat_button event.code={}".format(event.code))
+                self.pressed_buttons.add(TRacingWheel.left_hat_button_x)
+            elif self._right_hat_is_pressed(event):
+                self.logger.info("right_hat_button event.code={}".format(event.code))
+                self.pressed_buttons.add(TRacingWheel.right_hat_button_x)
             elif event.code == ecodes.ABS_WHEEL:
                 self.raw_angle = event.value
                 #self.logger.info("abs_wheel value={}, center={}".format(self.raw_angle, self.center))
-            if event.code == TRacingWheel.left_button:
-                self.logger.debug("left_button")
+            if self._left_small_button_is_pressed(event):
+                self.logger.info("left small button is pressed")
                 self.pressed_buttons.add(TRacingWheel.left_button)
-            elif event.code == TRacingWheel.right_button:
-                tm = time.time()
-                if tm - self.right_button_time > 2:
-                    self.right_button_time = tm
-                    self.logger.info("right_button")
-                    self.pressed_buttons.add(TRacingWheel.right_button)
+            elif self._right_small_button_is_pressed(event):
+                self.logger.info("right small button is pressed")
+                self.pressed_buttons.add(TRacingWheel.right_button)
             elif event.code == TRacingWheel.left_pedal:
                 if event.value > self.level:
                     self.logger.info("left pedal")

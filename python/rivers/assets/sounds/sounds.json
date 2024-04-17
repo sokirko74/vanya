@@ -5,6 +5,9 @@
   "engine_start": {
     "volume": 0.5
   },
+  "engine_start_volga_v8": {
+    "volume": 0.5
+  },
   "engine_stop": {
     "volume": 0.5
   },

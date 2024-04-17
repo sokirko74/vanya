@@ -25,6 +25,7 @@ class TGameRegisters:
         #self.font_fade_event = pygame.USEREVENT + 1
         #pygame.time.set_timer(self.font_fade_event, 200)
         self.count_call = 0
+        self.engine = False
 
     def print_text(self, text, x, y):
         screen_text = self.font.render(text, True, TColors.white)
@@ -64,6 +65,7 @@ class TGameRegisters:
         self.print_text('km: {}'.format(self.map_parts_count), 30, 210)
         self.print_text('fuel: {}'.format(self.fuel_volume), 30, 240)
         self.print_text('alarm: {}'.format(self.is_on_alarm), 30, 270)
+        self.print_text('engine: {}'.format(self.engine), 30, 300)
         if self.fuel_volume <= RED_LAMP_FUEL_MIN_LEVEL:
             if self.count_call % 8 < 4:
                 text = str(self.fuel_volume)
