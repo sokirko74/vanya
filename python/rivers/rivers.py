@@ -276,7 +276,7 @@ class TRiverGame:
             time.sleep(length)
             self.stats.refuel_car()
         else:
-            self.logger("stop engine, before refuel")
+            self.logger.info("stop engine, before refuel")
         #self.init_engine_sound()
 
     def granny_leaves_the_car(self):

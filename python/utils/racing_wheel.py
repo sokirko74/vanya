@@ -67,7 +67,7 @@ class TRacingWheel:
         if check_type and (event.code == key_code) and check_down:
             tm = time.time()
             last_time = self.last_press_times[key_code]
-            if tm - last_time > 2:
+            if tm - last_time > 4:
                 self.last_press_times[key_code] = tm
                 return True
         return False

@@ -23,19 +23,6 @@
         "https://www.youtube.com/watch?v=C8kvZrjp1Nc",
         "https://www.youtube.com/watch?v=Zypnd7Q-_14"
     ],
-    "ГАЗЕЛЬ тест драйв от первого лица": [
-        "https://www.youtube.com/watch?v=Y19mETVI504",
-        "https://www.youtube.com/watch?v=A7ydQHjQi1c",
-        "https://www.youtube.com/watch?v=JqK_w5WHLac",
-        "https://www.youtube.com/watch?v=5CGqJQ0kVrQ",
-        "https://www.youtube.com/watch?v=9ZeDilfX1S0",
-        "https://www.youtube.com/watch?v=jgRqMgTCIfc",
-        "https://www.youtube.com/watch?v=JkmiOylj_Y4",
-        "https://www.google.ru/search?newwindow=1&hl=ru&q=related:https://www.youtube.com/watch%3Fv%3DJkmiOylj_Y4+%D0%93%D0%90%D0%97%D0%95%D0%9B%D0%AC+%D1%82%D0%B5%D1%81%D1%82+%D0%B4%D1%80%D0%B0%D0%B9%D0%B2+%D0%BE%D1%82+%D0%BF%D0%B5%D1%80%D0%B2%D0%BE%D0%B3%D0%BE+%D0%BB%D0%B8%D1%86%D0%B0&sa=X&ved=2ahUKEwiXmtn45OT9AhUWv4sKHfo6CpMQH3oECAwQCQ",
-        "https://www.youtube.com/watch?v=lj1blrHqFmc",
-        "https://www.google.ru/search?newwindow=1&hl=ru&q=related:https://www.youtube.com/watch%3Fv%3Dlj1blrHqFmc+%D0%93%D0%90%D0%97%D0%95%D0%9B%D0%AC+%D1%82%D0%B5%D1%81%D1%82+%D0%B4%D1%80%D0%B0%D0%B9%D0%B2+%D0%BE%D1%82+%D0%BF%D0%B5%D1%80%D0%B2%D0%BE%D0%B3%D0%BE+%D0%BB%D0%B8%D1%86%D0%B0&sa=X&ved=2ahUKEwiXmtn45OT9AhUWv4sKHfo6CpMQH3oECAMQCQ",
-        "https://www.youtube.com/watch?v=kpq_m2dQtKU"
-    ],
     "ЛИМУЗИН тест драйв от первого лица": [
         "https://www.youtube.com/watch?v=_VEs29DUIaM",
         "https://www.youtube.com/watch?v=UvD0xm-z330",
@@ -1238,18 +1225,6 @@
         "https://www.youtube.com/watch?v=0EsKmUSmFMs",
         "https://www.youtube.com/watch?v=U2uktW44xxA"
     ],
-    "ГАЗЕЛЬ": [
-        "https://www.youtube.com/watch?v=o9GEUeuA1VQ",
-        "https://www.youtube.com/watch?v=FnejkbVxoOA",
-        "https://www.youtube.com/watch?v=SVorgJAvkYY",
-        "https://www.youtube.com/watch?v=5xNjBfaTifk",
-        "https://www.youtube.com/watch?v=VArcldjU-sk",
-        "https://www.youtube.com/watch?v=xHRCCseThMs",
-        "https://www.youtube.com/watch?v=NdFjqLfrEJQ",
-        "https://www.youtube.com/watch?v=NdFjqLfrEJQ&t=0",
-        "https://www.youtube.com/watch?v=NdFjqLfrEJQ&t=136",
-        "https://www.youtube.com/watch?v=YplQ1VKo51Y"
-    ],
     "ПРЯМОТОК": [
         "https://www.youtube.com/watch?v=fSmfmL9ZUaE",
         "https://www.youtube.com/watch?v=nMeaPY-0tIw",
@@ -1816,5 +1791,74 @@
         "https://www.youtube.com/watch?v=HPOBflWrH6A",
         "https://www.youtube.com/watch?v=VcLjmNbespM",
         "https://www.youtube.com/watch?v=tg402pAE_6g"
+    ],
+    "ФОРД СКОРПИО реставрация": [
+        "https://www.youtube.com/watch?v=i_X5JPYGrI8",
+        "https://www.youtube.com/watch?v=qhzb3SeQf6A",
+        "https://www.youtube.com/watch?v=T18q1XuseG4",
+        "https://www.youtube.com/watch?v=JF0HUV7ODQE",
+        "https://www.youtube.com/watch?v=KpN32eYi1pQ",
+        "https://www.youtube.com/watch?v=SUV-rT0Cq60",
+        "https://m.youtube.com/watch?v=q5PbjIu3Z4o",
+        "https://www.youtube.com/watch?v=noQEZ-6JVXk",
+        "https://www.youtube.com/watch?v=dy0m84qcxJU",
+        "https://www.youtube.com/watch?v=RRwxRMzZu3M"
+    ],
+    "STARTING FORD SCORPIO": [
+        "https://www.youtube.com/watch?v=teOHaGpDajE",
+        "https://translate.google.com/translate?hl=ru&sl=en&u=https://www.youtube.com/watch%3Fv%3DteOHaGpDajE&prev=search&pto=aue",
+        "https://www.youtube.com/watch?v=6G9447QVceE",
+        "https://translate.google.com/translate?hl=ru&sl=en&u=https://www.youtube.com/watch%3Fv%3D6G9447QVceE&prev=search&pto=aue",
+        "https://www.youtube.com/watch?v=4GvUWr8q6yg",
+        "https://translate.google.com/translate?hl=ru&sl=en&u=https://www.youtube.com/watch%3Fv%3D4GvUWr8q6yg&prev=search&pto=aue",
+        "https://www.youtube.com/watch?v=gTP6xiRMZ4U&lc=Ugw1xoS_Y1zepPdDXKl4AaABAg",
+        "https://translate.google.com/translate?hl=ru&sl=en&u=https://www.youtube.com/watch%3Fv%3DgTP6xiRMZ4U%26lc%3DUgw1xoS_Y1zepPdDXKl4AaABAg&prev=search&pto=aue",
+        "https://www.youtube.com/watch?v=gTP6xiRMZ4U&lc=Ugw1xoS_Y1zepPdDXKl4AaABAg&t=0",
+        "https://www.youtube.com/watch?v=gTP6xiRMZ4U&lc=Ugw1xoS_Y1zepPdDXKl4AaABAg&t=34",
+        "https://www.youtube.com/watch?v=gTP6xiRMZ4U&lc=Ugw1xoS_Y1zepPdDXKl4AaABAg&t=163",
+        "https://www.youtube.com/watch?v=gTP6xiRMZ4U&lc=Ugw1xoS_Y1zepPdDXKl4AaABAg&t=228",
+        "https://www.youtube.com/watch?v=ZlFgAJ6dFXo",
+        "https://translate.google.com/translate?hl=ru&sl=en&u=https://www.youtube.com/watch%3Fv%3DZlFgAJ6dFXo&prev=search&pto=aue",
+        "https://www.youtube.com/watch?v=ZlFgAJ6dFXo&t=55",
+        "https://www.youtube.com/watch?v=ZlFgAJ6dFXo&t=332",
+        "https://www.youtube.com/watch?v=ZlFgAJ6dFXo&t=686",
+        "https://www.youtube.com/watch?v=ZlFgAJ6dFXo&t=994",
+        "https://www.youtube.com/watch?v=ZlFgAJ6dFXo&t=1283",
+        "https://www.youtube.com/watch?v=ZlFgAJ6dFXo&t=1717",
+        "https://www.youtube.com/watch?v=ZlFgAJ6dFXo&t=2073",
+        "https://www.youtube.com/watch?v=ZlFgAJ6dFXo&t=2407",
+        "https://www.youtube.com/watch?v=ZlFgAJ6dFXo&t=2823",
+        "https://www.youtube.com/watch?v=ZlFgAJ6dFXo&t=3365",
+        "https://www.youtube.com/watch?v=ZeX8cgi3QM4",
+        "https://translate.google.com/translate?hl=ru&sl=en&u=https://www.youtube.com/watch%3Fv%3DZeX8cgi3QM4&prev=search&pto=aue",
+        "https://www.youtube.com/watch?v=vh-dDn19daU",
+        "https://www.youtube.com/watch?v=DVcKdfpJN_4",
+        "https://translate.google.com/translate?hl=ru&sl=en&u=https://www.youtube.com/watch%3Fv%3DDVcKdfpJN_4&prev=search&pto=aue",
+        "https://www.youtube.com/watch?v=1D0KegUs3Ow",
+        "https://translate.google.com/translate?hl=ru&sl=en&u=https://www.youtube.com/watch%3Fv%3D1D0KegUs3Ow&prev=search&pto=aue"
+    ],
+    "ГАЗЕЛЬ тест драйв от первого лица": [
+        "https://www.youtube.com/watch?v=CMdPbjs_hBY",
+        "https://www.youtube.com/watch?v=Y19mETVI504",
+        "https://www.youtube.com/watch?v=CUgJeRsKQH4",
+        "https://www.youtube.com/watch?v=vw0Dt_DINC0",
+        "https://www.youtube.com/watch?v=JqK_w5WHLac",
+        "https://www.youtube.com/watch?v=m-YjF7ChSzI",
+        "https://www.youtube.com/watch?v=5CGqJQ0kVrQ",
+        "https://www.youtube.com/watch?v=sqdirb5pO9Y",
+        "https://www.youtube.com/watch?v=8jA7Gv9OtJk",
+        "https://www.youtube.com/watch?v=lj1blrHqFmc"
+    ],
+    "ГАЗЕЛЬ 2000 тест драйв от первого лица": [
+        "https://www.youtube.com/watch?v=vw0Dt_DINC0",
+        "https://www.youtube.com/watch?v=CMdPbjs_hBY",
+        "https://www.youtube.com/watch?v=jgRqMgTCIfc",
+        "https://www.youtube.com/watch?v=CUgJeRsKQH4",
+        "https://www.youtube.com/watch?v=JqK_w5WHLac",
+        "https://www.youtube.com/watch?v=ZXwD11MxXSo",
+        "https://www.youtube.com/watch?v=lj1blrHqFmc",
+        "https://www.youtube.com/watch?v=sqdirb5pO9Y",
+        "https://m.youtube.com/watch?v=JkmiOylj_Y4&embeds_referring_euri=https%3A%2F%2Ftrophy-market.ru%2F&feature=emb_imp_woyt",
+        "https://www.youtube.com/watch?v=C2lkAYQb0Xk"
     ]
 }

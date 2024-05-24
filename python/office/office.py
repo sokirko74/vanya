@@ -15,7 +15,7 @@ from logging_wrapper import setup_logging
 from tkinter.messagebox import askyesno
 
 
-MAX_WORD_FAIL_COUNT = 5
+MAX_WORD_FAIL_COUNT = 3
 MAX_VICTORIES_COUNT = 20
 
 
@@ -133,8 +133,9 @@ class TVanyaOffice(tk.Frame):
         #self.play_file("word_fail.wav")
 
     def read_goal_words(self):
-        path = os.path.join(os.path.dirname(__file__), "goal_words.txt")
-        path = os.path.join(os.path.dirname(__file__), "nouns5.txt")
+        #path = os.path.join(os.path.dirname(__file__), "goal_words.txt")
+        #path = os.path.join(os.path.dirname(__file__), "nouns5.txt")
+        path = os.path.join(os.path.dirname(__file__), "nouns6.txt")
         with open(path) as inp:
             for i in inp:
                 self.goal_words.append(i.strip())
@@ -144,7 +145,7 @@ class TVanyaOffice(tk.Frame):
         frame1.pack(side=tk.TOP)
 
         self.goal_word = tk.StringVar()
-        self.goal_words_combobox = tk.ttk.Combobox(frame1, width=5,
+        self.goal_words_combobox = tk.ttk.Combobox(frame1, width=6,
                  textvariable=self.goal_word,font=self.read_font)
         self.goal_words_combobox['values'] = tuple(self.goal_words)
         self.goal_words_combobox.pack(side=tk.LEFT)
@@ -202,10 +203,11 @@ class TVanyaOffice(tk.Frame):
         notes = list()
         channel = 1
         for char in goal_word:
-            note, octave, instr = KEY_2_NOTE[char]
-            fluidsynth.set_instrument(channel, instr)
-            notes.append(Note(note, octave, channel=channel))
-            channel += 1
+            if char in KEY_2_NOTE:
+                note, octave, instr = KEY_2_NOTE[char]
+                fluidsynth.set_instrument(channel, instr)
+                notes.append(Note(note, octave, channel=channel))
+                channel += 1
         b.place_notes(notes, 1)
         fluidsynth.stop_everything()
         fluidsynth.play_Bar(b)

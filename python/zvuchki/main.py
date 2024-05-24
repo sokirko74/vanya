@@ -318,6 +318,8 @@ class TZvuchki(tk.Frame):
                 add_to_query.append("МАШИНА")
             elif token == 'Э':
                 add_to_query.append( "эксплуатация")
+            elif token == 'Р':
+                add_to_query.append("реставрация")
             elif token == 'П':
                 use_old_urls = True
             elif token == 'Г':
