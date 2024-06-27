@@ -21,7 +21,7 @@
     "volume": 0.2
   },
   "door_open": {
-    "volume": 0.2
+    "volume": 0.8
   },
   "wrong_stop": {
     "volume": 0.6
