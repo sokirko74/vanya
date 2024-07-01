@@ -5,7 +5,7 @@ from utils.game_sounds import TSounds
 from utils.game_intro import TGameIntro
 from engine_sound import TEngineSound
 from river_sprites import TSprite, TMyCar, TMapPart, TGrannySprite, TRepairStation, TGirlSprite,TGasStation,\
-    TRiverSprites,  THospital
+    TRiverSprites,  THospital, TTownSprite
 from river_registers import TGameRegisters
 
 import pygame
@@ -333,7 +333,7 @@ class TRiverGame:
                 time.sleep(1)
                 self.passenger_gets_on_the_car(self.map_part.passengers[0])
                 self.map_part_next.kill_passengers()
-            elif self.car_has_granny():
+            elif self.car_has_granny() and isinstance(town, TTownSprite):
                 self.granny_leaves_the_car()
             elif self.car_has_girl():
                 self.logger.info("girl refuses to leave the car")
