@@ -53,7 +53,7 @@ class TGameRegisters:
                 return False
         return True
 
-    def draw_params(self, my_car_top, game_speed, car_is_broken):
+    def draw_params(self, my_car_top, game_speed, car_is_broken, broken_tires):
         self.count_call +=1
         self.print_text('score: {}'.format(self.get_score()), 30, 0)
         self.print_text('speed: {}'.format(game_speed), 30, 30)
@@ -66,6 +66,7 @@ class TGameRegisters:
         self.print_text('fuel: {}'.format(self.fuel_volume), 30, 240)
         self.print_text('alarm: {}'.format(self.is_on_alarm), 30, 270)
         self.print_text('engine: {}'.format(self.engine), 30, 300)
+        self.print_text('tires: {}'.format(not broken_tires), 30, 330)
         if self.fuel_volume <= RED_LAMP_FUEL_MIN_LEVEL:
             if self.count_call % 8 < 4:
                 text = str(self.fuel_volume)

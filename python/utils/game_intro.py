@@ -55,6 +55,7 @@ class TGameIntro:
                         self.racing_wheel.save_wheel_center()
                     if event.key == pygame.K_RETURN:
                         self.action = TGameIntro.start_game_action
+                        break
                     if event.key == pygame.K_ESCAPE:
                         self.action = TGameIntro.exit_game_action
                         break
@@ -65,3 +66,4 @@ class TGameIntro:
             self.exit_button.process()
             pygame.display.update()
             time.sleep(0.2)
+        pygame.event.clear()

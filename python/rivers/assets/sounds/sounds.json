@@ -61,5 +61,8 @@
   },
   "alarm": {
     "volume": 0.8
+  },
+  "broken_tires": {
+    "volume": 0.3
   }
 }

@@ -34,6 +34,7 @@ class TRiverGame:
         self.engine_sound = None
         self.car_needs_repair = False
         self.init_engine_sound(False)
+        self.broken_tires = False
 
         self.last_pedal_event_time_stamp = 0
         self.river_collisions_1 = 0
@@ -208,6 +209,8 @@ class TRiverGame:
             self.map_part_next.generate_gas_station()
         elif self.car_needs_repair and random.random() > 0.5:
             self.map_part_next.generate_repair_station()
+        elif self.broken_tires and random.random() > 0.4 and not isinstance(self.map_part.car_stop, TRepairStation):
+            self.map_part_next.generate_repair_station()
         else:
             gen_granny = not self.car_has_passenger() and random.random() > 0.3
             self.map_part_next.generate_town(gen_granny)
@@ -268,6 +271,7 @@ class TRiverGame:
         self.sounds.play_sound("repair_car", loops=0)
         self.init_engine_sound()
         self.river_collisions_1 = 0
+        self.broken_tires = False
 
     def refuel_car(self):
         #self.engine_sound.stop_engine()
@@ -304,7 +308,7 @@ class TRiverGame:
             return
 
         town = pygame.sprite.spritecollideany(self.my_car, self.sprites.towns, collided=pygame.sprite.collide_mask)
-        if self.car_needs_repair and isinstance(town, TRepairStation):
+        if (self.car_needs_repair or self.broken_tires) and isinstance(town, TRepairStation):
             self.repair_car()
             return
 
@@ -361,6 +365,18 @@ class TRiverGame:
         length = self.sounds.play_sound("engine_start_volga_v8", loops=0)
         time.sleep(length)
         self.engine_sound.start_play_stream()
+
+    def set_broken_tires_sound(self):
+        if self.get_car_speed() > 0 and self.broken_tires:
+            if not self.sounds.this_sound_is_playing("broken_tires"):
+                self.sounds.play_sound('broken_tires')
+        else:
+            if self.sounds.this_sound_is_playing("broken_tires"):
+                self.sounds.stop_sound("broken_tires")
+
+    def make_tires_broken(self):
+        self.broken_tires = True
+        self.play_broken_tires()
 
     def stop_engine(self):
         if self.stats is None:
@@ -474,7 +490,12 @@ class TRiverGame:
         pygame.draw.line(self.screen, TColors.white, (0, self.finish_top),
                          (self.width, self.finish_top))
 
-        self.stats.draw_params(self.my_car.rect.top, self.get_car_speed(), self.car_needs_repair)
+        self.stats.draw_params(
+            self.my_car.rect.top,
+            self.get_car_speed(),
+            self.car_needs_repair,
+            self.broken_tires
+        )
         #pygame.draw.rect(self.screen, TColors.black, self.other_car.rect, width=1)
         #pygame.draw.rect(self.screen, TColors.black, self.my_car.rect, width=1)
         self.sprites.my_car.draw(self.screen)
@@ -512,13 +533,15 @@ class TRiverGame:
         if self.map_part is not None:
             self.map_part.destroy_sprites()
             self.map_part = None
-        #self.my_car.rect.top = self.height - 650
         self.stats = TGameRegisters(self.screen)
         self.redraw_background()
         self.car_needs_repair = False
         self.init_new_map_part()
-        #self.engine_sound.start_play_stream()
         self.river_collisions_1 = 0
+        self.passenger_in_car = None
+        self.car_is_ambulance = False
+        self.broken_tires = False
+        #self.broken_tires = True # temp to test
 
     def game_loop(self):
         self.init_game_loop()
@@ -540,6 +563,13 @@ class TRiverGame:
             cycle_index += 1
             if (cycle_index % 300 == 0) and self.stats.is_on_alarm and self.get_car_speed() > 0:
                 self.sounds.play_sound("alarm")
+            if cycle_index % 121 == 0:
+
+                if not self.broken_tires and random.random() > 0.9:
+                    if self.get_car_speed() > 0:
+                        self.broken_tires = True
+                        self.logger.info("tires are broken!")
+                self.set_broken_tires_sound()
 
 
 def parse_args():
@@ -576,7 +606,4 @@ if __name__ == "__main__":
     game.draw_game_intro()
 
 
-#=========
-# Звук старта ( если есть)
-# Макс. громкость
 

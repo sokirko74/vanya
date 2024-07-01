@@ -7,7 +7,7 @@ class TSounds:
 
     def __init__(self, sounds_dir, enable_sounds):
         self.enable_sounds = enable_sounds
-        self.sounds = dict()
+        self._sounds = dict()
         if self.enable_sounds:
             pygame.mixer.init()
             with open (os.path.join(sounds_dir, "sounds.json")) as inp:
@@ -15,23 +15,31 @@ class TSounds:
                     path = os.path.join(sounds_dir, k + ".wav")
                     sound = pygame.mixer.Sound(path)
                     sound.set_volume(v['volume'])
-                    self.sounds[k] = sound
+                    self._sounds[k] = sound
 
     def stop_sounds(self):
-        for k in self.sounds.values():
+        for k in self._sounds.values():
             k.stop()
 
     def play_sound(self, sound_type, loops=0, volume=None):
         length = 0
         if self.enable_sounds:
             if volume is not None:
-                self.sounds[sound_type].set_volume(volume)
-            self.sounds[sound_type].play(loops=loops)
-            length = self.sounds[sound_type].get_length()
+                self._sounds[sound_type].set_volume(volume)
+            self._sounds[sound_type].play(loops=loops)
+            length = self._sounds[sound_type].get_length()
         return length
 
+    def this_sound_is_playing(self, sound_type):
+        for i in range(pygame.mixer.get_num_channels()):
+            channel = pygame.mixer.Channel(i)
+            sound = channel.get_sound()
+            if sound == self._sounds[sound_type]:
+                return True
+        return False
+
     def stop_sound(self, sound_type):
-        sound = self.sounds.get(sound_type)
+        sound = self._sounds.get(sound_type)
         if sound:
             sound.stop()
 
