@@ -1,5 +1,3 @@
-from engine_state import TEngineState
-
 import time
 import threading
 import numpy as np

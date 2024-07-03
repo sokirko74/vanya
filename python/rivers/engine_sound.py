@@ -9,7 +9,6 @@ from collections import namedtuple
 from typing import List
 
 
-
 IncreaseProps = namedtuple('IncreaseProps', ['frame_rate', 'volume'])
 
 
@@ -22,6 +21,10 @@ class TEngineSound:
             with open (props_file) as inp:
                 props = json.load(inp)
         stable_file_path = os.path.join(engine_folder, props.get('stable', 'stable.wav'))
+        self.start_sound_file_path = None
+        if 'start' in props:
+            self.start_sound_file_path = os.path.join(engine_folder, props['start'])
+
         self._engine_sound, self.orig_frame_rate = librosa.load(stable_file_path)
         self._engine_sound = self._engine_sound * props.get('init_volume_coef', 1.0)
         self._stable_speed_cache = dict()
@@ -102,7 +105,7 @@ class TEngineSound:
         self._decreasing_engine_sound = np.ascontiguousarray(np.flip(self._increasing_engine_sound))
         assert len(self._increasing_engine_sound) == len(self._increasing_engine_sound)
 
-    def create_stable_at_speed(self, speed):
+    def _create_stable_at_speed(self, speed):
         cached_frames = self._stable_speed_cache.get(speed)
         if cached_frames is not None:
             return cached_frames
@@ -134,7 +137,7 @@ class TEngineSound:
     def _create_sound(self, speed):
         try:
             if self._engine_state == TEngineState.engine_stable:
-                s = self.create_stable_at_speed(speed)
+                s = self._create_stable_at_speed(speed)
             elif self._engine_state == TEngineState.engine_increase:
                 s = self._get_increasing_at_speed(speed)
             else:
@@ -149,7 +152,7 @@ class TEngineSound:
     def _can_decrease(self):
         return self._current_speed > self.idle_speed
 
-    def stabilize_speed(self):
+    def _stabilize_speed(self):
         if self._engine_state != TEngineState.engine_stable:
             self.log.debug("switch to stable state")
             self._engine_state = TEngineState.engine_stable
@@ -183,13 +186,13 @@ class TEngineSound:
         if self._engine_state == TEngineState.engine_increase:
             self._engine_state = TEngineState.engine_stable
             self._current_speed = self.limit_max_speed
-            return self.create_stable_at_speed(self.limit_max_speed)
+            return self._create_stable_at_speed(self.limit_max_speed)
         elif self._engine_state == TEngineState.engine_decrease:
             self._engine_state = TEngineState.engine_stable
             self._current_speed = self.idle_speed
-            return self.create_stable_at_speed(self.idle_speed)
+            return self._create_stable_at_speed(self.idle_speed)
         else:
-            return self.create_stable_at_speed(self._current_speed)
+            return self._create_stable_at_speed(self._current_speed)
 
 #todo try time_stretch instead of resample
 #

@@ -1,5 +1,5 @@
 {
   "stable": "stable.wav",
-  "start":  "start.wav",
+  "start": "start.wav",
   "init_volume_coef": 0.2
 }

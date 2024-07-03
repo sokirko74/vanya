@@ -85,6 +85,8 @@ class TRiverGame:
             self.engine_sound.start_play_stream()
         if old_engine_sound is not None:
             old_engine_sound.stop_engine()
+        if self.engine_sound.start_sound_file_path is not None:
+            self.sounds.set_sound('engine_start', self.engine_sound.start_sound_file_path)
 
     def quit(self):
         self.exit_game = True
@@ -361,9 +363,9 @@ class TRiverGame:
 
     def start_engine(self):
         self.stats.engine = True
-        self.sounds.stop_sound("engine_start_volga_v8")
-        length = self.sounds.play_sound("engine_start_volga_v8", loops=0)
-        time.sleep(length)
+        self.sounds.stop_sound("engine_start")
+        length = self.sounds.play_sound("engine_start", loops=0)
+        time.sleep(length - 0.5)
         self.engine_sound.start_play_stream()
 
     def set_broken_tires_sound(self):

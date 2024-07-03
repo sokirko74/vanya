@@ -23,7 +23,7 @@ def _test_engine_gui(engine: TEngineSound):
         keys = pygame.key.get_pressed()
         key_pressed = sum(1 for k in keys if k)
         if not key_pressed:
-            engine.stabilize_speed()
+            engine._stabilize_speed()
         elif keys[pygame.K_UP]:
             engine.increase_speed()
         elif keys[pygame.K_DOWN]:
@@ -50,7 +50,7 @@ def play_raw_frames(y, sr):
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--engine-folder", dest='engine_folder', default='../assets/sounds/uaz')
+    parser.add_argument("--engine-folder", dest='engine_folder', default=os.path.join(os.path.dirname(__file__), '../assets/sounds/uaz'))
     parser.add_argument("--limit-speed-count", dest='limit_speed', default=5, type=int)
     return parser.parse_args()
 
@@ -60,9 +60,9 @@ def main():
     log = setup_logging("test_engine", console_level=logging.DEBUG)
     engine = TEngineSound(log, args.engine_folder, 5)
     engine.start_play_stream()
-    #_test_engine_gui(engine)
+    _test_engine_gui(engine)
     #play_raw_frames(engine._engine_sound, engine.orig_frame_rate)
-    play_raw_frames(engine._increasing_engine_sound, engine.orig_frame_rate)
+    #play_raw_frames(engine._increasing_engine_sound, engine.orig_frame_rate)
     #ngine.start_engine_thread()
     #_test_engine_gui(sound)
     #for i in range(10):
