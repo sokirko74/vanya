@@ -17,6 +17,10 @@ class TSounds:
                     sound.set_volume(v['volume'])
                     self._sounds[k] = sound
 
+    def set_sound(self, key, path):
+        sound = pygame.mixer.Sound(path)
+        self._sounds[key] = sound
+
     def stop_sounds(self):
         for k in self._sounds.values():
             k.stop()
