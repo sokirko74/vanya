@@ -524,7 +524,7 @@ class TRiverGame:
         elif river is not None:
             self.check_river_collision(river)
         if self.car_has_granny() and not self.car_is_ambulance:
-            if (int(time.time()) % 25 == 0) and random.random() < self.args.granny_heart_attack_probability:
+            if (int(time.time()) % 33 == 0) and random.random() < self.args.granny_heart_attack_probability:
                 self.make_ambulance()
 
     def init_game_loop(self):
@@ -565,9 +565,8 @@ class TRiverGame:
             cycle_index += 1
             if (cycle_index % 300 == 0) and self.stats.is_on_alarm and self.get_car_speed() > 0:
                 self.sounds.play_sound("alarm")
-            if cycle_index % 121 == 0:
-
-                if not self.broken_tires and random.random() > 0.9:
+            if cycle_index % 161 == 0:
+                if not self.broken_tires and random.random() > 0.99:
                     if self.get_car_speed() > 0:
                         self.broken_tires = True
                         self.logger.info("tires are broken!")
@@ -592,7 +591,7 @@ def parse_args():
     parser.add_argument("--engine-audio-folder", dest='engine_audio_folder',
                         default= os.path.join(os.path.dirname(__file__), 'assets/sounds/ford'))
     parser.add_argument("--girl-probability", dest='girl_probability', default=0.4, type=float)
-    parser.add_argument("--granny-heart-attack-probability", dest='granny_heart_attack_probability', default=0.007, type=float)
+    parser.add_argument("--granny-heart-attack-probability", dest='granny_heart_attack_probability', default=0.005, type=float)
 
 
     return parser.parse_args()
