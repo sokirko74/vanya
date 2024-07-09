@@ -29,7 +29,7 @@ class PyAudioStreamWrapper(threading.Thread):
         return buf
 
     def _gen_audio_callback(self, in_data, frame_count, time_info, status):
-        if self._parent.get_current_speed() == 0:
+        if self._parent.get_current_speed() == 0 or self.get_audio_buffer() is None:
             return np.zeros( (frame_count,), dtype=np.float32)
         elif len(self.get_audio_buffer()) < frame_count:
             s = self._parent.get_new_frames()

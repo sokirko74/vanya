@@ -78,7 +78,7 @@ class TRiverGame:
             folder = os.path.join(os.path.dirname(__file__), 'assets/sounds/vaz_wo_muffler')
         else:
             folder = self.args.engine_audio_folder
-        new_engine_sound = TEngineSound(self.logger, folder, self.args.max_car_speed_limit + 1)
+        new_engine_sound = TEngineSound(self.logger, folder, self.args.max_car_speed_limit + 1, self.sounds)
         old_engine_sound = self.engine_sound
         self.engine_sound = new_engine_sound
         if start_playing:
@@ -361,7 +361,7 @@ class TRiverGame:
         self.sounds.play_sound("set_off_alarm", loops=0)
         time.sleep(1)
 
-    def start_engine(self):
+    def start_cold_engine(self):
         self.stats.engine = True
         self.sounds.stop_sound("engine_start")
         length = self.sounds.play_sound("engine_start", loops=0)
@@ -391,7 +391,7 @@ class TRiverGame:
         if self.stats.engine:
             self.stop_engine()
         else:
-            self.start_engine()
+            self.start_cold_engine()
 
     def _increase_speed(self):
         if self.stats.engine:

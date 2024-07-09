@@ -13,8 +13,9 @@ IncreaseProps = namedtuple('IncreaseProps', ['frame_rate', 'volume'])
 
 
 class TEngineSound:
-    def __init__(self, log, engine_folder, limit_speed):
+    def __init__(self, log, engine_folder, limit_speed, sounds):
         self.log = log
+        self.sounds = sounds
         props_file = os.path.join(engine_folder, "audio_props.json")
         props = dict()
         if os.path.exists(props_file):
@@ -24,6 +25,11 @@ class TEngineSound:
         self.start_sound_file_path = None
         if 'start' in props:
             self.start_sound_file_path = os.path.join(engine_folder, props['start'])
+        if 'idle' in props:
+            idle_sound_file_path = os.path.join(engine_folder, props['idle'])
+            self._idle_engine_sound, self.idle_frame_rate = librosa.load(idle_sound_file_path)
+        else:
+            self.idle_sound_file_path = None
 
         self._engine_sound, self.orig_frame_rate = librosa.load(stable_file_path)
         self._engine_sound = self._engine_sound * props.get('init_volume_coef', 1.0)
@@ -44,9 +50,7 @@ class TEngineSound:
 
     def set_idling_state(self):
         self._current_speed = self.idle_speed
-        self._engine_state = TEngineState.engine_stable
         self._create_sound(self.idle_speed)
-
 
     def start_play_stream(self):
         self.log.debug('start engine sound')
@@ -105,7 +109,12 @@ class TEngineSound:
         self._decreasing_engine_sound = np.ascontiguousarray(np.flip(self._increasing_engine_sound))
         assert len(self._increasing_engine_sound) == len(self._increasing_engine_sound)
 
+    def _get_idle_sound(self):
+        return self._idle_engine_sound
+
     def _create_stable_at_speed(self, speed):
+        if speed == self.idle_speed:
+            return self._get_idle_sound()
         cached_frames = self._stable_speed_cache.get(speed)
         if cached_frames is not None:
             return cached_frames
@@ -137,7 +146,10 @@ class TEngineSound:
     def _create_sound(self, speed):
         try:
             if self._engine_state == TEngineState.engine_stable:
-                s = self._create_stable_at_speed(speed)
+                if self._idle_engine_sound is not None:
+                    s = self._get_idle_sound()
+                else:
+                    s = self._create_stable_at_speed(speed)
             elif self._engine_state == TEngineState.engine_increase:
                 s = self._get_increasing_at_speed(speed)
             else:
@@ -194,5 +206,3 @@ class TEngineSound:
         else:
             return self._create_stable_at_speed(self._current_speed)
 
-#todo try time_stretch instead of resample
-#
