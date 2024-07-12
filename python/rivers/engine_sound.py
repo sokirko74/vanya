@@ -110,7 +110,10 @@ class TEngineSound:
         assert len(self._increasing_engine_sound) == len(self._increasing_engine_sound)
 
     def _get_idle_sound(self):
-        return self._idle_engine_sound
+        if hasattr(self, "_idle_engine_sound") and self._idle_engine_sound is not None:
+            return self._idle_engine_sound
+        else:
+            return self._engine_sound
 
     def _create_stable_at_speed(self, speed):
         if speed == self.idle_speed:
@@ -146,7 +149,7 @@ class TEngineSound:
     def _create_sound(self, speed):
         try:
             if self._engine_state == TEngineState.engine_stable:
-                if self._idle_engine_sound is not None:
+                if hasattr(self, "_idle_engine_sound" ) and self._idle_engine_sound is not None:
                     s = self._get_idle_sound()
                 else:
                     s = self._create_stable_at_speed(speed)
