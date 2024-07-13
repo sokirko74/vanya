@@ -86,8 +86,6 @@ class TRiverGame:
             self.engine_sound.start_play_stream()
         if old_engine_sound is not None:
             old_engine_sound.stop_engine()
-        if self.engine_sound.start_sound_file_path is not None:
-            self.sounds.set_sound('engine_start', self.engine_sound.start_sound_file_path)
 
     def quit(self):
         self.exit_game = True

@@ -21,12 +21,17 @@ class TEngineSound:
         if os.path.exists(props_file):
             with open (props_file) as inp:
                 props = json.load(inp)
-        stable_file_path = os.path.join(engine_folder, props.get('stable', 'stable.wav'))
-        self.start_sound_file_path = None
-        if 'start' in props:
-            self.start_sound_file_path = os.path.join(engine_folder, props['start'])
+        stable_base_name = 'stable.wav'
+        if 'stable' in props:
+            stable_base_name = props['stable']['path']
+        stable_file_path = os.path.join(engine_folder, stable_base_name)
+        for i in ['engine_start', 'set_on_alarm', 'set_off_alarm']:
+            if i in props:
+                sound_file_path = os.path.join(engine_folder, props[i]['path'])
+                sounds.set_sound(i, sound_file_path, props[i].get('volume'))
+
         if 'idle' in props:
-            idle_sound_file_path = os.path.join(engine_folder, props['idle'])
+            idle_sound_file_path = os.path.join(engine_folder, props['idle']['path'])
             self._idle_engine_sound, self.idle_frame_rate = librosa.load(idle_sound_file_path)
         else:
             self.idle_sound_file_path = None
@@ -34,7 +39,7 @@ class TEngineSound:
             self.idle_frame_rate = None
 
         self._engine_sound, self.orig_frame_rate = librosa.load(stable_file_path)
-        self._engine_sound = self._engine_sound * props.get('init_volume_coef', 1.0)
+        self._engine_sound = self._engine_sound * props.get('stable', {}).get('volume', 1.0)
         self._stable_speed_cache = dict()
         self._increasing_engine_sound = None
         self._increase_engine_props: List[IncreaseProps] = list()

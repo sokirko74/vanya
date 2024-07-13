@@ -65,9 +65,11 @@ class TRacingWheel:
         check_type = event.type == ecodes.EV_ABS or event.type == ecodes.EV_KEY
         check_down = event.value != 0
         if check_type and (event.code == key_code) and check_down:
-            tm = time.time()
+            #tm = time.time()
+            tm = event.sec
             last_time = self.last_press_times[key_code]
             if tm - last_time > 4:
+                self.logger.debug('last time={} , time ={}'.format(last_time, tm))
                 self.last_press_times[key_code] = tm
                 return True
         return False
@@ -110,7 +112,8 @@ class TRacingWheel:
                 self.logger.info("left_hat_button event.code={}".format(event.code))
                 self.pressed_buttons.add(TRacingWheel.left_hat_button_x)
             elif self._right_hat_is_pressed(event):
-                self.logger.info("right_hat_button event.code={}".format(event.code))
+                self.logger.info("right_hat_button event.code={} time={}".format(
+                    event.code, event.sec))
                 self.pressed_buttons.add(TRacingWheel.right_hat_button_x)
             elif event.code == ecodes.ABS_WHEEL:
                 self.raw_angle = event.value

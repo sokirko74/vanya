@@ -1,4 +1,3 @@
 {
-  "stable": "stable.wav",
-  "init_volume_coef": 0.2
+  "stable": {"path": "stable.wav", "volume": 0.2 }
 }
