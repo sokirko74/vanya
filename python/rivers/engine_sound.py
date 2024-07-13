@@ -30,6 +30,8 @@ class TEngineSound:
             self._idle_engine_sound, self.idle_frame_rate = librosa.load(idle_sound_file_path)
         else:
             self.idle_sound_file_path = None
+            self._idle_engine_sound = None
+            self.idle_frame_rate = None
 
         self._engine_sound, self.orig_frame_rate = librosa.load(stable_file_path)
         self._engine_sound = self._engine_sound * props.get('init_volume_coef', 1.0)
@@ -110,7 +112,7 @@ class TEngineSound:
         assert len(self._increasing_engine_sound) == len(self._increasing_engine_sound)
 
     def _get_idle_sound(self):
-        if hasattr(self, "_idle_engine_sound") and self._idle_engine_sound is not None:
+        if self._idle_engine_sound is not None:
             return self._idle_engine_sound
         else:
             return self._engine_sound
@@ -149,7 +151,7 @@ class TEngineSound:
     def _create_sound(self, speed):
         try:
             if self._engine_state == TEngineState.engine_stable:
-                if hasattr(self, "_idle_engine_sound" ) and self._idle_engine_sound is not None:
+                if self._idle_engine_sound is not None:
                     s = self._get_idle_sound()
                 else:
                     s = self._create_stable_at_speed(speed)

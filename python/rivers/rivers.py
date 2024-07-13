@@ -15,7 +15,7 @@ import os
 import math
 import random
 import logging
-
+from threading import Thread, Lock
 
 SOUNDS_DIR = os.path.join(os.path.dirname(__file__), "assets", 'sounds')
 
@@ -33,11 +33,11 @@ class TRiverGame:
         self.racing_wheel = TRacingWheel(self.logger, args.wheel_center, angle_level_ratio=args.angle_level_ratio)
         self.engine_sound = None
         self.car_needs_repair = False
-        self.init_engine_sound(False)
         self.broken_tires = False
-
+        self.start_engine_mutex = Lock()
         self.last_pedal_event_time_stamp = 0
         self.river_collisions_1 = 0
+
         if args.full_screen:
             self.screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
             pygame.display.toggle_fullscreen()
@@ -51,6 +51,7 @@ class TRiverGame:
         self.game_intro = TGameIntro(self.screen, os.path.join(TSprite.SPRITES_DIR, 'background1.jpg'),  self.racing_wheel)
         self.my_car = None
         self.init_my_car()
+        self.init_engine_sound(False)
         self.map_part: TMapPart = None
         self.map_part_next = None
         self.passenger_in_car: TSprite = None
@@ -276,14 +277,12 @@ class TRiverGame:
         self.broken_tires = False
 
     def refuel_car(self):
-        #self.engine_sound.stop_engine()
         if not self.stats.engine:
             length = self.sounds.play_sound("gas_station", loops=0)
             time.sleep(length)
             self.stats.refuel_car()
         else:
             self.logger.info("stop engine, before refuel")
-        #self.init_engine_sound()
 
     def granny_leaves_the_car(self):
         if self.car_is_ambulance:
@@ -362,11 +361,13 @@ class TRiverGame:
         time.sleep(1)
 
     def start_cold_engine(self):
-        self.stats.engine = True
-        self.sounds.stop_sound("engine_start")
-        length = self.sounds.play_sound("engine_start", loops=0)
-        time.sleep(length - 0.5)
-        self.engine_sound.start_play_stream()
+        with self.start_engine_mutex:
+            if not self.stats.engine:
+                self.sounds.stop_sound("engine_start")
+                length = self.sounds.play_sound("engine_start", loops=0)
+                time.sleep(length - 0.5)
+                self.engine_sound.start_play_stream()
+                self.stats.engine = True
 
     def set_broken_tires_sound(self):
         if self.get_car_speed() > 0 and self.broken_tires:
