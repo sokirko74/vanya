@@ -363,6 +363,7 @@ class TRiverGame:
     def start_cold_engine(self):
         with self.start_engine_mutex:
             if not self.stats.engine:
+                self.logger.info("start cold engine")
                 self.sounds.stop_sound("engine_start")
                 length = self.sounds.play_sound("engine_start", loops=0)
                 time.sleep(length - 0.5)
@@ -384,6 +385,7 @@ class TRiverGame:
     def stop_engine(self):
         if self.stats is None:
             return
+        self.logger.info("stop cold engine")
         self.stats.engine = False
         if self.engine_sound is not None:
             self.engine_sound.stop_engine()
