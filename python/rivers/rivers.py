@@ -347,12 +347,14 @@ class TRiverGame:
             self.passenger_goes_to_river("hurra")
 
     def set_alarm_on(self):
+        self.logger.info("set_alarm_on")
         self.stats.is_on_alarm = True
         self.sounds.stop_sound("alarm")
         self.sounds.play_sound("set_on_alarm", loops=0)
         time.sleep(1)
 
     def set_alarm_off(self):
+        self.logger.info("set_alarm_off")
         self.stats.is_on_alarm = False
         self.sounds.stop_sound("alarm")
         self.sounds.play_sound("set_off_alarm", loops=0)

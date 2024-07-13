@@ -25,7 +25,7 @@ class TEngineSound:
         if 'stable' in props:
             stable_base_name = props['stable']['path']
         stable_file_path = os.path.join(engine_folder, stable_base_name)
-        for i in ['engine_start', 'set_on_alarm', 'set_off_alarm']:
+        for i in ['engine_start', 'set_on_alarm', 'set_off_alarm', "alarm"]:
             if i in props:
                 sound_file_path = os.path.join(engine_folder, props[i]['path'])
                 sounds.set_sound(i, sound_file_path, props[i].get('volume'))
