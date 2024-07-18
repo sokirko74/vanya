@@ -1,0 +1,5 @@
+{
+  "stable": {"path": "stable.wav", "volume": 0.2},
+  "engine_start": {"path": "start.wav"}
+
+}
