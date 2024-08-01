@@ -18,10 +18,16 @@ class TSounds:
                     self._sounds[k] = sound
 
     def set_sound(self, key, path, volume=None):
-        sound = pygame.mixer.Sound(path)
-        if volume is not None:
-            sound.set_volume(volume)
-        self._sounds[key] = sound
+        if path is None and key in self._sounds:
+            del self._sounds[key]
+        elif path is not None:
+            sound = pygame.mixer.Sound(path)
+            if volume is not None:
+                sound.set_volume(volume)
+            self._sounds[key] = sound
+
+    def has_sound(self, key):
+        return key in self._sounds and self._sounds[key]
 
     def stop_sounds(self):
         for k in self._sounds.values():

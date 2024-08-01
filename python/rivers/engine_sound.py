@@ -27,8 +27,11 @@ class TEngineSound:
         stable_file_path = os.path.join(engine_folder, stable_base_name)
         for i in ['engine_start', 'set_on_alarm', 'set_off_alarm', "alarm"]:
             if i in props:
-                sound_file_path = os.path.join(engine_folder, props[i]['path'])
-                sounds.set_sound(i, sound_file_path, props[i].get('volume'))
+                if props[i]['path'] is None:
+                    sounds.set_sound(i, None)
+                else:
+                    sound_file_path = os.path.join(engine_folder, props[i]['path'])
+                    sounds.set_sound(i, sound_file_path, props[i].get('volume'))
 
         if 'idle' in props:
             idle_sound_file_path = os.path.join(engine_folder, props['idle']['path'])
@@ -164,7 +167,10 @@ class TEngineSound:
                 s = self._get_increasing_at_speed(speed)
             else:
                 s = self._get_decreasing_at_speed(speed)
-            self._play_stream.set_audio_buffer(s)
+            if self._play_stream is not None:
+                self._play_stream.set_audio_buffer(s)
+            else:
+                self.log.debug("self._play_stream is None, fix me")
         except IndexError as exp:
             self.log.debug("unknown exception {}, speed = {}, fix me in 2024".format(exp, speed))
 
