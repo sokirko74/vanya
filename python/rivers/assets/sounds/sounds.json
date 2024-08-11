@@ -61,5 +61,11 @@
   },
   "broken_tires": {
     "volume": 0.3
+  },
+  "handcuffs": {
+    "volume": 1.0
+  },
+  "police-siren": {
+    "volume": 0.1
   }
 }
