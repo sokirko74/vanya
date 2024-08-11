@@ -662,7 +662,8 @@ class TRiverGame:
                 self.my_car.rect.top = self.height - 30
             cycle_index += 1
             if (cycle_index % 300 == 0) and self.stats.is_on_alarm and self.get_car_speed() > 0:
-                self.sounds.play_sound("alarm")
+                if self.sounds.has_sound("alarm"):
+                    self.sounds.play_sound("alarm")
             if cycle_index % 10 == 0:
                 self.init_robber_car()
                 self.update_robber_car_position()
