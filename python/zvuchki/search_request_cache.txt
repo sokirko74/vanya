@@ -1860,5 +1860,17 @@
         "https://www.youtube.com/watch?v=sqdirb5pO9Y",
         "https://m.youtube.com/watch?v=JkmiOylj_Y4&embeds_referring_euri=https%3A%2F%2Ftrophy-market.ru%2F&feature=emb_imp_woyt",
         "https://www.youtube.com/watch?v=C2lkAYQb0Xk"
+    ],
+    "ЛИФАН тест драйв от первого лица": [
+        "https://www.youtube.com/watch?v=adhk036mLBA",
+        "https://www.youtube.com/watch?v=GzGs6dX5w9I",
+        "https://www.youtube.com/watch?v=5c-zsGTGud0",
+        "https://www.youtube.com/watch?v=8yqEor_lD6g",
+        "https://www.youtube.com/watch?v=GB5BdCNZQsc",
+        "https://www.youtube.com/watch?v=6S3F26NvcCE",
+        "https://www.youtube.com/watch?v=fjncMVBaFFc",
+        "https://www.youtube.com/watch?v=4lBrYO2geK0",
+        "https://www.youtube.com/watch?v=wzDPMpPWUv4",
+        "https://www.youtube.com/watch?v=_WYiH7f-3T8"
     ]
 }
