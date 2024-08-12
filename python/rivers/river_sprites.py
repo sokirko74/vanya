@@ -15,6 +15,7 @@ class TSprite(pygame.sprite.Sprite):
     def __init__(self, screen, image_file_name, rect, surface=None):
         super().__init__()
         self.screen = screen
+        self.river_fall_count = 0
         self.rect = rect
         self.file_name = image_file_name
         if image_file_name is not None:
@@ -85,7 +86,7 @@ class TTownColor:
             return 2
         if self.color == TColors.blue:
             return 3
-        raise Exception("unk color {}".format(c))
+        raise Exception("unk color {}".format(self.color))
 
     def get_color_str(self):
         if self.color == TColors.red:
@@ -94,14 +95,14 @@ class TTownColor:
             return "green"
         if self.color == TColors.blue:
             return "blue"
-        raise Exception("unk color {}".format(c))
+        raise Exception("unk color {}".format(self.color))
 
 
 class TGrannySprite(TSprite):
     GRANNY_WIDTH = 150
 
     def __init__(self, screen, left, top, width=None, color=None, minus_color=None):
-        self.river_fall_count = 0
+
         self.color = TTownColor(color, minus_color)
         if width is None:
             width = TGrannySprite.GRANNY_WIDTH
@@ -325,7 +326,7 @@ class TMapPart:
 
 
 class TCarSprite(TSprite):
-    def __init__(self, screen, image_folder, horizontal_speed=10):
+    def __init__(self, screen, image_folder):
         if not os.path.exists(image_folder):
             image_folder = os.path.join(os.path.dirname(__file__), image_folder)
         info_path = os.path.join(image_folder, "info.json")
@@ -336,8 +337,6 @@ class TCarSprite(TSprite):
         image_file_name = os.path.abspath(os.path.join(image_folder, "body.png"))
         rct = pygame.Rect(0, 0, car_width, car_height)
         super().__init__(screen, image_file_name, rct)
-        self.horizontal_speed = horizontal_speed
-        self.horizontal_speed_increase_with_get_speed = True
 
 
 class TRiverSprites:

@@ -57,5 +57,5 @@ class TSounds:
 
     def stop_all_and_play(self, sound_type, loops=1000, volume=None):
         self.stop_sounds()
-        self.play_sound(sound_type, loops=loops, volume=volume)
+        return self.play_sound(sound_type, loops=loops, volume=volume)
 

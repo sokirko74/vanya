@@ -1,11 +1,8 @@
 from utils.colors import TColors
 
 import pygame
-import random
 
 
-MAX_FUEL_VOLUME = 5
-RED_LAMP_FUEL_MIN_LEVEL = 2
 
 
 class TGameRegisters:
@@ -17,15 +14,29 @@ class TGameRegisters:
         self.success_tasks_count = 0
         self.paused = False
         self.map_parts_count = 0
-        self.fuel_volume = MAX_FUEL_VOLUME
+
         self.map_parts_count = 0
         self.font = pygame.font.SysFont(None, 30)
         self.red_lamp_font = pygame.font.SysFont(None, 230)
         self.is_on_alarm = True
-        #self.font_fade_event = pygame.USEREVENT + 1
-        #pygame.time.set_timer(self.font_fade_event, 200)
         self.count_call = 0
         self.engine = False
+        self.my_car = None
+
+    def restart_stats(self):
+        self.game_over = False
+        self.river_accident_count = 0
+        self.bridge_passing_count = 0
+        self.success_tasks_count = 0
+        self.paused = False
+        self.map_parts_count = 0
+        self.map_parts_count = 0
+        self.is_on_alarm = True
+        self.count_call = 0
+
+
+    def set_my_car_ref(self, my_car):
+        self.my_car = my_car
 
     def print_text(self, text, x, y):
         screen_text = self.font.render(text, True, TColors.white)
@@ -34,22 +45,11 @@ class TGameRegisters:
     def get_score(self):
         return self.bridge_passing_count - self.river_accident_count + self.success_tasks_count
 
-    def refuel_car(self):
-        self.fuel_volume = MAX_FUEL_VOLUME
-
-    def is_full_tank(self):
-        return self.fuel_volume == MAX_FUEL_VOLUME
-
-    def should_generate_gas_station(self):
-        #return self.fuel_volume <= RED_LAMP_FUEL_MIN_LEVEL #test
-        return self.fuel_volume <= RED_LAMP_FUEL_MIN_LEVEL and random.random() > 1.5 * self.fuel_volume / MAX_FUEL_VOLUME #prod
-
     def increment_map_parts_count(self):
         self.map_parts_count += 1
 
         if (self.map_parts_count % 3) == 0:
-            self.fuel_volume -= 1
-            if self.fuel_volume <= 0:
+            if not self.my_car.decrement_fuel():
                 return False
         return True
 
@@ -63,13 +63,13 @@ class TGameRegisters:
         self.print_text('success tasks: {}'.format(self.success_tasks_count), 30, 150)
         self.print_text('broken: {}'.format(car_is_broken), 30, 180)
         self.print_text('km: {}'.format(self.map_parts_count), 30, 210)
-        self.print_text('fuel: {}'.format(self.fuel_volume), 30, 240)
+        self.print_text('fuel: {}'.format(self.my_car.get_fuel_volume()), 30, 240)
         self.print_text('alarm: {}'.format(self.is_on_alarm), 30, 270)
-        self.print_text('engine: {}'.format(self.engine), 30, 300)
+        self.print_text('engine: {}'.format(self.my_car.engine), 30, 300)
         self.print_text('tires: {}'.format(not broken_tires), 30, 330)
-        if self.fuel_volume <= RED_LAMP_FUEL_MIN_LEVEL:
+        if self.my_car.need_fuel():
             if self.count_call % 8 < 4:
-                text = str(self.fuel_volume)
+                text = str(self.my_car.get_fuel_volume())
             else:
                 text = ' '
             screen_text = self.red_lamp_font.render(text, True, TColors.red)
@@ -78,3 +78,4 @@ class TGameRegisters:
         if self.paused:
             s = pygame.display.get_surface()
             self.print_text("pause (press spacebar to play)", s.get_width()/2, s.get_height()/2)
+

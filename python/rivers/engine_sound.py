@@ -192,6 +192,8 @@ class TEngineSound:
                 self._engine_state = TEngineState.engine_increase
                 self.log.debug("switch to increasing state")
                 self._create_sound(self._current_speed)
+                return True
+        return False
 
     def decrease_speed(self):
         if self._can_decrease():
@@ -199,6 +201,8 @@ class TEngineSound:
                 self._engine_state = TEngineState.engine_decrease
                 self.log.debug("switch to decreasing state")
                 self._create_sound(self._current_speed)
+                return True
+        return False
 
     def update_speed(self):
         if self._engine_state == TEngineState.engine_stable:
