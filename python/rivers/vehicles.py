@@ -142,7 +142,7 @@ class BaseCar:
             self.logger.info("stop engine, before refuel")
 
     def stop_engine(self):
-        self.logger.info("{} stop cold engine".format(name))
+        self.logger.info("{} stop cold engine".format(self.name))
         self.engine = False
         if self.engine_sound is not None:
             self.engine_sound.stop_engine()

@@ -101,17 +101,18 @@ class TRiverGame:
                                   )
         self.my_car.use_police_light = True
         left, top = self.map_part.car_stop.rect.center
-        self.robber_car.move_car(left, top - 100)
+        self.robber_car.move_car(left, top - 300)
         self.sprites.passengers_at_car_stop.empty()
         self.map_part.kill_passengers()
         self.robber_car.start_warm_engine()
 
-    def destroy_robber_car(self):
+    def destroy_robber_car(self, success=True):
         self.logger.info('destroy robber car')
         self.chase_bridge_count = 0
         self.my_car.stop_engine()
-        length = self.sounds.stop_all_and_play('handcuffs', loops=0)
-        time.sleep(length)
+        if success:
+            length = self.sounds.stop_all_and_play('handcuffs', loops=0)
+            time.sleep(length)
         self.robber_car.destroy_car()
         self.robber_car = None
         self.my_car.use_police_light = False
@@ -383,6 +384,8 @@ class TRiverGame:
         self.my_car.decrease_speed()
         if self.robber_car:
             self.robber_car.decrease_speed()
+        if self.my_car.get_speed() == 0 and self.robber_car is not None:
+            self.destroy_robber_car(False)
 
     def make_tires_broken(self):
         self.my_car.broken_tires = True
@@ -586,7 +589,7 @@ def parse_args():
     parser.add_argument("--engine-auto-start", dest='engine_auto_start', default=False, action="store_true")
     parser.add_argument("--passenger-at-stop-prob", dest='passenger_at_stop_prob', default=0.7, type=float)
     parser.add_argument("--min-chase-bridge-count", dest='min_chase_bridge_count', default=3, type=int)
-    parser.add_argument("--bank-prob", dest='bank_prob', default=0.1, type=float)
+    parser.add_argument("--bank-prob", dest='bank_prob', default=0.05, type=float)
 
     return parser.parse_args()
 
