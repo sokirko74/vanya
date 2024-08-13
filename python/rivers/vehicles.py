@@ -148,6 +148,8 @@ class BaseCar:
         self.engine = False
         if self.engine_sound is not None:
             self.engine_sound.stop_engine()
+        if self.siren:
+            self.sounds.stop_sound(self.siren)
 
     def increase_speed(self):
         if self.engine:

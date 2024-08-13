@@ -344,13 +344,16 @@ class TRiverGame:
             self.my_car.stop_engine()
             self.my_car = self.saved_my_car
             self.my_car.start_warm_engine()
+            if self.robber_car:
+                self.destroy_robber_car(False)
+            self.car_is_ambulance = False
             return
 
         passenger_at_car_stop = self.my_car.find_collision(self.sprites.passengers_at_car_stop)
         bridge = self.my_car.find_collision(self.sprites.bridges)
-
+        is_town  = car_stop and isinstance(car_stop, TTownSprite)
         if passenger_at_car_stop is None:
-            if car_stop and car_stop.traveller is not None:
+            if is_town and car_stop.traveller is not None:
                 passenger_at_car_stop = car_stop.traveller
         if passenger_at_car_stop and not self.car_has_passenger():
             self.logger.info("granny comes to the car")
@@ -358,8 +361,7 @@ class TRiverGame:
             time.sleep(1)
             self.passenger_gets_on_the_car(passenger_at_car_stop)
 
-
-        elif car_stop and self.car_has_granny() and isinstance(car_stop, TTownSprite):
+        elif car_stop and self.car_has_granny() and is_town:
             self.granny_leaves_the_car()
         elif car_stop and self.car_has_girl():
             self.logger.info("girl refuses to leave the car")
@@ -594,7 +596,7 @@ def parse_args():
     parser.add_argument("--engine-auto-start", dest='engine_auto_start', default=False, action="store_true")
     parser.add_argument("--passenger-at-stop-prob", dest='passenger_at_stop_prob', default=0.7, type=float)
     parser.add_argument("--min-chase-bridge-count", dest='min_chase_bridge_count', default=3, type=int)
-    parser.add_argument("--bank-prob", dest='bank_prob', default=0.05, type=float)
+    parser.add_argument("--bank-prob", dest='bank_prob', default=0.1, type=float)
 
     return parser.parse_args()
 
