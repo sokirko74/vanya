@@ -161,6 +161,7 @@ class TTownSprite(TSprite):
                          surface=srf
                          )
         self.collided = False
+        self.traveller = None
 
 
 class TStation(TSprite):
@@ -233,7 +234,8 @@ class TMapPart:
         else:
             self.car_stop = TTownSprite(self.screen, self.road.car_stop_position[0], self.road.car_stop_position[1])
             if generate_passenger:
-                self.generate_passenger(minus_color=self.car_stop.color.color)
+                p = self._generate_passenger(minus_color=self.car_stop.color.color)
+                self.car_stop.traveller = p
 
     def generate_bank(self):
         self.car_stop = TBank(self.screen, self.road.car_stop_position[0], self.road.car_stop_position[1])
@@ -288,13 +290,14 @@ class TMapPart:
             x = self.car_stop.rect.left - self.car_stop.rect.width + len(self.passengers) * 20
         return x, self.car_stop.rect.top
 
-    def generate_passenger(self, color=None, minus_color=None):
+    def _generate_passenger(self, color=None, minus_color=None):
         left, top = self._get_passenger_position_at_car_stop()
         if random.random() < self.girl_probability:
             g = TGirlSprite(self.road.screen, left, top)
         else:
             g = TGrannySprite(self.road.screen, left, top, color=color, minus_color=minus_color)
         self.passengers.append(g)
+        return g
 
     def passenger_goes_to_car_stop(self, passenger: TSprite):
         passenger.screen = self.road.screen

@@ -60,6 +60,7 @@ class TEngineSound:
 
     def set_idling_state(self):
         self._current_speed = self.idle_speed
+        self._engine_state = TEngineState.engine_stable
         self._create_sound(self.idle_speed)
 
     def start_play_stream(self):

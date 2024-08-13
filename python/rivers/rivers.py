@@ -70,6 +70,7 @@ class TRiverGame:
         return self.my_car
 
     def create_ambulance(self):
+        self.my_car.stop_engine()
         self.sounds.play_sound('granny_wants_to_hospital')
         time.sleep(3)
 
@@ -80,6 +81,9 @@ class TRiverGame:
                     self.screen,
                     self.sounds,
                     sprite_folder, engine_sound_folder, "siren", max_speed)
+        c.dashboard.is_on_alarm = False
+        c.move_car(self.my_car.sprite.rect.left, self.my_car.sprite.rect.top)
+        c.start_warm_engine()
         self.saved_my_car = self.my_car
         self.car_is_ambulance = True
         return c
@@ -228,7 +232,7 @@ class TRiverGame:
         elif self.my_car.broken_tires and random.random() > 0.4 and not isinstance(self.map_part.car_stop, TRepairStation):
             mp.generate_repair_station()
         else:
-            gen_granny = not self.car_has_passenger() and random.random() < self.args.passenger_at_stop_prob
+            gen_granny = not self.car_has_passenger() and random.random() < self.args.passenger_at_stop_prob and not self.map_part.has_passengers()
             bank_prob = self.get_bank_probability()
             mp.generate_town(gen_granny, bank_prob)
         return mp
@@ -323,43 +327,47 @@ class TRiverGame:
         if self.my_car.get_speed() != 0:
             return
 
-        town = self.my_car.find_collision(self.sprites.towns)
-        if (self.my_car.car_needs_repair or self.my_car.broken_tires) and isinstance(town, TRepairStation):
+        car_stop = self.my_car.find_collision(self.sprites.towns)
+        if (self.my_car.car_needs_repair or self.my_car.broken_tires) and isinstance(car_stop, TRepairStation):
             self.my_car.repair_car()
             self.river_collisions_1 = 0
             return
 
-        if isinstance(town, TGasStation):
+        if isinstance(car_stop, TGasStation):
             if not self.my_car.is_full_tank():
                 self.my_car.refuel_car()
             return
 
-        if isinstance(town, THospital) and self.car_has_passenger():
+        if isinstance(car_stop, THospital) and self.car_has_passenger():
             self.passenger_leaves_car("thank")
             self.get_dashboard().success_tasks_count += 1
+            self.my_car.stop_engine()
             self.my_car = self.saved_my_car
+            self.my_car.start_warm_engine()
             return
 
         passenger_at_car_stop = self.my_car.find_collision(self.sprites.passengers_at_car_stop)
-        if town or passenger_at_car_stop:
-            self.logger.info("open door")
-            if self.map_part.has_passengers() and not self.car_has_passenger():
-                self.logger.info("granny comes to the car")
-                self.sounds.play_sound("door_open", loops=0)
-                time.sleep(1)
-                self.passenger_gets_on_the_car(self.map_part.passengers[0])
-                self.map_part_next.kill_passengers()
-            elif self.car_has_granny() and isinstance(town, TTownSprite):
-                self.granny_leaves_the_car()
-            elif self.car_has_girl():
-                self.logger.info("girl refuses to leave the car")
-                self.sounds.play_sound("door_open", loops=0)
-                time.sleep(2)
-                self.sounds.play_sound("gde_voda", loops=0)
-                time.sleep(1)
-
         bridge = self.my_car.find_collision(self.sprites.bridges)
-        if bridge and self.car_has_girl():
+
+        if passenger_at_car_stop is None:
+            if car_stop and car_stop.traveller is not None:
+                passenger_at_car_stop = car_stop.traveller
+        if passenger_at_car_stop and not self.car_has_passenger():
+            self.logger.info("granny comes to the car")
+            self.sounds.play_sound("door_open", loops=0)
+            time.sleep(1)
+            self.passenger_gets_on_the_car(passenger_at_car_stop)
+
+
+        elif car_stop and self.car_has_granny() and isinstance(car_stop, TTownSprite):
+            self.granny_leaves_the_car()
+        elif car_stop and self.car_has_girl():
+            self.logger.info("girl refuses to leave the car")
+            self.sounds.play_sound("door_open", loops=0)
+            time.sleep(2)
+            self.sounds.play_sound("gde_voda", loops=0)
+            time.sleep(1)
+        elif bridge and self.car_has_girl():
             self.get_dashboard().success_tasks_count += 1
             self.passenger_goes_to_river("hurra")
 
