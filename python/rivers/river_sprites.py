@@ -27,15 +27,9 @@ class TSprite(pygame.sprite.Sprite):
             assert surface is not None
             self.image = surface
 
-        self.angle = 0
-        self.speed_modifier = 1.0
-
-        self.retreat_after_crash = False
-        self.sound = None
-        self.sound_volume = 0
 
     def change_spite_position(self, speed):
-        self.rect.top += self.speed_modifier * speed
+        self.rect.top += speed
 
 
 class TRiver(TSprite):
@@ -358,8 +352,8 @@ class TRiverSprites:
 
     def redraw_without_cars(self, screen):
         self.rivers.draw(screen)
-        self.bridges.draw(screen)
         self.roads.draw(screen)
+        self.bridges.draw(screen)
         self.towns.draw(screen)
         self.passengers_at_car_stop.draw(screen)
         self.passengers_in_car.draw(screen)

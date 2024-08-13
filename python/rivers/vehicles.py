@@ -1,5 +1,5 @@
 from river_sprites import TCarSprite
-
+from car_dashboard import TCarDashboard
 import gif_pygame
 from threading import Lock
 import pygame
@@ -11,15 +11,15 @@ import random
 MAX_FUEL_VOLUME = 5
 RED_LAMP_FUEL_MIN_LEVEL = 2
 
+
 class BaseCar:
-    def __init__(self, logger, screen, sounds, stats, sprite_folder,
+    def __init__(self, logger, screen, sounds, sprite_folder,
                  engine_sound_folder, siren, max_car_speed_limit,
                  horizontal_speed=10):
         self.logger = logger
         self.screen = screen
         self.sounds = sounds
         self.engine = False
-        self.stats = stats
         self.sprite_folder = sprite_folder
         self.siren = siren
         self.engine_sound_folder = engine_sound_folder
@@ -40,6 +40,8 @@ class BaseCar:
         self.horizontal_speed = horizontal_speed
         self.horizontal_speed_increase_with_get_speed = True
         self.fuel_volume = MAX_FUEL_VOLUME
+        #self.fuel_volume = 1
+        self.dashboard = TCarDashboard(screen)
 
     def init_engine_sound(self, start_playing=True):
         if self.car_needs_repair:
@@ -113,10 +115,10 @@ class BaseCar:
                 self.engine = True
 
     def get_speed(self):
-        if self.engine_sound is None:
+        if not self.engine:
             return 0
         engine_speed = self.engine_sound.get_current_speed()
-        #self.logger.debug('engine speed = {}'.format(engine_speed))
+        self.logger.debug('engine speed = {}'.format(engine_speed))
         return engine_speed - 1
 
     def set_broken_tires_sound(self):
@@ -180,3 +182,24 @@ class BaseCar:
 
     def get_fuel_volume(self):
         return self.fuel_volume
+
+    def draw_dashboard(self, game_paused):
+        self.dashboard.draw_params(
+            game_paused,
+            self.sprite.rect.top,
+            self.get_speed(),
+            self.car_needs_repair,
+            self.broken_tires,
+            self.get_fuel_volume(),
+            self.need_fuel(),
+            self.engine
+        )
+
+    def pass_map_part(self):
+        self.dashboard.map_parts_count += 1
+
+        if (self.dashboard.map_parts_count % 3) == 0:
+            if not self.decrement_fuel():
+                return False
+        return True
+
