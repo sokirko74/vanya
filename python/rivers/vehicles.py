@@ -94,13 +94,6 @@ class BaseCar:
         return pygame.sprite.spritecollideany(self.sprite, sprites,
                                               collided=pygame.sprite.collide_mask)
 
-    def draw(self):
-        self.sprite_group.draw(self.screen)
-        if self.use_police_light:
-            p = self.sprite.rect.center
-            self.police_light.render(self.screen, (p[0] - self.sprite.rect.width / 2 + 10, p[1]))
-        self.passengers_in_car.draw(self.screen)
-
     def start_warm_engine(self):
         with self.start_engine_mutex:
             if not self.engine:
@@ -199,6 +192,7 @@ class BaseCar:
             self.get_fuel_volume(),
             self.need_fuel(),
             self.engine
+            len(self.passengers_in_car)
         )
 
     def pass_map_part(self):
@@ -222,3 +216,10 @@ class BaseCar:
         if kill:
             self.passenger.kill()
         self.passenger = None
+
+    def draw(self):
+        self.sprite_group.draw(self.screen)
+        if self.use_police_light:
+            p = self.sprite.rect.center
+            self.police_light.render(self.screen, (p[0] - self.sprite.rect.width / 2 + 10, p[1]))
+        self.passengers_in_car.draw(self.screen)

@@ -24,7 +24,7 @@ class TCarDashboard:
         return self.bridge_passing_count - self.river_accident_count + self.success_tasks_count
 
     def draw_params(self, game_paused, my_car_top, game_speed, car_is_broken, broken_tires,
-                    fuel_volume, fuel_red_lamp, engine):
+                    fuel_volume, fuel_red_lamp, engine, passengers):
         self.count_call +=1
         self.print_text('score: {}'.format(self.get_score()), 30, 0)
         self.print_text('speed: {}'.format(game_speed), 30, 30)
@@ -38,6 +38,7 @@ class TCarDashboard:
         self.print_text('alarm: {}'.format(self.is_on_alarm), 30, 270)
         self.print_text('engine: {}'.format(engine), 30, 300)
         self.print_text('tires: {}'.format(not broken_tires), 30, 330)
+        self.print_text('passengers: {}'.format(passengers), 30, 360)
         if fuel_red_lamp:
             if int(time.time()) % 2 == 0:
                 text = str(fuel_volume)
