@@ -1,4 +1,4 @@
-from river_sprites import TCarSprite
+from river_sprites import TCarSprite, TSprite
 from car_dashboard import TCarDashboard
 import gif_pygame
 from threading import Lock
@@ -42,6 +42,8 @@ class BaseCar:
         self.fuel_volume = MAX_FUEL_VOLUME
         #self.fuel_volume = 1
         self.dashboard = TCarDashboard(screen)
+        self.passenger: TSprite = None
+        self.passengers_in_car = pygame.sprite.Group()
 
     def init_engine_sound(self, start_playing=True):
         if self.car_needs_repair:
@@ -75,6 +77,7 @@ class BaseCar:
             self.sounds.stop_sound(self.siren)
         self.stop_engine()
         self.sprite_group.empty()
+        self.passengers_in_car.empty()
 
     def bad_collision(self):
         if not self.car_needs_repair:
@@ -96,6 +99,7 @@ class BaseCar:
         if self.use_police_light:
             p = self.sprite.rect.center
             self.police_light.render(self.screen, (p[0] - self.sprite.rect.width / 2 + 10, p[1]))
+        self.passengers_in_car.draw(self.screen)
 
     def start_warm_engine(self):
         with self.start_engine_mutex:
@@ -203,3 +207,16 @@ class BaseCar:
                 return False
         return True
 
+    def add_passenger(self, sprite: TSprite):
+        self.passengers_in_car.empty()
+        sprite.parent = self.screen
+        sprite.rect.top = self.screen.get_height() - sprite.rect.height
+        sprite.rect.left = self.screen.get_width() - sprite.rect.width
+        self.passenger = sprite
+        self.passengers_in_car.add(sprite)
+
+    def remove_passenger(self, kill=False):
+        self.passengers_in_car.empty()
+        if kill:
+            self.passenger.kill()
+        self.passenger = None

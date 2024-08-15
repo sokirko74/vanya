@@ -67,5 +67,11 @@
   },
   "police-siren": {
     "volume": 0.1
+  },
+  "prison_gate": {
+    "volume": 1
+  },
+  "lets_robber": {
+    "volume": 1
   }
 }

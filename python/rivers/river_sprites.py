@@ -91,126 +91,91 @@ class TTownColor:
             return "blue"
         raise Exception("unk color {}".format(self.color))
 
-
-class TGrannySprite(TSprite):
-    GRANNY_WIDTH = 150
-
-    def __init__(self, screen, left, top, width=None, color=None, minus_color=None):
-
-        self.color = TTownColor(color, minus_color)
-        if width is None:
-            width = TGrannySprite.GRANNY_WIDTH
-        fname = "granny{}.png".format(self.color.get_color_id())
-        super().__init__(screen,
-                         fname,
-                         pygame.Rect(left, top, width, width),
-                         )
-        self.collided = False
-
-    def get_description(self):
-        return self.color.get_color_str() + " granny"
-
-
-class TGirlSprite(TSprite):
-    GIRL_WIDTH = 150
-
-    def __init__(self, screen, left, top, width=None):
-        if width is None:
-            width = TGirlSprite.GIRL_WIDTH
-        fname = "girl.png"
-        super().__init__(screen,
-                         fname,
-                         pygame.Rect(left, top, width, width),
-                         )
-        self.collided = False
-    def get_description(self):
-        return "girl"
-
-
-class TRobberSprite(TSprite):
+class TPassenger(TSprite):
     _WIDTH = 150
-
-    def __init__(self, screen, left, top, width=None):
+    def __init__(self, screen, name, left, top, width=None):
         if width is None:
-            width = TRobberSprite._WIDTH
-        fname = "robber.png"
+            width = TPassenger._WIDTH
+        self.passenger_name = name
         super().__init__(screen,
-                         fname,
+                         name + ".png",
                          pygame.Rect(left, top, width, width),
                          )
         self.collided = False
 
     def get_description(self):
-        return "robber"
+        return self.passenger_name
 
 
-class TTownSprite(TSprite):
-    def __init__(self, screen, left, top, width=300, replicate_width=3):
-        self.color = TTownColor()
-        fname = "town{}.png".format(self.color.get_color_id())
+class TGrannySprite(TPassenger):
+    def __init__(self, screen, left, top, width=None, color=None, minus_color=None):
+        self.color = TTownColor(color, minus_color)
+        name = "granny{}".format(self.color.get_color_id())
+        super().__init__(screen, name, left, top, width)
+
+
+class TGirlSprite(TPassenger):
+    def __init__(self, screen, left, top, width=None):
+        super().__init__(screen,"girl", left, top, width)
+
+
+class TRobberSprite(TPassenger):
+    def __init__(self, screen, left, top, width=None):
+        super().__init__(screen,"robber", left, top, width)
+
+
+class TCarStop(TSprite):
+    def __init__(self, screen, fname, left, top, width=300, replicate_width=1):
+        self.collided = False
+        self.traveller = None
         img = pygame.image.load(os.path.join(TSprite.SPRITES_DIR, fname))
         img = pygame.transform.scale(img, (width, width))
         srf = pygame.Surface((width*replicate_width, width))
         srf.fill(TSprite.BACKGROUND_COLOR)
         for i in range(replicate_width):
             srf.blit(img, (i*width, 0))
-
         super().__init__(screen,
                          None,
                          pygame.Rect(left-srf.get_width()/2, top-width/2, srf.get_width(), srf.get_height()),
                          surface=srf
                          )
-        self.collided = False
-        self.traveller = None
 
 
-class TStation(TSprite):
+class TTownSprite(TCarStop):
+    def __init__(self, screen, left, top, width=300, replicate_width=3):
+        self.color = TTownColor()
+        fname = "town{}.png".format(self.color.get_color_id())
+        super().__init__(screen, fname, left, top, width, replicate_width)
+
+
+class TStation(TCarStop):
     def __init__(self, screen, left, top, image_file_name, width=300, replicate_width=1):
-        img = pygame.image.load(os.path.join(TSprite.SPRITES_DIR, image_file_name))
-        img = pygame.transform.scale(img, (width, width))
-        srf = pygame.Surface((width*replicate_width, width))
-        srf.fill(TSprite.BACKGROUND_COLOR)
-        for i in range(replicate_width):
-            srf.blit(img, (i*width, 0))
-        super().__init__(screen,
-                         None,
-                         pygame.Rect(left-srf.get_width()/2, top-width/2, srf.get_width(), srf.get_height()),
-                         surface=srf
-                         )
-        self.collided = False
+        super().__init__(screen, image_file_name, left, top, width, replicate_width)
 
 
-class TBank(TSprite):
+class TBank(TCarStop):
     def __init__(self, screen, left, top):
-        width = 300
-        height = 300
-        img = pygame.image.load(os.path.join(TSprite.SPRITES_DIR, "bank.png"))
-        img = pygame.transform.scale(img, (width, height))
-        srf = pygame.Surface((width, height))
-        srf.fill(TSprite.BACKGROUND_COLOR)
-        srf.blit(img, (0, 0))
-        super().__init__(screen,
-                         None,
-                         pygame.Rect(left-srf.get_width()/2, top-width/2, srf.get_width(), srf.get_height()),
-                         surface=srf
-                         )
-        self.collided = False
+        super().__init__(screen, "bank.png", left, top, 300)
 
 
-class TRepairStation(TStation):
-    def __init__(self, screen, left, top, width=300, replicate_width=1):
-        super().__init__(screen, left, top, "repair.png", width=width, replicate_width=replicate_width)
+class TRepairStation(TCarStop):
+    def __init__(self, screen, left, top, width=300):
+        super().__init__(screen, "repair.png", left, top, width=width)
 
 
-class THospital(TStation):
-    def __init__(self, screen, left, top, width=300, replicate_width=1):
-        super().__init__(screen, left, top, "hospital.png", width=width, replicate_width=replicate_width)
+class THospital(TCarStop):
+    def __init__(self, screen, left, top, width=300):
+        super().__init__(screen, "hospital.png", left, top, width=width)
 
 
-class TGasStation(TStation):
-    def __init__(self, screen, left, top, width=300, replicate_width=1):
-        super().__init__(screen, left, top, "gas_station.png", width=width, replicate_width=replicate_width)
+class TGasStation(TCarStop):
+    def __init__(self, screen, left, top, width=300):
+        super().__init__(screen, "gas_station.png", left, top, width=width)
 
+
+class TPrison(TCarStop):
+    def __init__(self, screen, left, top, width=300):
+        super().__init__(screen, "prison.png", left, top, width=width)
 
 class TMapPart:
     def __init__(self, screen, top, bridge_width, road_width, prev_bridge_rect, girl_probability):
@@ -225,8 +190,8 @@ class TMapPart:
         anchor1 = (self.bridge.rect.left + bridge_width/2 - road_width, self.bridge.rect.bottom)
         anchor2 = (prev_bridge_rect.left + bridge_width / 2 - road_width, prev_bridge_rect.top)
         self.road = TRoadSprite(screen, anchor1, anchor2)
-        self.car_stop = None
-        self.passengers = list()
+        self.car_stop: TCarStop | None = None
+
 
     def generate_town(self, generate_passenger: bool, bank_prob):
         if random.random() < bank_prob:
@@ -234,20 +199,23 @@ class TMapPart:
         else:
             self.car_stop = TTownSprite(self.screen, self.road.car_stop_position[0], self.road.car_stop_position[1])
             if generate_passenger:
-                p = self._generate_passenger(minus_color=self.car_stop.color.color)
-                self.car_stop.traveller = p
+                self._generate_passenger(minus_color=self.car_stop.color.color)
+
 
     def generate_bank(self):
         self.car_stop = TBank(self.screen, self.road.car_stop_position[0], self.road.car_stop_position[1])
         left, top = self._get_passenger_position_at_car_stop()
         g = TRobberSprite(self.road.screen, left, top)
-        self.passengers.append(g)
+        self.car_stop.traveller = g
 
     def generate_repair_station(self):
         self.car_stop = TRepairStation(self.screen, self.road.car_stop_position[0], self.road.car_stop_position[1])
 
     def generate_gas_station(self):
         self.car_stop = TGasStation(self.screen, self.road.car_stop_position[0], self.road.car_stop_position[1])
+
+    def generate_prison(self):
+        self.car_stop = TPrison(self.screen, self.road.car_stop_position[0], self.road.car_stop_position[1])
 
     def generate_hospital(self):
         self.car_stop = THospital(self.screen, self.road.car_stop_position[0], self.road.car_stop_position[1])
@@ -260,34 +228,29 @@ class TMapPart:
         self.road.kill()
         self.road = None
         self.car_stop.kill()
-        self.car_stop = None
-        self.kill_passengers()
+        self.car_stop: TCarStop|None = None
+
 
     def change_spite_position(self, delta):
         self.river.change_spite_position(delta)
         self.bridge.change_spite_position(delta)
         self.road.change_spite_position(delta)
         self.car_stop.change_spite_position(delta)
-        for g in self.passengers:
-            g.change_spite_position(delta)
+        if self.car_stop.traveller is not None:
+            self.car_stop.traveller.change_spite_position(delta)
 
     def has_passengers(self):
-        return len(self.passengers) > 0
+        return self.car_stop.traveller is not None
 
     def kill_passengers(self):
-        for g in self.passengers:
-            g.kill()
-        self.passengers = list()
-
-    def add_passengers_to_sprite_group(self, grp: pygame.sprite.Group):
-        for g in self.passengers:
-            grp.add(g)
+        if self.car_stop.traveller is not None:
+            self.car_stop.traveller.kill()
 
     def _get_passenger_position_at_car_stop(self):
         if self.car_stop.rect.left < self.car_stop.screen.get_width() / 2:
-            x = self.car_stop.rect.left + self.car_stop.rect.width + len(self.passengers) * 20
+            x = self.car_stop.rect.left + self.car_stop.rect.width
         else:
-            x = self.car_stop.rect.left - self.car_stop.rect.width + len(self.passengers) * 20
+            x = self.car_stop.rect.left - self.car_stop.rect.width
         return x, self.car_stop.rect.top
 
     def _generate_passenger(self, color=None, minus_color=None):
@@ -296,21 +259,20 @@ class TMapPart:
             g = TGirlSprite(self.road.screen, left, top)
         else:
             g = TGrannySprite(self.road.screen, left, top, color=color, minus_color=minus_color)
-        self.passengers.append(g)
-        return g
+        self.car_stop.traveller = g
 
-    def passenger_goes_to_car_stop(self, passenger: TSprite):
+    def passenger_goes_to_car_stop(self, passenger: TPassenger):
         passenger.screen = self.road.screen
-        self.passengers.append(passenger)
         left, top = self._get_passenger_position_at_car_stop()
         passenger.rect.left = left
         passenger.rect.top = top
+        self.car_stop.traveller = passenger
 
     def get_descr(self):
         if  isinstance(self.car_stop, TTownSprite):
             message = "a {} town ".format(self.car_stop.color.get_color_str())
-            if len(self.passengers) > 0:
-                message += " with a " + self.passengers[0].get_description()
+            if self.car_stop.traveller:
+                message += " with a " + self.car_stop.traveller.get_description()
             return message
         elif isinstance(self.car_stop, TGasStation):
             return "Gas station"
@@ -343,7 +305,7 @@ class TRiverSprites:
         self.roads = pygame.sprite.Group()
         self.towns = pygame.sprite.Group()
         self.passengers_at_car_stop = pygame.sprite.Group()
-        self.passengers_in_car = pygame.sprite.Group()
+
 
     def clear_groups(self):
         self.rivers.empty()
@@ -351,7 +313,7 @@ class TRiverSprites:
         self.roads.empty()
         self.towns.empty()
         self.passengers_at_car_stop.empty()
-        self.passengers_in_car.empty()
+
 
     def redraw_without_cars(self, screen):
         self.rivers.draw(screen)
@@ -359,5 +321,5 @@ class TRiverSprites:
         self.bridges.draw(screen)
         self.towns.draw(screen)
         self.passengers_at_car_stop.draw(screen)
-        self.passengers_in_car.draw(screen)
+
 
