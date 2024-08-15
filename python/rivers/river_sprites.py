@@ -245,6 +245,7 @@ class TMapPart:
     def kill_passengers(self):
         if self.car_stop.traveller is not None:
             self.car_stop.traveller.kill()
+        self.car_stop.traveller = None
 
     def _get_passenger_position_at_car_stop(self):
         if self.car_stop.rect.left < self.car_stop.screen.get_width() / 2:

@@ -86,6 +86,9 @@ class TRiverGame:
         c.start_warm_engine()
         self.saved_my_car = self.my_car
         self.car_is_ambulance = True
+        c.add_passenger(self.my_car.passenger)
+        self.my_car.remove_passenger()
+
         return c
 
     def init_robber_car(self):
@@ -292,8 +295,11 @@ class TRiverGame:
                 self.init_new_map_part()
 
     def passenger_gets_on_the_car(self, sprite: TSprite):
-        self.my_car.add_passenger(sprite)
         self.sprites.passengers_at_car_stop.empty()
+        self.map_part.car_stop.traveller = None
+        self.my_car.add_passenger(sprite)
+
+        pass
 
 
     def passenger_leaves_car(self, sound_name, success=True):

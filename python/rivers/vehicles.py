@@ -191,7 +191,7 @@ class BaseCar:
             self.broken_tires,
             self.get_fuel_volume(),
             self.need_fuel(),
-            self.engine
+            self.engine,
             len(self.passengers_in_car)
         )
 
@@ -205,6 +205,7 @@ class BaseCar:
 
     def add_passenger(self, sprite: TSprite):
         self.passengers_in_car.empty()
+        sprite.kill()
         sprite.parent = self.screen
         sprite.rect.top = self.screen.get_height() - sprite.rect.height
         sprite.rect.left = self.screen.get_width() - sprite.rect.width
