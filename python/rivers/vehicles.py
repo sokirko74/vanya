@@ -214,7 +214,7 @@ class BaseCar:
 
     def remove_passenger(self, kill=False):
         self.passengers_in_car.empty()
-        if kill:
+        if kill and self.passenger:
             self.passenger.kill()
         self.passenger = None
 
