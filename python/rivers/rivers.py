@@ -303,8 +303,8 @@ class TRiverGame:
 
 
     def passenger_leaves_car(self, sound_name, success=True):
-        self.sounds.play_sound(sound_name, loops=0)
-        time.sleep(1)
+        len = self.sounds.play_sound(sound_name, loops=0)
+        time.sleep(len)
         self.map_part.passenger_goes_to_car_stop(self.my_car.passenger)
         self.my_car.remove_passenger()
         if success:
@@ -350,8 +350,8 @@ class TRiverGame:
             return
 
         if isinstance(car_stop, THospital) and self.car_has_passenger():
-            self.passenger_leaves_car("thank")
             self.my_car.stop_engine()
+            self.passenger_leaves_car("hospital")
             self.my_car = self.saved_my_car
             self.my_car.start_warm_engine()
             if self.robber_car:

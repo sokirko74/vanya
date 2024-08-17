@@ -72,6 +72,9 @@
     "volume": 1
   },
   "lets_robber": {
+    "volume": 0.8
+  },
+  "hospital": {
     "volume": 1
   }
 }
