@@ -15,7 +15,7 @@ from logging_wrapper import setup_logging
 from tkinter.messagebox import askyesno
 
 
-MAX_WORD_FAIL_COUNT = 3
+MAX_WORD_FAIL_COUNT = 2
 MAX_VICTORIES_COUNT = 20
 
 

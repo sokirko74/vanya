@@ -613,7 +613,7 @@ def parse_args():
     parser.add_argument("--engine-audio-folder", dest='engine_audio_folder',
                         default= os.path.join(os.path.dirname(__file__), 'assets/sounds/ford'))
     parser.add_argument("--girl-probability", dest='girl_probability', default=0.4, type=float)
-    parser.add_argument("--granny-heart-attack-probability", dest='granny_heart_attack_probability', default=0.005, type=float)
+    parser.add_argument("--granny-heart-attack-probability", dest='granny_heart_attack_probability', default=0.01, type=float)
     parser.add_argument("--engine-auto-start", dest='engine_auto_start', default=False, action="store_true")
     parser.add_argument("--passenger-at-stop-prob", dest='passenger_at_stop_prob', default=0.7, type=float)
     parser.add_argument("--min-chase-bridge-count", dest='min_chase_bridge_count', default=3, type=int)
