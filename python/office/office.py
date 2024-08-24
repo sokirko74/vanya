@@ -3,11 +3,10 @@ import sys
 import argparse
 import tkinter as tk
 import threading
-from tkinter import ttk
 import time
 
 from mingus.containers import Note, Bar
-import vlc
+import pygame
 import random
 from mingus.midi import fluidsynth
 sys.path.append(os.path.join(os.path.dirname(__file__), '../utils'))
@@ -16,7 +15,7 @@ from tkinter.messagebox import askyesno
 
 
 MAX_WORD_FAIL_COUNT = 3
-MAX_VICTORIES_COUNT = 20
+MAX_VICTORIES_COUNT = 1
 
 
 BLACK = (0, 0, 0)
@@ -97,6 +96,7 @@ class TVanyaOffice(tk.Frame):
         self.master = tk.Tk()
         super().__init__(master)
 
+
         if self.args.fullscreen:
             self.master.attributes("-fullscreen", True)
             self.main_wnd_left = 0
@@ -144,11 +144,9 @@ class TVanyaOffice(tk.Frame):
         frame1 = tk.Frame(self.master)
         frame1.pack(side=tk.TOP)
 
-        self.goal_word = tk.StringVar()
-        self.goal_words_combobox = tk.ttk.Combobox(frame1, width=6,
-                 textvariable=self.goal_word,font=self.read_font)
-        self.goal_words_combobox['values'] = tuple(self.goal_words)
-        self.goal_words_combobox.pack(side=tk.LEFT)
+        self.goal_word_widget = tk.Text(
+            frame1, width=6, font=self.read_font, height=1)
+        self.goal_word_widget.pack(side=tk.LEFT)
 
 
 
@@ -173,16 +171,18 @@ class TVanyaOffice(tk.Frame):
         self.fail_count_label = tk.Label(frame3, text="0", font=self.label_font, bg="light green")
         self.fail_count_label.pack(side=tk.LEFT)
 
+    def get_goal_word(self):
+        return self.goal_word_widget.get("1.0", tk.END).strip("\n")
+
     def new_game(self):
-        last_goal = self.goal_word.get()
+        last_goal = self.get_goal_word()
         words = list(self.goal_words)
         if last_goal in words:
             words.remove(last_goal)
         w = random.choice(words)
         #w = "ЖУК"
-        self.goal_words_combobox.set(w)
-        self.goal_word.set(w)
-        self.goal_words_combobox.update()
+        self.goal_word_widget.delete("1.0", tk.END)
+        self.goal_word_widget.insert("1.0", w)
 
         self.fail_count = 0
         self.fail_count_label.config(text=str(self.fail_count))
@@ -193,7 +193,7 @@ class TVanyaOffice(tk.Frame):
         self.logger.info(m)
 
     def victory(self):
-        goal_word = self.goal_word.get()
+        goal_word = self.get_goal_word()
         self.text_widget.update()
         self.victory_count += 1
         self.victory_count_label.config(text=str(self.victory_count))
@@ -236,7 +236,7 @@ class TVanyaOffice(tk.Frame):
         fluidsynth.play_Note(note)
 
     def check_word(self):
-        goal_word = self.goal_word.get()
+        goal_word = self.get_goal_word()
         input_word = self.text_widget.get(1.0, tk.END).strip().upper()
         for i in range(len(goal_word)):
             if i < len(input_word) and goal_word[i] != input_word[i].upper():
@@ -251,7 +251,7 @@ class TVanyaOffice(tk.Frame):
             return
         self.last_char = event.char
         new_word = self.text_widget.get(1.0, tk.END).strip().upper()
-        goal_word = self.goal_word.get()
+        goal_word = self.get_goal_word()
         if goal_word == new_word:
             self.victory()
             return
@@ -281,8 +281,9 @@ class TVanyaOffice(tk.Frame):
         assert os.path.exists(file_path)
         if self.audioplayer is not None:
             self.audioplayer.stop()
-        self.audioplayer = vlc.MediaPlayer(file_path)
-        self.audioplayer.audio_set_volume(volume)
+
+        self.audioplayer = pygame.mixer.Sound(file_path)
+        self.audioplayer.set_volume(volume)
         self.audioplayer.play()
 
     def main_loop(self):
@@ -301,6 +302,7 @@ def parse_args():
 
 
 if __name__ == "__main__":
+    pygame.mixer.init()
     game = TVanyaOffice()
     game.main_loop()
 

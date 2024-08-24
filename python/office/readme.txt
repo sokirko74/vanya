@@ -1,2 +1,2 @@
-sudo apt-get install -y fluidsynth python3-tk vlc
+sudo apt-get install -y fluidsynth python3-tk
 
