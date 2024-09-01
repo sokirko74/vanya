@@ -71,8 +71,10 @@ class TRiverGame:
 
     def create_ambulance(self):
         self.my_car.stop_engine()
-        self.sounds.play_sound('granny_wants_to_hospital')
-        time.sleep(3)
+        vars = ['granny_wants_to_hospital', 'granny_wants_to_hospital1', 'granny_wants_to_hospital2', 'granny_wants_to_hospital3']
+        snd_name = random.choice(vars)
+        delay = self.sounds.play_sound(snd_name)
+        time.sleep(delay)
 
         sprite_folder = os.path.join(os.path.dirname(__file__), "assets", 'sprites', 'ambulance')
         engine_sound_folder = os.path.join(os.path.dirname(__file__), 'assets/sounds/ambulance')
@@ -317,7 +319,8 @@ class TRiverGame:
 
     def granny_leaves_the_car(self):
         if self.car_is_ambulance:
-            self.sounds.play_sound('granny_wants_to_hospital')
+            #self.sounds.play_sound('granny_wants_to_hospital')
+            pass
         elif self.map_part.car_stop.color.color == self.get_granny_in_car_color():
             self.logger.info("granny leaves the car")
             self.sounds.play_sound("door_open", loops=0)

@@ -47,8 +47,14 @@
   "granny_wants_to_hospital": {
     "volume": 1.2
   },
-  "granny_wants_to_hospital": {
-    "volume": 1.2
+  "granny_wants_to_hospital1": {
+    "volume": 1.0
+  },
+  "granny_wants_to_hospital2": {
+    "volume": 1.0
+  },
+  "granny_wants_to_hospital3": {
+    "volume": 1.0
   },
   "set_on_alarm": {
     "volume": 1.2
