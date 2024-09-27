@@ -496,14 +496,14 @@ class TRiverGame:
             return
         if not self.racing_wheel.is_attached():
             return
-        if self.racing_wheel.is_left_pedal_pressed():
+        if self.racing_wheel.is_right_pedal_pressed():
             #self.logger.info("left pedal is on")
             self.increase_speeds()
         else:
             #self.logger.info("left pedal is off    ")
             self.decrease_speeds()
 
-        if self.racing_wheel.is_right_pedal_pressed():
+        if self.racing_wheel.is_left_pedal_pressed():
             #self.logger.info("right pedal is on")
             self.my_car.use_brakes()
 

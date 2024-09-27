@@ -8,6 +8,7 @@ from collections import  defaultdict
 class TRacingWheel:
     right_button = 294
     left_button = 295
+    right_under_wheel_button = 336
     right_pedal = 9
     left_pedal = 10
     left_hat_button_x = ecodes.ABS_HAT0X
@@ -64,6 +65,8 @@ class TRacingWheel:
     def _key_is_pressed(self, event: InputEvent, key_code):
         check_type = event.type == ecodes.EV_ABS or event.type == ecodes.EV_KEY
         check_down = event.value != 0
+        #print(event)
+
         if check_type and (event.code == key_code) and check_down:
             #tm = time.time()
             tm = event.sec
@@ -99,6 +102,9 @@ class TRacingWheel:
     def _left_small_button_is_pressed(self, event):
         return self._key_is_pressed(event, TRacingWheel.left_button)
 
+    def _right_under_wheel_button_is_pressed(self, event):
+        return self._key_is_pressed(event, TRacingWheel.right_under_wheel_button)
+
     def _right_small_button_is_pressed(self, event):
         return self._key_is_pressed(event, TRacingWheel.right_button)
 
@@ -118,7 +124,10 @@ class TRacingWheel:
             elif event.code == ecodes.ABS_WHEEL:
                 self.raw_angle = event.value
                 #self.logger.info("abs_wheel value={}, center={}".format(self.raw_angle, self.center))
-            if self._left_small_button_is_pressed(event):
+            if  self._right_under_wheel_button_is_pressed(event):
+                self.logger.info("right under wheel button is pressed")
+                self.pressed_buttons.add(TRacingWheel.right_under_wheel_button)
+            elif self._left_small_button_is_pressed(event):
                 self.logger.info("left small button is pressed")
                 self.pressed_buttons.add(TRacingWheel.left_button)
             elif self._right_small_button_is_pressed(event):
@@ -128,25 +137,15 @@ class TRacingWheel:
                 if event.value > self.level:
                     self.logger.info("left pedal")
                     self.pressed_buttons.add(TRacingWheel.left_pedal)
-                    if self.sound_pedals:
-                        print ("aaaasss")
-                        pygame.mixer.music.load('beeps/nolik.wav')
-                        pygame.mixer.music.play()
                 else:
-                    if TRacingWheel.left_pedal in self.pressed_buttons:
-                        self.pressed_buttons.remove(TRacingWheel.left_pedal)
+                    self.forget_key(TRacingWheel.left_pedal)
                 #self.logger.info("left_pedal value={} {}".format(event.value, self.pressed_buttons))
             elif event.code == TRacingWheel.right_pedal:
-                if event.value > self.level:
+                if event.value > 20:
                     self.logger.info("right_pedal")
                     self.pressed_buttons.add(TRacingWheel.right_pedal)
-                    if self.sound_pedals:
-                        print ("aaaasss")
-                        pygame.mixer.music.load('beeps/krestik.wav')
-                        pygame.mixer.music.play()
                 else:
-                    if TRacingWheel.right_pedal in self.pressed_buttons:
-                        self.pressed_buttons.remove(TRacingWheel.right_pedal)
+                    self.forget_key(TRacingWheel.right_pedal)
                 #self.logger.info("right_pedal value={} {}".format(event.value, self.pressed_buttons))
             event = self.read_one_event()
 
@@ -155,6 +154,10 @@ class TRacingWheel:
 
     def is_right_pedal_pressed(self):
         return TRacingWheel.right_pedal in self.pressed_buttons
+
+    def forget_key(self, key):
+        if key in self.pressed_buttons:
+            self.pressed_buttons.remove(key)
 
     def get_angle(self):
         self.read_events()

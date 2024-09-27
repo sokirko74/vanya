@@ -1,37 +1,46 @@
 from utils.racing_wheel import TRacingWheel
 import time
 from utils.logging_wrapper import setup_logging
+from utils.uinput_wrapper import KeyControls
 
 
-import uinput
 
 def main():
     logger = setup_logging("test_wheel")
     wheel = TRacingWheel(logger, -30, sound_pedals=False)
-    center_angle = -30
-    print("center_angle  {}".format(center_angle))
-    keys = [uinput.KEY_UP,
-    uinput.KEY_DOWN, uinput.KEY_LEFT, uinput.KEY_RIGHT, uinput.KEY_TAB]
-    with uinput.Device(keys) as device:
-        while True:
-            wheel.read_events()
-            if wheel.is_right_pedal_pressed():
-                print("up")
-                device.emit(uinput.KEY_UP, 1)
-            elif wheel.is_right_pedal_pressed():
-                print("down")
-                device.emit(uinput.KEY_DOWN, 1)
-            wheel_angle = wheel.get_angle()
-            print(wheel_angle)
-            if wheel_angle is not None:
-                if wheel_angle > 10:
-                    print("right")
-                    device.emit(uinput.KEY_RIGHT, 1)
-                elif wheel_angle < -10:
-                    print("left")
-                    device.emit(uinput.KEY_LEFT, 1)
-            time.sleep(0.2)
+    keyboard = KeyControls()
+    while True:
+        wheel.read_events()
+        if wheel.right_under_wheel_button in wheel.pressed_buttons:
+            wheel.forget_key(wheel.right_under_wheel_button)
+            print("center wheel")
+            wheel.save_wheel_center()
 
+        elif wheel.right_button in wheel.pressed_buttons:
+            wheel.forget_key(wheel.right_button)
+            keyboard.press_tab()
+        elif wheel.left_button in wheel.pressed_buttons:
+            wheel.forget_key(wheel.left_button)
+            keyboard.click_left()
+
+        if wheel.is_right_pedal_pressed():
+            keyboard.press_up()
+        elif wheel.is_left_pedal_pressed():
+            keyboard.press_down()
+        else:
+            keyboard.unpress_up_and_down()
+
+        wheel_angle = wheel.get_angle()
+        if wheel_angle is not None:
+            if wheel_angle > 10:
+                keyboard.press_right()
+            elif wheel_angle < -10:
+                keyboard.press_left()
+            else:
+                keyboard.unpress_left_and_right()
+        time.sleep(0.2)
+        if keyboard.pressed_keys:
+            print("are pressed {}".format(keyboard.pressed_keys))
 
 if __name__ == "__main__":
     main()
