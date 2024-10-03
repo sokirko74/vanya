@@ -40,7 +40,7 @@ namespace KartGame.KartSystems
             }
             info += string.Format("=>accelerate={0},", accelerate);
             info += string.Format(",GlobalStarted={0},", GlobalStarted);
-            var turnInput = Input.GetAxis("Horizontal") * 2;
+            float turnInput = (float)(Input.GetAxis("Horizontal") * 0.9);
             if (turnInput < -1)
             {
                 turnInput = -1;
