@@ -15,23 +15,13 @@ namespace KartGame.KartSystems
             string info = "";
             bool accelerate = Input.GetButton(AccelerateButtonName);
             info += string.Format("accelerate btn={0},", accelerate);
-            float axis2 = Input.GetAxis("Axis 2");
-            if (!GlobalStarted)
-            {
-                if (axis2 != 0)
-                {
-                    GlobalStarted = true;
-                }
-                else
-                {
-                    axis2 = -1;
-                }
+            if (!accelerate) { // no keyboard
+
+                float axis2 = Input.GetAxis("Axis 2");
+                accelerate = axis2 != 0 && axis2 < 0.95;
             }
-            if (axis2 > -0.95)
-            {
-                accelerate = true;
-            }
-            //accelerate = false;
+
+                
             var axis = new string[] { "Horizontal", "Vertical", "Accelerate", "Axis 1", "Axis 2", "Axis 3"};
             foreach (string a in axis)
             {
@@ -40,6 +30,7 @@ namespace KartGame.KartSystems
             }
             info += string.Format("=>accelerate={0},", accelerate);
             info += string.Format(",GlobalStarted={0},", GlobalStarted);
+            info += string.Format(",timescale={0},",Time.timeScale);
             float turnInput = (float)(Input.GetAxis("Horizontal") * 0.9);
             if (turnInput < -1)
             {
