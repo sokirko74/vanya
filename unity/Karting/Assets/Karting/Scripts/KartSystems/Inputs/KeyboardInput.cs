@@ -1,49 +1,69 @@
 ﻿using UnityEngine;
+using UnityEngine.Animations;
 
 namespace KartGame.KartSystems
 {
+    public struct AxisInfo
+    {
+            // UninitializedValue is returned in the beginning before any activity, null value 
+            public float UninitializedValue;  
+
+            // UnpressedValue is returned during playing if the pedal is unpressed
+            public float UnpressedValue;  
+
+            // consider no activity if axes value is in [UnpressedValue, UnpressedValue - DeadZone]
+            public float DeadZone; 
+
+            // there was some activity for this axes
+            public bool HasEverChanged;
+
+            public AxisInfo(float uninitializedValue, float unpressedValue, float deadZone) {
+                UninitializedValue = uninitializedValue;
+                UnpressedValue = unpressedValue;
+                DeadZone = deadZone;
+                HasEverChanged = false;
+            }
+    }
+
 
     public class KeyboardInput : BaseInput
     {
-        public static bool Axis2HasChanged = false;
+        public static AxisInfo Axis2;
         public string TurnInputName = "Horizontal";
         public string AccelerateButtonName = "Accelerate";
         public string BrakeButtonName = "Brake";
 
-        public bool CalcAccelerate()
+        static KeyboardInput()
         {
-            bool accelerate = Input.GetButton(AccelerateButtonName);
-            float axis2 = Input.GetAxisRaw("Axis 2");
-            const float axis2Unpressed = 1;
-            const float axis2Uninitialized = 0; 
-            const float axis2DeadZone = 0.05F; 
+            Axis2 = new AxisInfo(0, 1, 0.05F);
+        }
+        public bool CalcAxis(string btnName, string axisName, AxisInfo axis_info)
+        {
+            bool result = Input.GetButton(btnName);
+            float axis = Input.GetAxisRaw(axisName);
             if (!Application.isFocused) {
-                axis2 =  axis2Uninitialized;
-                Axis2HasChanged = false; // as if in the beginning
+                axis =  axis_info.UninitializedValue;
+                axis_info.HasEverChanged = false; // as if in the beginning
             }
 
-            if (!Axis2HasChanged) {
-                if (axis2 != axis2Uninitialized) {
-                    Axis2HasChanged = true;
+            if (!axis_info.HasEverChanged) {
+                if (axis != axis_info.UninitializedValue) {
+                    axis_info.HasEverChanged = true;
                 } 
                 else  {
-                    axis2 = axis2Unpressed; // convert null to normal unpressed value
+                    axis = axis_info.UnpressedValue; // convert null to normal unpressed value
                 }
             }
-            if (!accelerate) { // no keyboard
-
-                //print(string.Format("check {0} < {1}", axis2, (axis2Unpressed - axis2DeadZone)));
-                accelerate = axis2 < (axis2Unpressed - axis2DeadZone);
-            } else  {
-                //print("keyboard accelerating");
-            }
-            return accelerate
+            if (!result) { // no keyboard
+                result = axis < (axis_info.UnpressedValue - axis_info.DeadZone);
+            } 
+            return result;
         }
 
         public override InputData GenerateInput()
         {
             string info = "";
-            bool accelerate = CalcAccelerate();
+            bool accelerate = CalcAxis(AccelerateButtonName, "Axis 2", Axis2);
             var axis = new string[] { "Horizontal", "Vertical", "Accelerate", "Axis 1", "Axis 2", "Axis 3"};
             foreach (string a in axis)
             {
@@ -51,7 +71,6 @@ namespace KartGame.KartSystems
                 info += string.Format("{0}={1},", a, Input.GetAxisRaw(a));
             }
             info += string.Format("=>accelerate={0},", accelerate);
-            info += string.Format(",Axis2HasChanged={0},", Axis2HasChanged);
             info += string.Format(",Application.isFocused={0},", Application.isFocused);
             float turnInput = (float)(Input.GetAxis("Horizontal") * 0.9);
             if (turnInput < -1)
