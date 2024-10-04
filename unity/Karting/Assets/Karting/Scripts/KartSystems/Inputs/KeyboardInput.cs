@@ -10,16 +10,13 @@ namespace KartGame.KartSystems
         public string AccelerateButtonName = "Accelerate";
         public string BrakeButtonName = "Brake";
 
-        public override InputData GenerateInput()
+        public bool CalcAccelerate()
         {
-            string info = "";
             bool accelerate = Input.GetButton(AccelerateButtonName);
-            info += string.Format("accelerate btn={0},", accelerate);
             float axis2 = Input.GetAxisRaw("Axis 2");
             const float axis2Unpressed = 1;
             const float axis2Uninitialized = 0; 
             const float axis2DeadZone = 0.05F; 
-
             if (!Application.isFocused) {
                 axis2 =  axis2Uninitialized;
                 Axis2HasChanged = false; // as if in the beginning
@@ -35,13 +32,18 @@ namespace KartGame.KartSystems
             }
             if (!accelerate) { // no keyboard
 
-                print(string.Format("check {0} < {1}", axis2, (axis2Unpressed - axis2DeadZone)));
+                //print(string.Format("check {0} < {1}", axis2, (axis2Unpressed - axis2DeadZone)));
                 accelerate = axis2 < (axis2Unpressed - axis2DeadZone);
             } else  {
-                print("keyboard accelerating");
+                //print("keyboard accelerating");
             }
+            return accelerate
+        }
 
-                
+        public override InputData GenerateInput()
+        {
+            string info = "";
+            bool accelerate = CalcAccelerate();
             var axis = new string[] { "Horizontal", "Vertical", "Accelerate", "Axis 1", "Axis 2", "Axis 3"};
             foreach (string a in axis)
             {
