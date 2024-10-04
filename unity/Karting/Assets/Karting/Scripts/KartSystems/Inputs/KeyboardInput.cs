@@ -37,7 +37,7 @@ namespace KartGame.KartSystems
         static KeyboardInput()
         {
             Axis2 = new AxisInfo(0, 1, 0.05F);
-            Axis3 = new AxisInfo(0, -1, 0.7F);
+            Axis3 = new AxisInfo(0, -1, 0.7F);// special for Vanya
         }
         public bool CalcAxis(string btnName, string axisName, AxisInfo axis_info)
         {
