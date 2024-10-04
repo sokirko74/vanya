@@ -5,7 +5,7 @@ namespace KartGame.KartSystems
 
     public class KeyboardInput : BaseInput
     {
-        public static bool GlobalStarted = false;
+        public static bool Axis2HasChanged = false;
         public string TurnInputName = "Horizontal";
         public string AccelerateButtonName = "Accelerate";
         public string BrakeButtonName = "Brake";
@@ -15,10 +15,30 @@ namespace KartGame.KartSystems
             string info = "";
             bool accelerate = Input.GetButton(AccelerateButtonName);
             info += string.Format("accelerate btn={0},", accelerate);
+            float axis2 = Input.GetAxisRaw("Axis 2");
+            const float axis2Unpressed = 1;
+            const float axis2Uninitialized = 0; 
+            const float axis2DeadZone = 0.05F; 
+
+            if (!Application.isFocused) {
+                axis2 =  axis2Uninitialized;
+                Axis2HasChanged = false; // as if in the beginning
+            }
+
+            if (!Axis2HasChanged) {
+                if (axis2 != axis2Uninitialized) {
+                    Axis2HasChanged = true;
+                } 
+                else  {
+                    axis2 = axis2Unpressed; // convert null to normal unpressed value
+                }
+            }
             if (!accelerate) { // no keyboard
 
-                float axis2 = Input.GetAxis("Axis 2");
-                accelerate = axis2 != 0 && axis2 < 0.95;
+                print(string.Format("check {0} < {1}", axis2, (axis2Unpressed - axis2DeadZone)));
+                accelerate = axis2 < (axis2Unpressed - axis2DeadZone);
+            } else  {
+                print("keyboard accelerating");
             }
 
                 
@@ -26,11 +46,11 @@ namespace KartGame.KartSystems
             foreach (string a in axis)
             {
 
-                info += string.Format("{0}={1},", a, Input.GetAxis(a));
+                info += string.Format("{0}={1},", a, Input.GetAxisRaw(a));
             }
             info += string.Format("=>accelerate={0},", accelerate);
-            info += string.Format(",GlobalStarted={0},", GlobalStarted);
-            info += string.Format(",timescale={0},",Time.timeScale);
+            info += string.Format(",Axis2HasChanged={0},", Axis2HasChanged);
+            info += string.Format(",Application.isFocused={0},", Application.isFocused);
             float turnInput = (float)(Input.GetAxis("Horizontal") * 0.9);
             if (turnInput < -1)
             {
