@@ -1,0 +1,4 @@
+*.sln binary
+*.suo binary
+*.vcxproj binary
+*.FBX binary
