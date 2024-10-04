@@ -6402,7 +6402,7 @@ PrefabInstance:
     - target: {fileID: 6435499550973355434, guid: d5cf9c31208d745c1856acc71c9cb1ca,
         type: 3}
       propertyPath: totalTimeInSecs
-      value: 200
+      value: 300
       objectReference: {fileID: 0}
     - target: {fileID: 6435499550973355434, guid: d5cf9c31208d745c1856acc71c9cb1ca,
         type: 3}
@@ -12865,7 +12865,7 @@ PrefabInstance:
     - target: {fileID: 4810912518991602690, guid: 19954de30401f73428254541a9ad156e,
         type: 3}
       propertyPath: maxSteeringAngle
-      value: 30
+      value: 20
       objectReference: {fileID: 0}
     - target: {fileID: 4810912518991602691, guid: 19954de30401f73428254541a9ad156e,
         type: 3}
@@ -12940,7 +12940,7 @@ PrefabInstance:
     - target: {fileID: 4810912518991602694, guid: 19954de30401f73428254541a9ad156e,
         type: 3}
       propertyPath: baseStats.TopSpeed
-      value: 4
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 4810912518991602694, guid: 19954de30401f73428254541a9ad156e,
         type: 3}
@@ -12988,7 +12988,7 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 4810912518991602691, guid: 19954de30401f73428254541a9ad156e,
         type: 3}
       insertIndex: -1
-      addedObject: {fileID: 1910917303}
+      addedObject: {fileID: 1910917308}
   m_SourcePrefab: {fileID: 100100000, guid: 19954de30401f73428254541a9ad156e, type: 3}
 --- !u!4 &1304724376 stripped
 Transform:
@@ -19173,7 +19173,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Id: 1e015b90-7713-408c-8d9a-3a4586f0f423
---- !u!114 &1910917303
+--- !u!114 &1910917308
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -19182,7 +19182,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 1910917296}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3415ddae8be17a6789427f406822d0d6, type: 3}
+  m_Script: {fileID: 11500000, guid: 7f292ffb948323c49ac31e54ff737ea2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   TurnInputName: Horizontal
