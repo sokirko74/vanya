@@ -29,6 +29,7 @@ namespace KartGame.KartSystems
     public class KeyboardInput : BaseInput
     {
         public static AxisInfo Axis2;
+        public static AxisInfo Axis3;
         public string TurnInputName = "Horizontal";
         public string AccelerateButtonName = "Accelerate";
         public string BrakeButtonName = "Brake";
@@ -36,6 +37,7 @@ namespace KartGame.KartSystems
         static KeyboardInput()
         {
             Axis2 = new AxisInfo(0, 1, 0.05F);
+            Axis3 = new AxisInfo(0, -1, 0.7F);
         }
         public bool CalcAxis(string btnName, string axisName, AxisInfo axis_info)
         {
@@ -55,7 +57,13 @@ namespace KartGame.KartSystems
                 }
             }
             if (!result) { // no keyboard
-                result = axis < (axis_info.UnpressedValue - axis_info.DeadZone);
+                if (axis_info.UnpressedValue > 0) {
+                    result = axis < (axis_info.UnpressedValue - axis_info.DeadZone);
+                }
+                else {
+                    //print (string.Format("check {0} > {1} + {2}", axis, axis_info.UnpressedValue, axis_info.DeadZone));
+                    result = axis > (axis_info.UnpressedValue + axis_info.DeadZone);
+                }
             } 
             return result;
         }
@@ -64,6 +72,7 @@ namespace KartGame.KartSystems
         {
             string info = "";
             bool accelerate = CalcAxis(AccelerateButtonName, "Axis 2", Axis2);
+            bool brake = CalcAxis(BrakeButtonName, "Axis 3", Axis3);
             var axis = new string[] { "Horizontal", "Vertical", "Accelerate", "Axis 1", "Axis 2", "Axis 3"};
             foreach (string a in axis)
             {
@@ -71,6 +80,7 @@ namespace KartGame.KartSystems
                 info += string.Format("{0}={1},", a, Input.GetAxisRaw(a));
             }
             info += string.Format("=>accelerate={0},", accelerate);
+            info += string.Format("=>brake={0},", brake);
             info += string.Format(",Application.isFocused={0},", Application.isFocused);
             float turnInput = (float)(Input.GetAxis("Horizontal") * 0.9);
             if (turnInput < -1)
@@ -88,8 +98,8 @@ namespace KartGame.KartSystems
             return new InputData
             {
                 Accelerate = accelerate,
-                Brake = Input.GetButton(BrakeButtonName),
-                //Brake = false,
+                //Brake = Input.GetButton(BrakeButtonName),
+                Brake = brake,
                 TurnInput = turnInput
 
             };
