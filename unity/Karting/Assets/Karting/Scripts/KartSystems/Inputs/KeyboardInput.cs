@@ -34,8 +34,6 @@ namespace KartGame.KartSystems
         public string AccelerateButtonName = "Accelerate";
         public string BrakeButtonName = "Brake";
 
-        public float LastWheelValue = 0.0F;
-
         public float WheelCenter = 0.0F;
 
         static KeyboardInput()
@@ -73,13 +71,11 @@ namespace KartGame.KartSystems
         }
         private float GetTurnAngle() {
             bool setWheelCenter = Input.GetButton("SetWheelCenter");
-            if (setWheelCenter) {
-                Debug.Log("setWheelCenter to " + LastWheelValue);
-                WheelCenter = LastWheelValue;
-            }
-            LastWheelValue = Input.GetAxis("Axis 1");
-
             float rawHor = (float)Input.GetAxis("Horizontal");
+            if (setWheelCenter && rawHor != 1 && rawHor != -1) {
+                Debug.Log("setWheelCenter to " + rawHor);
+                WheelCenter = rawHor;
+            }
             if (rawHor <= -1)
             {
                 return -1; // keyboard input
@@ -89,7 +85,7 @@ namespace KartGame.KartSystems
                 return 1; // keyboard output
             }
             
-            float turnInput = (LastWheelValue - WheelCenter) * 0.6F;
+            float turnInput = (rawHor - WheelCenter) * 1.0F;
             return turnInput; // race wheel input
         }
 
