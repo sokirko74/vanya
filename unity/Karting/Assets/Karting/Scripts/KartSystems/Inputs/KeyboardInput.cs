@@ -61,63 +61,60 @@ namespace KartGame.KartSystems
                 } 
                 else  {
                     axis = AxisInfo.UnpressedValue; // convert null to normal unpressed value
-		    print ("axis_info.HasEverChanged  " + axis_info.HasEverChanged + " set axis =" + axis);
+		            //print ("axis_info.HasEverChanged  " + axis_info.HasEverChanged + " set axis =" + axis);
                 }
             }
-            axis = 0.5F + 0.5F * axis; // convert "centered axes" to "not-centered axes"
+            axis = (axis + 1.0F ) / 2.0F; // convert "centered axes" to "not-centered axes" [-1, 1] -> [0, 1]
 
-            print (string.Format("check {0} > {1}", axis, axis_info.DeadZone));
+            //print (string.Format("check {0} > {1}", axis, axis_info.DeadZone));
             bool result = axis > axis_info.DeadZone;
             return result; 
         }
 
 	private float GetTurnAngle() {
-            bool setWheelCenter = Input.GetButton("SetWheelCenter");
-            float rawHor = (float)Input.GetAxis("Horizontal");
-            if (setWheelCenter && rawHor != 1 && rawHor != -1) {
-                Debug.Log("setWheelCenter to " + rawHor);
-                WheelCenter = rawHor;
-            }
-            if (rawHor <= -1)
+            float horiz = (float)Input.GetAxis("Horizontal");
+            if (horiz == -1)
             {
                 return -1; // keyboard input
             }
-            if (rawHor >= 1)
+            if (horiz == 1)
             {
-                return 1; // keyboard output
+                return 1; // keyboard input
             }
-            
-            float turnInput = (rawHor - WheelCenter) * 1.0F;
+            if (Input.GetButton("SetWheelCenter")) {
+                Debug.Log("setWheelCenter to " + horiz);
+                WheelCenter = horiz;
+            }       
+            float turnInput = horiz - WheelCenter;
             return turnInput; // race wheel input
         }
 
-        public override InputData GenerateInput()
-        {
+        private void printState(InputData inputData) {
             string info = "";
-            bool accelerate = CalcAxis(AccelerateButtonName, "Axis 2", Axis2);
-            bool brake = CalcAxis(BrakeButtonName, "Axis 3", Axis3);
-            float turnInput = GetTurnAngle();
-
             var axis = new string[] { "Horizontal", "Vertical", "Accelerate", "Axis 1", "Axis 2", "Axis 3"};
             foreach (string a in axis)
             {
 
                 info += string.Format("{0}={1},", a, Input.GetAxisRaw(a));
             }
-            info += string.Format("=>accelerate={0},", accelerate);
-            info += string.Format("=>brake={0},", brake);
-            info += string.Format(",turnInput={0},", turnInput);
+            info += string.Format("=>accelerate={0},", inputData.Accelerate);
+            info += string.Format("=>brake={0},", inputData.Brake);
+            info += string.Format(",turnInput={0},", inputData.TurnInput);
             info += string.Format(",WheelCenter={0},", WheelCenter);
             print(info);
+        }
 
-            return new InputData
+        public override InputData GenerateInput()
+        {
+            var inputData = new InputData
             {
-                Accelerate = accelerate,
-                //Brake = Input.GetButton(BrakeButtonName),
-                Brake = brake,
-                TurnInput = turnInput
+                Accelerate = CalcAxis(AccelerateButtonName, "Axis 2", Axis2),
+                Brake = CalcAxis(BrakeButtonName, "Axis 3", Axis3),
+                TurnInput = GetTurnAngle()
 
             };
+            //printState(inputData);
+            return inputData;
         }
     }
 }
