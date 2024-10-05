@@ -34,6 +34,10 @@ namespace KartGame.KartSystems
         public string AccelerateButtonName = "Accelerate";
         public string BrakeButtonName = "Brake";
 
+        public float LastWheelValue = 0.0F;
+
+        public float WheelCenter = 0.0F;
+
         static KeyboardInput()
         {
             Axis2 = new AxisInfo(0, 1, 0.05F);
@@ -67,12 +71,35 @@ namespace KartGame.KartSystems
             } 
             return result;
         }
+        private float GetTurnAngle() {
+            bool setWheelCenter = Input.GetButton("SetWheelCenter");
+            if (setWheelCenter) {
+                Debug.Log("setWheelCenter to " + LastWheelValue);
+                WheelCenter = LastWheelValue;
+            }
+            LastWheelValue = Input.GetAxis("Axis 1");
+
+            float rawHor = (float)Input.GetAxis("Horizontal");
+            if (rawHor <= -1)
+            {
+                return -1; // keyboard input
+            }
+            if (rawHor >= 1)
+            {
+                return 1; // keyboard output
+            }
+            
+            float turnInput = (LastWheelValue - WheelCenter) * 0.6F;
+            return turnInput; // race wheel input
+        }
 
         public override InputData GenerateInput()
         {
             string info = "";
             bool accelerate = CalcAxis(AccelerateButtonName, "Axis 2", Axis2);
             bool brake = CalcAxis(BrakeButtonName, "Axis 3", Axis3);
+            float turnInput = GetTurnAngle();
+
             var axis = new string[] { "Horizontal", "Vertical", "Accelerate", "Axis 1", "Axis 2", "Axis 3"};
             foreach (string a in axis)
             {
@@ -81,18 +108,8 @@ namespace KartGame.KartSystems
             }
             info += string.Format("=>accelerate={0},", accelerate);
             info += string.Format("=>brake={0},", brake);
-            info += string.Format(",Application.isFocused={0},", Application.isFocused);
-            float turnInput = (float)(Input.GetAxis("Horizontal") * 0.9);
-            if (turnInput < -1)
-            {
-                turnInput = -1;
-            }
-            if (turnInput > 1)
-            {
-                turnInput = 1;
-            }
             info += string.Format(",turnInput={0},", turnInput);
-
+            info += string.Format(",WheelCenter={0},", WheelCenter);
             print(info);
 
             return new InputData
