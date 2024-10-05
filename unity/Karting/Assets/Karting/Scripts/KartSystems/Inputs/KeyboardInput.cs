@@ -5,11 +5,14 @@ namespace KartGame.KartSystems
 {
     public struct AxisInfo
     {
+    	    // IMPORTANT!! All axis are not "inverted" in Unity Project Settings.
+    	    // but wheel pedals are treated as the main wheel (so 0 is in the center position)
+    	    
             // UninitializedValue is returned in the beginning before any activity, null value 
-            public float UninitializedValue;  
+            public const float UninitializedValue = 0;  
 
             // UnpressedValue is returned during playing if the pedal is unpressed
-            public float UnpressedValue;  
+            public const float UnpressedValue = -1;  
 
             // consider no activity if axes value is in [UnpressedValue, UnpressedValue - DeadZone]
             public float DeadZone; 
@@ -17,9 +20,7 @@ namespace KartGame.KartSystems
             // there was some activity for this axes
             public bool HasEverChanged;
 
-            public AxisInfo(float uninitializedValue, float unpressedValue, float deadZone) {
-                UninitializedValue = uninitializedValue;
-                UnpressedValue = unpressedValue;
+            public AxisInfo( float deadZone) {
                 DeadZone = deadZone;
                 HasEverChanged = false;
             }
@@ -38,38 +39,39 @@ namespace KartGame.KartSystems
 
         static KeyboardInput()
         {
-            Axis2 = new AxisInfo(0, 1, 0.05F);
-            Axis3 = new AxisInfo(0, -1, 0.9F);// special for Vanya
+        	
+            Axis2 = new AxisInfo(0.05F);
+            Axis3 = new AxisInfo(0.5F);// special for Vanya
         }
-        public bool CalcAxis(string btnName, string axisName, AxisInfo axis_info)
+
+	private bool CalcAxis(string btnName, string axisName, AxisInfo axis_info)
         {
-            bool result = Input.GetButton(btnName);
-            float axis = Input.GetAxisRaw(axisName);
+            if (Input.GetButton(btnName)) {
+            	return true; // keyboard input
+            }
+            float axis = Input.GetAxis(axisName);
             if (!Application.isFocused) {
-                axis =  axis_info.UninitializedValue;
+                axis =  AxisInfo.UninitializedValue;
                 axis_info.HasEverChanged = false; // as if in the beginning
             }
 
             if (!axis_info.HasEverChanged) {
-                if (axis != axis_info.UninitializedValue) {
+                if (axis != AxisInfo.UninitializedValue) {
                     axis_info.HasEverChanged = true;
                 } 
                 else  {
-                    axis = axis_info.UnpressedValue; // convert null to normal unpressed value
+                    axis = AxisInfo.UnpressedValue; // convert null to normal unpressed value
+		    print ("axis_info.HasEverChanged  " + axis_info.HasEverChanged + " set axis =" + axis);
                 }
             }
-            if (!result) { // no keyboard
-                if (axis_info.UnpressedValue > 0) {
-                    result = axis < (axis_info.UnpressedValue - axis_info.DeadZone);
-                }
-                else {
-                    //print (string.Format("check {0} > {1} + {2}", axis, axis_info.UnpressedValue, axis_info.DeadZone));
-                    result = axis > (axis_info.UnpressedValue + axis_info.DeadZone);
-                }
-            } 
-            return result;
+            axis = 0.5F + 0.5F * axis; // convert "centered axes" to "not-centered axes"
+
+            print (string.Format("check {0} > {1}", axis, axis_info.DeadZone));
+            bool result = axis > axis_info.DeadZone;
+            return result; 
         }
-        private float GetTurnAngle() {
+
+	private float GetTurnAngle() {
             bool setWheelCenter = Input.GetButton("SetWheelCenter");
             float rawHor = (float)Input.GetAxis("Horizontal");
             if (setWheelCenter && rawHor != 1 && rawHor != -1) {
