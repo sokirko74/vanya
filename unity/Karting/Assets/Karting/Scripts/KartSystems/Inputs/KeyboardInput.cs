@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using TMPro;
+using UnityEngine;
 using UnityEngine.Animations;
 
 namespace KartGame.KartSystems
@@ -14,7 +15,7 @@ namespace KartGame.KartSystems
             // UnpressedValue is returned during playing if the pedal is unpressed
             public const float UnpressedValue = -1;  
 
-            // consider no activity if axes value is in [UnpressedValue, UnpressedValue - DeadZone]
+            // consider no activity if axes value is in [0, DeadZone]
             public float DeadZone; 
 
             // there was some activity for this axes
