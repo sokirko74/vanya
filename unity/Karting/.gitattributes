@@ -2,3 +2,4 @@
 *.suo binary
 *.vcxproj binary
 *.FBX binary
+*.ttf binary
