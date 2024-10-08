@@ -28,13 +28,13 @@ public class RedLightSwitch : MonoBehaviour
     public void Update()
     {
         long unixTimestamp = (long)DateTime.Now.Subtract(new DateTime(1970, 1, 1)).TotalSeconds;
-        long p = unixTimestamp % 5;
-        if (p < 2) {
+        long p = unixTimestamp % 40;
+        if (p < 10) {
             RedLight.enabled = true;
             YellowLight.enabled = false;
             GreenLight.enabled = false;
         }
-        else if (p < 3) {
+        else if (p < 20) {
             RedLight.enabled = false;
             YellowLight.enabled = true;
             GreenLight.enabled = false;
