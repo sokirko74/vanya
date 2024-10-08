@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using UnityEngine;
 using System.Collections.Generic;
 using UnityEngine.VFX;
@@ -427,9 +427,9 @@ namespace KartGame.KartSystems
             // use the max speed for the direction we are going--forward or reverse.
             //float maxSpeed = localVelDirectionIsFwd ? m_FinalStats.TopSpeed : m_FinalStats.ReverseSpeed;
             float maxSpeed = localVelDirectionIsFwd ? TopSpeedDropDown.UserTopSpeed : m_FinalStats.ReverseSpeed;
-            if (localVelDirectionIsFwd) {
-                Debug.Log("max speed is " + maxSpeed);
-            }
+            // if (localVelDirectionIsFwd) {
+            //     Debug.Log("max speed is " + maxSpeed);
+            // }
 
             float accelPower = accelDirectionIsFwd ? m_FinalStats.Acceleration : m_FinalStats.ReverseAcceleration;
 
