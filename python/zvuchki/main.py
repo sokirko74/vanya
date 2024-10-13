@@ -84,7 +84,11 @@ class TZvuchki(tk.Frame):
         self.keyboard_column_count = 12
         self.master = tk.Tk()
         self.master.title("ZvuchkiApp")
-        self.yandex_music_client = TYandexMusic(self, self.args.prefer_rap)
+        if self.args.enable_ya_music:
+            self.yandex_music_client = TYandexMusic(self, self.args.prefer_rap)
+        else:
+            self.yandex_music_client = None
+
         super().__init__(master)
         if self.args.fullscreen:
             if self.master.winfo_screenwidth() > 2000:
@@ -222,7 +226,7 @@ class TZvuchki(tk.Frame):
                 self.on_video_finish()
             except selenium.common.exceptions.WebDriverException:
                 pass
-        elif  self.yandex_music_client.is_playing():
+        elif  self.yandex_music_client and self.yandex_music_client.is_playing():
             self.logger.info("stop yandex music player")
             self.yandex_music_client.stop_player()
         else:
@@ -428,6 +432,7 @@ def parse_args():
     parser.add_argument("--audio-keys", dest='audio_keys', default=False, action="store_true")
     parser.add_argument("--transliterate", dest='transliterate', default=False, action="store_true")
     parser.add_argument("--free", dest='free_request', default=False, action="store_true")
+    parser.add_argument("--disable-ya-music", dest='enable_ya_music', default=True, action="store_false")
 
     return parser.parse_args()
 

@@ -112,6 +112,12 @@ class TBrowser:
             element = self.browser.switch_to.active_element
             time.sleep(1)
 
+            self.browser.switch_to.default_content()
+            WebDriverWait(self.browser, 20).until(EC.frame_to_be_available_and_switch_to_it((By.ID, "iframe")))
+            print("click Accept all")
+            self.browser.find_element_by_xpath("//*[contains(text(), 'Accept all')]").click()
+            time.sleep(1)
+
             #print("send Tab")
             #element.send_keys(Keys.TAB)
             #time.sleep(1)

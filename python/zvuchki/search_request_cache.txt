@@ -1872,5 +1872,43 @@
         "https://www.youtube.com/watch?v=4lBrYO2geK0",
         "https://www.youtube.com/watch?v=wzDPMpPWUv4",
         "https://www.youtube.com/watch?v=_WYiH7f-3T8"
+    ],
+    "ВАЗ": [
+        "https://www.youtube.com/watch?v=aGowSasy4Ek",
+        "https://www.youtube.com/watch?v=Oc_JJnqc8PQ",
+        "https://www.youtube.com/watch?v=uluMolos0Xc",
+        "https://www.youtube.com/watch?v=ofF1cBHsoAM",
+        "https://www.youtube.com/watch?v=xzNm75LgpKc",
+        "https://www.youtube.com/watch?v=q2odARZdYT0",
+        "https://www.youtube.com/watch?v=Hh6iSk_vNEs",
+        "https://www.youtube.com/watch?v=J88UxkNexgo",
+        "https://www.youtube.com/watch?v=hJFCaYOvKb4",
+        "https://www.youtube.com/watch?v=shWSeG0aQ_M"
+    ],
+    "VAZ2": [
+        "https://m.youtube.com/watch?v=XdE9ElYHwZ0",
+        "https://www.youtube.com/channel/UC3PbZ3aJsCgJgoutWBcqSew",
+        "https://www.youtube.com/watch?v=YTOfH4JYYmM",
+        "https://www.youtube.com/watch?v=F1XOZqHM2Qo",
+        "https://m.youtube.com/watch?v=xuyP6KimDV4",
+        "https://www.youtube.com/channel/UCpe8Qlc2U3KcHrsUvqdzAOQ"
+    ],
+    "VAZ": [
+        "https://www.youtube.com/@TheVaz2103",
+        "https://www.youtube.com/watch?v=aGowSasy4Ek",
+        "https://www.youtube.com/watch?v=Jhl0ApNmqPU",
+        "https://www.youtube.com/watch?v=J4Md3cmjmPA",
+        "https://www.youtube.com/watch?v=Gm1EtScyOAs",
+        "https://www.youtube.com/watch?v=q2odARZdYT0",
+        "https://www.youtube.com/watch?v=Hh6iSk_vNEs",
+        "https://www.youtube.com/@minvaz",
+        "https://www.youtube.com/watch?v=2FD2B3GDTiQ",
+        "https://www.youtube.com/watch?v=xrrkKEiEHiI"
+    ],
+    "VAZ1": [
+        "https://www.youtube.com/watch?v=0FgF6d-OtSI",
+        "https://www.youtube.com/watch?v=7WI6B53sTIg",
+        "https://www.youtube.com/channel/UCtDaNqwnN3TLlUHjH3_UMZA",
+        "https://www.youtube.com/watch?v=uGiYMFslyiQ"
     ]
 }

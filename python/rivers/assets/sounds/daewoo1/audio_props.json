@@ -16,6 +16,6 @@
   },
   "alarm": {
     "path": "alarm.wav",
-    "volume": 0.8
+    "volume": 1.2
   }
 }
