@@ -37,17 +37,17 @@ class TChars:
 
 
 class VideoPlayer (threading.Thread):
-    def __init__(self, parent,url, seconds):
+    def __init__(self, parent, url, seconds):
         threading.Thread.__init__(self)
         self.parent = parent
+        self.browser: TBrowser = parent.browser
         self.url = url
         self.seconds = seconds
         self._interrupted = False
-        self.browser = None
 
     def stop_playing(self):
         self._interrupted = True
-        self.browser.close_browser()
+        self.browser.close_all_windows()
 
     def next_track(self):
         self.browser.send_shift_n()
@@ -59,11 +59,8 @@ class VideoPlayer (threading.Thread):
         for try_index in range(2):
             if not self.parent.is_running or self._interrupted:
                 break
-            self.browser = TBrowser()
-            self.parent.logger.info("Number of cached urls: {}".format(len(self.browser.all_requests)))
-            self.browser.start_browser()
             res = self.browser.play_youtube(self.url, self.seconds)
-            self.browser.close_browser()
+            self.browser.close_all_windows()
             if res:
                 break
         self.parent.on_video_finish()
@@ -76,8 +73,16 @@ def transliterate(s):
 class TZvuchki(tk.Frame):
     def __init__(self, master=None):
         self.args = parse_args()
+        self.browser:TBrowser  = TBrowser()
         log_path = os.path.join(os.path.dirname(__file__), "zvuchki.log")
         self.logger = setup_logging(log_file_name=log_path, append_mode=True)
+
+        self.logger.info("Number of cached urls: {}".format(len(self.browser.all_requests)))
+        if self.args.attach_browser_address is not None:
+            self.browser.attach_to_browser(self.args.attach_browser_address)
+        else:
+            self.browser.start_browser()
+
         self.left_offset = 80
         self.is_running = True
         self.font_size = self.args.font_size
@@ -234,12 +239,10 @@ class TZvuchki(tk.Frame):
             self.play_request(s)
 
     def get_url_video_from_google_or_cached(self, request, position):
-        browser = TBrowser()
-        search_results = browser.get_cached_request(request)
+        search_results = self.browser.get_cached_request(request)
         if search_results is None:
-            browser.start_browser()
-            search_results = browser.send_request(request)
-            browser.close_browser()
+            search_results = self.browser.send_request(request)
+            self.browser.close_all_windows()
         if position > 0:
             position -= 1
         if position >= len(search_results):
@@ -433,7 +436,7 @@ def parse_args():
     parser.add_argument("--transliterate", dest='transliterate', default=False, action="store_true")
     parser.add_argument("--free", dest='free_request', default=False, action="store_true")
     parser.add_argument("--disable-ya-music", dest='enable_ya_music', default=True, action="store_false")
-
+    parser.add_argument("--attach-browser-address")
     return parser.parse_args()
 
 

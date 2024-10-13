@@ -29,30 +29,52 @@ class TBrowser:
 
     def init_chrome(self):
         options = webdriver.ChromeOptions()
-        #options.add_argument("start-maximized")
+        options.add_argument("--verbose")
+        options.add_argument("--log-path=chromedriver.log")
         options.add_argument("enable-automation")
         options.add_argument("--no-sandbox")
         options.add_argument("--disable-dev-shm-usage")
         options.add_argument("--disable-browser-side-navigation")
         options.add_argument("--disable-gpu")
-        self.browser = webdriver.Chrome(options=options)
+        self.browser = webdriver.Chrome(
+            options=options,
+            )
         self.browser.set_page_load_timeout(20)
         self.browser.set_script_timeout(18)
         self.browser.set_window_position(0, 0)
 
-    def init_firefox(self):
-        opts =  webdriver.FirefoxOptions()
-        #opts.log.level = "trace"
-        self.browser = webdriver.Firefox(
-                options=opts,
-                executable_path='/snap/bin/geckodriver',
-                #service_log_path=os.path.join(os.path.dirname(__file__), 'geckodriver.log')
-                    service_log_path=None
-                )
+    # def init_firefox(self):
+    #     opts =  webdriver.FirefoxOptions()
+    #     #opts.log.level = "trace"
+    #     self.browser = webdriver.Firefox(
+    #             options=opts,
+    #             executable_path='/snap/bin/geckodriver',
+    #             #service_log_path=os.path.join(os.path.dirname(__file__), 'geckodriver.log')
+    #                 service_log_path=None
+    #             )
 
     def start_browser(self):
         #self.init_firefox()
         self.init_chrome()
+
+    def attach_to_browser(self, address):
+        options = webdriver.ChromeOptions()
+        options.debugger_address = address
+        options.add_argument("enable-automation")
+        options.add_argument("--no-sandbox")
+        options.add_argument("--disable-dev-shm-usage")
+        options.add_argument("--disable-browser-side-navigation")
+        options.add_argument("--disable-gpu")
+        self.browser = webdriver.Chrome(
+            options=options)
+        self.browser.set_page_load_timeout(20)
+        self.browser.set_script_timeout(18)
+
+    def close_all_windows(self):
+        for handle in self.browser.window_handles[1:]:
+            self.browser.switch_to.window(handle)
+            self.browser.close()
+        self.browser.get('about:blank')
 
     def close_browser(self):
         if self.browser is not None:
@@ -103,35 +125,34 @@ class TBrowser:
             print ("sleep 3 sec")
             time.sleep(3)
 
-            #self.send_ctrl_end()
-            #time.sleep(1)
-
-            #self.send_ctrl_home()
-            #time.sleep(1)
+            # self.browser.switch_to.default_content()
+            # elem = self.browser.find_elements(By.XPATH, "//*[contains(text(), 'Accept all')]")
+            # if not elem:
+            #     elem = self.browser.find_elements(By.XPATH, "//*[contains(text(), 'Принять все')]")
+            #
+            # if elem:
+            #     for i in range(6):
+            #         ActionChains(self.browser).send_keys(Keys.TAB).perform()
+            #         time.sleep(1)
+            #     ActionChains(self.browser).send_keys(Keys.RETURN).perform()
+            #
+            #     #print("scroll to  @Accept all")
+            #     #ActionChains(self.browser).move_to_element(elem[0]).perform()
+            #     #time.sleep(1)
+            #
+            #     #print("click Accept all")
+            #     #elem[0].click()
+            # else:
+            #     print("no accept cookie button found")
+            # time.sleep(1)
 
             element = self.browser.switch_to.active_element
-            time.sleep(1)
+            time.sleep(2)
 
-            self.browser.switch_to.default_content()
-            WebDriverWait(self.browser, 20).until(EC.frame_to_be_available_and_switch_to_it((By.ID, "iframe")))
-            print("click Accept all")
-            self.browser.find_element_by_xpath("//*[contains(text(), 'Accept all')]").click()
-            time.sleep(1)
 
-            #print("send Tab")
-            #element.send_keys(Keys.TAB)
-            #time.sleep(1)
-
-            #self.browser.execute_script("window.scrollTo(0, 100)")
-            #time.sleep(1)
-
-            #element = self.browser.switch_to.active_element
-            #time.sleep(1)
-            #element = self.browser.find_elements('body')
-
-            print ("send к")
-            element.send_keys("k")
-            time.sleep(1)
+            # print ("send к")
+            # element.send_keys("k")
+            # time.sleep(1)
 
             #time.sleep(0.5)
             #print ("send f")
@@ -141,8 +162,9 @@ class TBrowser:
             #print ("send p")
             #element.send_keys("p")
 
-            print("max_duration = {}".format(max_duration))
+            print("sleep for  {} seconds (video duration)".format(max_duration))
             time.sleep(max_duration)
+            print("time elapsed")
             return True
         except WebDriverException as exp:
             print("exception: {}".format(exp))
@@ -199,3 +221,4 @@ if __name__ == "__main__":
     b = TBrowser()
     b.start_browser()
     b.play_youtube('https://www.youtube.com/watch?v=NaiCfIcutbM', 10)
+    time.sleep(10000)
