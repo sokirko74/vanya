@@ -112,7 +112,7 @@ class TVanyaOffice(tk.Frame):
         self.audioplayer = None
         self.write_font = ("DejaVu Sans Mono", self.args.write_font_size)
         self.read_font = ("DejaVu Sans Mono", self.args.read_font_size)
-        self.label_font = ("DejaVu Sans Mono", 140)
+        self.label_font = ("DejaVu Sans Mono", 100)
         self.goal_words = list()
         self.read_goal_words()
 

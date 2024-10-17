@@ -1965,5 +1965,53 @@
         "https://www.youtube.com/watch?v=d9cBbx3gRw8",
         "https://www.youtube.com/watch?v=pY6PAqpu2dY",
         "https://m.youtube.com/watch?v=AGcukQ8rv5k"
+    ],
+    "ЛОДКА": [
+        "https://www.youtube.com/watch?v=VR7-bHisGlQ",
+        "https://www.youtube.com/watch?v=T5-d9kKOGPk",
+        "https://www.youtube.com/watch?v=m6mlvldsqZs",
+        "https://www.youtube.com/watch?v=yPYP0AJUE9M",
+        "https://www.youtube.com/watch?v=BmJwT9afo6E",
+        "https://m.youtube.com/watch?v=QmcKd1_lwiU",
+        "https://www.youtube.com/watch?v=IZ7L_NlCjk8",
+        "https://www.youtube.com/watch?v=6EjeEyXgqCI&pp=ygUTI9GC0LDQstC-0LvQttC90LjQug%3D%3D",
+        "https://www.youtube.com/watch?v=z9H1Kzhurfc",
+        "https://www.youtube.com/watch?v=P2C_IBNJlFg"
+    ],
+    "ВИТЯЗЬ тест драйв от первого лица": [
+        "https://www.youtube.com/watch?v=rlyXENmG_A0",
+        "https://www.youtube.com/watch?v=taVDltA_3yc",
+        "https://www.youtube.com/watch?v=FTTJmvPF2HI",
+        "https://www.youtube.com/watch?v=Y1NldyBmewg",
+        "https://m.youtube.com/watch?v=YULAGque6xY",
+        "https://www.youtube.com/watch?v=c9BSj6BNPMo",
+        "https://m.youtube.com/watch?v=8YxvnwvTbQY",
+        "https://www.youtube.com/watch?v=qJDn-0SccX4",
+        "https://www.youtube.com/watch?v=Yk91PSEMKBM",
+        "https://www.youtube.com/watch?v=gxMzf37TuOY"
+    ],
+    "ГАЗ24 звук двигателя": [
+        "https://www.youtube.com/watch?v=iY6AglNIvcw",
+        "https://www.youtube.com/watch?v=G_pxRQ5DNUM",
+        "https://www.youtube.com/watch?v=F5ceIDPExC8",
+        "https://www.youtube.com/watch?v=OnDnnDUg15I",
+        "https://www.youtube.com/watch?v=YhebJePWbx0",
+        "https://www.youtube.com/watch?v=5JkRh-bwHf0",
+        "https://www.youtube.com/watch?v=9f1FL6pCyU4",
+        "https://www.youtube.com/watch?v=LmuU06rKAqU",
+        "https://www.youtube.com/watch?v=V6uUIftUIb4",
+        "https://www.youtube.com/watch?v=PQ_8F9zoiyM"
+    ],
+    "ГАЗ24": [
+        "https://www.youtube.com/watch?v=PQ_8F9zoiyM",
+        "https://www.youtube.com/watch?v=gc2GTukRBAk",
+        "https://m.youtube.com/watch?v=8dQaJ0hYsA0",
+        "https://www.youtube.com/watch?v=mwdvpqiGGF8",
+        "https://m.youtube.com/watch?v=rZXXLW4uU_o",
+        "https://www.youtube.com/watch?v=1oZPmgDwNGE",
+        "https://www.youtube.com/watch?v=xQ_Y8v6Hayc",
+        "https://www.youtube.com/watch?v=EqDXAMESeyc",
+        "https://www.youtube.com/watch?v=UqDtEiDsiiQ",
+        "https://m.youtube.com/watch?v=-PO5eqpJTvY"
     ]
 }
