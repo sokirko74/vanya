@@ -115,12 +115,12 @@ class TZvuchki(tk.Frame):
                                    textvariable = self.entry_text,
                                    font=self.editor_font)
 
-        self.text_widget.bind('<Return>', self.on_text_click)
-        self.text_widget.bind('<Escape>', self.on_text_click)
+        self.text_widget.bind('<Return>', self.on_return)
+        self.text_widget.bind('<Escape>', self.on_return)
         self.text_widget.bind('<F1>', self.on_backspace)
-        self.bind('<Return>', self.on_text_click)
-        self.bind('<Escape>', self.on_text_click)
-        self.text_widget.bind("<Button-1>", self.on_text_click)
+        self.bind('<Return>', self.on_return)
+        self.bind('<Escape>', self.on_return)
+        #self.text_widget.bind("<Button-1>", self.on_return)
         self.text_widget.focus_force()
         if self.args.audio_keys:
             self.master.bind_all('<KeyPress>', self.report_key_press)
@@ -222,9 +222,9 @@ class TZvuchki(tk.Frame):
         self.entry_text.set(s[:-1])
         self.text_widget.select_clear()
 
-    def on_text_click(self, event):
+    def on_return(self, event):
         self.text_widget.select_clear()
-        self.logger.info("on_text_click")
+        self.logger.info("on_return")
         if self.video_player_thread is not None:
             try:
                 self.video_player_thread.stop_playing()
