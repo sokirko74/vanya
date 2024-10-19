@@ -1,4 +1,5 @@
 import json
+from json.decoder import BACKSLASH
 
 from car_brands import CARS, URLS, BIRDS, COMPOSERS, OTHER_SRC, CAR_EN
 from browser_wrapper import TBrowser
@@ -94,6 +95,12 @@ class TZvuchki(tk.Frame):
         else:
             self.yandex_music_client = None
 
+        self.key_row_count = 4
+        self.keys = dict()
+        self.last_char = None
+        self.last_char_timestamp = time.time()
+
+
         super().__init__(master)
         if self.args.fullscreen:
             if self.master.winfo_screenwidth() > 2000:
@@ -144,10 +151,6 @@ class TZvuchki(tk.Frame):
             self.key_font = tkFont.Font(family="DejaVu Sans Mono", size=self.args.font_size)
             self.key_font_umlaut = tkFont.Font(family="DejaVu Sans Mono", size=int(self.args.font_size * 0.7))
 
-            self.key_row_count = 4
-            self.keys = dict()
-            self.last_char = None
-            self.last_char_timestamp = time.time()
             self.init_all_abc_keyboard_layout(self.args.layout)
         self.video_player_thread = None
 
@@ -155,6 +158,8 @@ class TZvuchki(tk.Frame):
         ch = e.char.upper()
         if ch == '*':
             return
+        if ch == '\x08':
+            self.play_audio('backspace.wav', 50)
         #print ('press '+ ch)
         if ch == ' ':
             ch = 'space'
@@ -208,7 +213,7 @@ class TZvuchki(tk.Frame):
                 width=button_width,
                 relheight=1 / self.key_row_count
             )
-            canvas.bind("<Button-1>", partial(self.keyboard_click, key_info['char']))
+            canvas.bind("<Button-1>", partial(self.gui_keyboard_click, key_info['char']))
             left += button_width
 
     def on_video_finish(self):
@@ -218,11 +223,19 @@ class TZvuchki(tk.Frame):
         self.entry_text.set("")
 
     def on_backspace(self, event):
+        self.play_audio("backspace.wav", 50)
         s = self.entry_text.get()
         self.entry_text.set(s[:-1])
         self.text_widget.select_clear()
 
     def on_return(self, event):
+        ts = time.time()
+        if ts - self.last_char_timestamp < 2 and '\n' == self.last_char:
+            return
+        self.last_char_timestamp = ts
+        self.last_char = '\n'
+
+        self.play_audio("enter.wav", 50)
         self.text_widget.select_clear()
         self.logger.info("on_return")
         if self.video_player_thread is not None:
@@ -392,7 +405,7 @@ class TZvuchki(tk.Frame):
             return
         self.entry_text.set(s + char)
 
-    def keyboard_click(self, char, event):
+    def gui_keyboard_click(self, char, event):
         if self.video_player_thread is not None:
             if char and char.upper() == 'Н':
                 self.video_player_thread.next_track()
@@ -413,11 +426,14 @@ class TZvuchki(tk.Frame):
             self.add_char(char)
         self.logger.info("text={}".format(self.entry_text.get()))
 
-    def play_audio(self, file_path):
+    def play_audio(self, file_path, volume=None):
         file_path = os.path.join(os.path.dirname(__file__), "sound", file_path)
         if self.audioplayer is not None:
             self.audioplayer.stop()
         self.audioplayer = vlc.MediaPlayer(file_path)
+        if volume is not None:
+            self.audioplayer.audio_set_volume(volume)
+
         self.audioplayer.play()
 
     def main_loop(self):
