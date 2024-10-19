@@ -431,10 +431,16 @@ class TZvuchki(tk.Frame):
         if self.audioplayer is not None:
             self.audioplayer.stop()
         self.audioplayer = vlc.MediaPlayer(file_path)
-        if volume is not None:
-            self.audioplayer.audio_set_volume(volume)
+        self.audioplayer.audio_set_volume(100)
+        # if volume is not None:
+        #     save_volume = self.audioplayer.audio_get_volume()
+        #     self.audioplayer.audio_set_volume(volume)
+        # else:
+        #     save_volume =  None
 
         self.audioplayer.play()
+        # if save_volume is not None:
+        #     self.audioplayer.audio_set_volume(save_volume)
 
     def main_loop(self):
         self.master.mainloop()
