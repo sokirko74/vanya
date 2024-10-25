@@ -20,10 +20,24 @@ import pygame
 import argparse
 
 JOYSTICK_DEAD_ZONE = 0.3
+PRESSED_BUTTONS = set()
+
+
+def press_btn(b):
+    if b not in PRESSED_BUTTONS:
+        print("press {}".format(b))
+        PRESSED_BUTTONS.add(b)
+        return TKeyEventType(pygame.KEYDOWN, b)
+
+def unpress_btns(lst):
+    for btn in lst:
+        if btn in PRESSED_BUTTONS:
+            PRESSED_BUTTONS.remove(btn)
+            return TKeyEventType(pygame.KEYUP, btn)
 
 class TKeyEventType:
-    def __init__(self, type, key_code):
-        self.type = type
+    def __init__(self, typ, key_code):
+        self.type = typ
         self.key = key_code
 
     @staticmethod
@@ -32,23 +46,18 @@ class TKeyEventType:
         #    print("event.axis={} value={}".format(event.axis, round(event.value, 3)))
         if event.axis == 0:
             if event.value > 0.0 + JOYSTICK_DEAD_ZONE:
-                yield TKeyEventType(pygame.KEYDOWN, pygame.K_RIGHT)
+                return press_btn(pygame.K_LEFT)
             elif event.value < 0.0 - JOYSTICK_DEAD_ZONE:
-                yield TKeyEventType(pygame.KEYDOWN, pygame.K_LEFT)
+                return press_btn(pygame.K_RIGHT)
             else:
-                yield TKeyEventType(pygame.KEYUP, pygame.K_LEFT)
-                yield TKeyEventType(pygame.KEYUP, pygame.K_RIGHT)
+                return unpress_btns([pygame.K_LEFT, pygame.K_RIGHT])
         elif event.axis == 1:
             if event.value < 0.0 - JOYSTICK_DEAD_ZONE:
-                print("press K_DOWN")
-                yield TKeyEventType(pygame.KEYDOWN, pygame.K_DOWN)
+                return press_btn(pygame.K_DOWN)
             elif event.value > 0.0 + JOYSTICK_DEAD_ZONE:
-                print("press K_UP")
-                yield TKeyEventType(pygame.KEYDOWN, pygame.K_UP)
+                return press_btn(pygame.K_UP)
             else:
-                print("stop move vertically")
-                yield TKeyEventType(pygame.KEYUP, pygame.K_DOWN)
-                yield TKeyEventType(pygame.KEYUP, pygame.K_UP)
+                return unpress_btns([pygame.K_DOWN, pygame.K_UP])
 
 
 class TMaze:
@@ -227,7 +236,7 @@ class TMaze:
         self.start_game()
         clock = pygame.time.Clock()
         while self.is_running:
-            joystick_direction = [0, 0]
+            #joystick_direction = [0, 0]
             for event in pygame.event.get():
                 if event.type == pygame.JOYBUTTONDOWN:
                     self.logger.info("Joystick button pressed.")
@@ -236,14 +245,15 @@ class TMaze:
                     self.logger.info("Joystick button released.")
                 elif event.type == pygame.JOYAXISMOTION:
                     if event.axis < 2:
-                        joystick_direction[event.axis] = int(event.value)
-                        for e in TKeyEventType.from_joystick_event(event):
+                        #joystick_direction[event.axis] = int(event.value)
+                        e = TKeyEventType.from_joystick_event(event)
+                        if e is not None:
                             self.handle_player_events(e)
                 else:
                    self.check_game_events(event)
                    self.handle_player_events(event)
-                if joystick_direction[0] != 0 or joystick_direction[1] != 0:
-                    self.logger.info("joystick_direction = {}".format(joystick_direction))
+                # if joystick_direction[0] != 0 or joystick_direction[1] != 0:
+                #     self.logger.info("joystick_direction = {}".format(joystick_direction))
 
             self.screen.fill(TColors.white)
             self.all_sprites.update()
