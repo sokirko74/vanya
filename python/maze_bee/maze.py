@@ -19,6 +19,8 @@ from bone import TBone
 import pygame
 import argparse
 
+JOYSTICK_DEAD_ZONE = 0.3
+
 class TKeyEventType:
     def __init__(self, type, key_code):
         self.type = type
@@ -26,20 +28,25 @@ class TKeyEventType:
 
     @staticmethod
     def from_joystick_event(event):
+        #if event.axis == 1:
+        #    print("event.axis={} value={}".format(event.axis, round(event.value, 3)))
         if event.axis == 0:
-            if event.value > 0:
+            if event.value > 0.0 + JOYSTICK_DEAD_ZONE:
                 yield TKeyEventType(pygame.KEYDOWN, pygame.K_RIGHT)
-            elif event.value < 0:
+            elif event.value < 0.0 - JOYSTICK_DEAD_ZONE:
                 yield TKeyEventType(pygame.KEYDOWN, pygame.K_LEFT)
             else:
                 yield TKeyEventType(pygame.KEYUP, pygame.K_LEFT)
                 yield TKeyEventType(pygame.KEYUP, pygame.K_RIGHT)
         elif event.axis == 1:
-            if event.value > 0:
+            if event.value < 0.0 - JOYSTICK_DEAD_ZONE:
+                print("press K_DOWN")
                 yield TKeyEventType(pygame.KEYDOWN, pygame.K_DOWN)
-            elif event.value < 0:
+            elif event.value > 0.0 + JOYSTICK_DEAD_ZONE:
+                print("press K_UP")
                 yield TKeyEventType(pygame.KEYDOWN, pygame.K_UP)
             else:
+                print("stop move vertically")
                 yield TKeyEventType(pygame.KEYUP, pygame.K_DOWN)
                 yield TKeyEventType(pygame.KEYUP, pygame.K_UP)
 
@@ -228,9 +235,10 @@ class TMaze:
                     self.next_map()
                     self.logger.info("Joystick button released.")
                 elif event.type == pygame.JOYAXISMOTION:
-                    joystick_direction[event.axis] = int(event.value)
-                    for e in TKeyEventType.from_joystick_event(event):
-                        self.handle_player_events(e)
+                    if event.axis < 2:
+                        joystick_direction[event.axis] = int(event.value)
+                        for e in TKeyEventType.from_joystick_event(event):
+                            self.handle_player_events(e)
                 else:
                    self.check_game_events(event)
                    self.handle_player_events(event)
