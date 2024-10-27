@@ -78,14 +78,14 @@ class TBee(MazePlayer):
     def get_joystick_direction(self):
         if abs(self.horizontal_axis) > abs(self.vertical_axis):
             if self.horizontal_axis < -self.dead_zone:
-                return pygame.K_RIGHT
-            elif self.horizontal_axis > self.dead_zone:
                 return pygame.K_LEFT
+            elif self.horizontal_axis > self.dead_zone:
+                return pygame.K_RIGHT
         else:
             if self.vertical_axis < -self.dead_zone:
-                return pygame.K_DOWN
-            elif self.vertical_axis > self.dead_zone:
                 return pygame.K_UP
+            elif self.vertical_axis > self.dead_zone:
+                return pygame.K_DOWN
 
     def _move(self, key_code):
         if key_code == pygame.K_LEFT:
