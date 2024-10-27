@@ -198,7 +198,8 @@ class TMaze:
         clock = pygame.time.Clock()
         while self.is_running:
             for event in pygame.event.get():
-                if event.type == pygame.JOYBUTTONUP:
+                if event.type == pygame.JOYBUTTONDOWN:
+                    self.logger.info('button {} is released'.format(event.button))
                     if self.joystick_next_btn_id == event.button:
                         self.logger.info("joystick next button released.")
                         self.next_map()
@@ -226,7 +227,7 @@ class TMaze:
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--use-joystick", dest='use_joystick', default=False, action="store_true")
-    parser.add_argument("--joystick-next-button-id", dest='joystick_next_btn_id', default=6)
+    parser.add_argument("--joystick-next-button-id", dest='joystick_next_btn_id', default=10)
     parser.add_argument("--fullscreen", dest='fullscreen', default=False, action="store_true")
     parser.add_argument("--rooms-count", dest='rooms_count', default=2, type=int)
     parser.add_argument("--speed", dest='speed', default=2, type=int)
