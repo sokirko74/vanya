@@ -30,6 +30,11 @@ class TBee(MazePlayer):
         self.loaded_with_milk = False
         self.loaded_with_bone = False
 
+        #joystick
+        self.dead_zone = 0.1
+        self.horizontal_axis = 0.0
+        self.vertical_axis = 0.0
+
         self.shadow = pygame.sprite.Sprite()
         self.shadow.image = pygame.image.load(os.path.join('assets', 'sprites', 'bee.png'))
         w, h = self.rect.size
@@ -70,22 +75,58 @@ class TBee(MazePlayer):
         self.direction_vector = self.direction_vector.rotate(45)
         self.rotate_player = True
 
+    def get_joystick_direction(self):
+        if abs(self.horizontal_axis) > abs(self.vertical_axis):
+            if self.horizontal_axis < -self.dead_zone:
+                return pygame.K_RIGHT
+            elif self.horizontal_axis > self.dead_zone:
+                return pygame.K_LEFT
+        else:
+            if self.vertical_axis < -self.dead_zone:
+                return pygame.K_DOWN
+            elif self.vertical_axis > self.dead_zone:
+                return pygame.K_UP
+
+    def _move(self, key_code):
+        if key_code == pygame.K_LEFT:
+            self.set_move_x(-1)
+        elif key_code == pygame.K_RIGHT:
+            self.set_move_x(1)
+        elif key_code == pygame.K_UP:
+            self.set_move_y(-1)
+        elif key_code == pygame.K_DOWN:
+            self.set_move_y(1)
+        elif key_code == pygame.K_a:
+            self.rotate()
+            self.update()
+
     def handle_event(self, event):
         self.move_player = False
         self.rotate_player = False
 
-        if event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_LEFT:
-                self.set_move_x(-1)
-            elif event.key == pygame.K_RIGHT:
-                self.set_move_x(1)
-            elif event.key == pygame.K_UP:
-                self.set_move_y(-1)
-            elif event.key == pygame.K_DOWN:
-                self.set_move_y(1)
-            elif event.key == pygame.K_a:
-                self.rotate()
-                self.update()
+        if event.type == pygame.JOYAXISMOTION:
+            if event.axis == 0:
+                self.horizontal_axis = event.value
+                if abs(self.horizontal_axis) < self.dead_zone:
+                    self.direction_vector.x = 0
+                # no diagonal movement for joystick
+                if abs(self.horizontal_axis) > abs(self.vertical_axis):
+                    self.direction_vector.y = 0
+
+            elif event.axis == 1:
+                self.vertical_axis = event.value
+                if abs(self.vertical_axis) < self.dead_zone:
+                    self.direction_vector.y = 0
+
+                #no diagonal movement for joystick
+                if abs(self.vertical_axis) > abs(self.horizontal_axis):
+                    self.direction_vector.x = 0
+
+            joystick_direction = self.get_joystick_direction()
+            if joystick_direction:
+                self._move(joystick_direction)
+        elif event.type == pygame.KEYDOWN:
+            self._move(event.key)
         elif event.type == pygame.KEYUP:
             if event.key == pygame.K_LEFT:
                 self.direction_vector.x = 0

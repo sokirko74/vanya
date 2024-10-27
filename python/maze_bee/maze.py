@@ -1,6 +1,4 @@
-import sys
-import os
-sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+#sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
 from utils.joystick import init_joystick
 import utils.maze_generator as generator
@@ -19,49 +17,11 @@ from bone import TBone
 import pygame
 import argparse
 
-JOYSTICK_DEAD_ZONE = 0.3
-PRESSED_BUTTONS = set()
-
-
-def press_btn(b):
-    if b not in PRESSED_BUTTONS:
-        print("press {}".format(b))
-        PRESSED_BUTTONS.add(b)
-        return TKeyEventType(pygame.KEYDOWN, b)
-
-def unpress_btns(lst):
-    for btn in lst:
-        if btn in PRESSED_BUTTONS:
-            PRESSED_BUTTONS.remove(btn)
-            return TKeyEventType(pygame.KEYUP, btn)
-
-class TKeyEventType:
-    def __init__(self, typ, key_code):
-        self.type = typ
-        self.key = key_code
-
-    @staticmethod
-    def from_joystick_event(event):
-        #if event.axis == 1:
-        #    print("event.axis={} value={}".format(event.axis, round(event.value, 3)))
-        if event.axis == 0:
-            if event.value > 0.0 + JOYSTICK_DEAD_ZONE:
-                return press_btn(pygame.K_LEFT)
-            elif event.value < 0.0 - JOYSTICK_DEAD_ZONE:
-                return press_btn(pygame.K_RIGHT)
-            else:
-                return unpress_btns([pygame.K_LEFT, pygame.K_RIGHT])
-        elif event.axis == 1:
-            if event.value < 0.0 - JOYSTICK_DEAD_ZONE:
-                return press_btn(pygame.K_DOWN)
-            elif event.value > 0.0 + JOYSTICK_DEAD_ZONE:
-                return press_btn(pygame.K_UP)
-            else:
-                return unpress_btns([pygame.K_DOWN, pygame.K_UP])
 
 
 class TMaze:
-    def __init__(self, use_joystick, is_full_screen, rooms_count, speed, block_size, maze_width=1000, maze_height=800):
+    def __init__(self, use_joystick, is_full_screen, rooms_count, speed, block_size, maze_width=1000, maze_height=800,
+                 joystick_next_btn_id=6):
         self.logger = setup_logging("maze_logger")
         self.gen = generator.Generator(logger=self.logger, rooms=max(rooms_count, 2))
         self.tiles = []
@@ -74,6 +34,7 @@ class TMaze:
         self.all_sprites = None
         self.objects = None
         self.print_victory = False
+        self.joystick_next_btn_id = joystick_next_btn_id
         if is_full_screen:
             self.left_maze = 80
             self.top_maze = 0
@@ -236,24 +197,14 @@ class TMaze:
         self.start_game()
         clock = pygame.time.Clock()
         while self.is_running:
-            #joystick_direction = [0, 0]
             for event in pygame.event.get():
-                if event.type == pygame.JOYBUTTONDOWN:
-                    self.logger.info("Joystick button pressed.")
-                elif event.type == pygame.JOYBUTTONUP:
-                    self.next_map()
-                    self.logger.info("Joystick button released.")
-                elif event.type == pygame.JOYAXISMOTION:
-                    if event.axis < 2:
-                        #joystick_direction[event.axis] = int(event.value)
-                        e = TKeyEventType.from_joystick_event(event)
-                        if e is not None:
-                            self.handle_player_events(e)
+                if event.type == pygame.JOYBUTTONUP:
+                    if self.joystick_next_btn_id == event.button:
+                        self.logger.info("joystick next button released.")
+                        self.next_map()
                 else:
                    self.check_game_events(event)
                    self.handle_player_events(event)
-                # if joystick_direction[0] != 0 or joystick_direction[1] != 0:
-                #     self.logger.info("joystick_direction = {}".format(joystick_direction))
 
             self.screen.fill(TColors.white)
             self.all_sprites.update()
@@ -275,6 +226,7 @@ class TMaze:
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--use-joystick", dest='use_joystick', default=False, action="store_true")
+    parser.add_argument("--joystick-next-button-id", dest='joystick_next_btn_id', default=6)
     parser.add_argument("--fullscreen", dest='fullscreen', default=False, action="store_true")
     parser.add_argument("--rooms-count", dest='rooms_count', default=2, type=int)
     parser.add_argument("--speed", dest='speed', default=2, type=int)
@@ -287,6 +239,6 @@ def parse_args():
 if __name__ == '__main__':
     args = parse_args()
     maze = TMaze(args.use_joystick, args.fullscreen, args.rooms_count, args.speed, args.block_size,
-                 args.maze_width, args.maze_height )
+                 args.maze_width, args.maze_height, args.joystick_next_btn_id )
     maze.main_loop()
     pygame.quit()

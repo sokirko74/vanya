@@ -20,5 +20,5 @@ def init_joystick(logger):
 
 
 if __name__ == "__main__":
-    logger = setup_logging("test_joystick")
-    wheel = init_joystick(logger)
+    _logger = setup_logging("test_joystick")
+    wheel = init_joystick(_logger)
