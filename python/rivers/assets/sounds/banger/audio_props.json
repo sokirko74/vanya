@@ -1,0 +1,21 @@
+{
+  "stable": {
+    "path": "stable.wav",
+    "volume": 0.2
+  },
+  "engine_start": {
+    "path": "start.wav"
+  },
+  "set_on_alarm": {
+    "path": "set_on_alarm.wav",
+    "volume": 1.2
+  },
+  "set_off_alarm": {
+    "path": "set_off_alarm.wav",
+    "volume": 1.2
+  },
+  "alarm": {
+    "path": "alarm.wav",
+    "volume": 1.2
+  }
+}
