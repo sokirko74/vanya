@@ -5,7 +5,7 @@ from utils.colors import TColors
 from utils.game_sounds import TSounds
 from utils.game_intro import TGameIntro
 from river_sprites import TSprite, TMapPart, TGrannySprite, TRepairStation, TGirlSprite,TGasStation, \
-    TRiverSprites,  THospital, TTownSprite, TBank, TRobberSprite
+    TRiverSprites,  THospital, TTownSprite, TBank, TRobberSprite, TForest
 from car_dashboard import TCarDashboard
 from vehicles import BaseCar
 
@@ -246,10 +246,13 @@ class TRiverGame:
             mp.generate_repair_station()
         elif self.my_car.broken_tires and random.random() > 0.4 and not isinstance(self.map_part.car_stop, TRepairStation):
             mp.generate_repair_station()
+        elif random.random() < self.args.forest_prob:
+            mp.generate_forest()
+        elif random.random() < self.get_bank_probability():
+            mp.generate_bank()
         else:
             gen_granny = not self.car_has_passenger() and random.random() < self.args.passenger_at_stop_prob and not self.map_part.has_passengers()
-            bank_prob = self.get_bank_probability()
-            mp.generate_town(gen_granny, bank_prob)
+            mp.generate_town(gen_granny)
         return mp
 
     def init_new_map_part(self):
@@ -262,7 +265,7 @@ class TRiverGame:
             dummy_rct = pygame.Rect(self.my_car.sprite.rect.center[0] - self.args.bridge_width/2,
                                     self.get_car_top(), self.args.bridge_width, 10)
             self.map_part = TMapPart(self.screen, 0, self.args.bridge_width, self.road_width, dummy_rct, self.args.girl_probability)
-            self.map_part.generate_town(True, self.args.bank_prob)
+            self.map_part.generate_town(True)
             #self.logger.info("prev rect {}".format(dummy_rct))
             #self.logger.info("car rect {}".format(self.my_car.rect))
             pygame.draw.rect(self.screen, TColors.white, dummy_rct)
@@ -333,6 +336,10 @@ class TRiverGame:
             self.sounds.play_sound("wrong_stop", loops=0)
             time.sleep(1)
 
+    def blackbird_sings(self):
+        self.logger.info("a blackbird sings")
+        self.sounds.play_sound("blackbird", loops=0)
+
     def open_door(self):
         if self.my_car.get_speed() == 1:
             self.my_car.use_brakes()
@@ -376,6 +383,8 @@ class TRiverGame:
 
         elif car_stop and self.car_has_granny() and is_town:
             self.granny_leaves_the_car()
+        elif car_stop and isinstance(car_stop, TForest):
+            self.blackbird_sings()
         elif car_stop and self.car_has_girl():
             self.logger.info("girl refuses to leave the car")
             self.sounds.play_sound("door_open", loops=0)
@@ -621,6 +630,7 @@ def parse_args():
     parser.add_argument("--passenger-at-stop-prob", dest='passenger_at_stop_prob', default=0.7, type=float)
     parser.add_argument("--min-chase-bridge-count", dest='min_chase_bridge_count', default=3, type=int)
     parser.add_argument("--bank-prob", dest='bank_prob', default=0.1, type=float)
+    parser.add_argument("--forest-prob", dest='forest_prob', default=0.1, type=float)
 
     return parser.parse_args()
 

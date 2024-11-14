@@ -157,6 +157,10 @@ class TBank(TCarStop):
     def __init__(self, screen, left, top):
         super().__init__(screen, "bank.png", left, top, 300)
 
+class TForest(TCarStop):
+    def __init__(self, screen, left, top):
+        super().__init__(screen, "forest.png", left, top, 300)
+
 
 class TRepairStation(TCarStop):
     def __init__(self, screen, left, top, width=300):
@@ -193,13 +197,10 @@ class TMapPart:
         self.car_stop: TCarStop | None = None
 
 
-    def generate_town(self, generate_passenger: bool, bank_prob):
-        if random.random() < bank_prob:
-            self.generate_bank()
-        else:
-            self.car_stop = TTownSprite(self.screen, self.road.car_stop_position[0], self.road.car_stop_position[1])
-            if generate_passenger:
-                self._generate_passenger(minus_color=self.car_stop.color.color)
+    def generate_town(self, generate_passenger: bool):
+        self.car_stop = TTownSprite(self.screen, self.road.car_stop_position[0], self.road.car_stop_position[1])
+        if generate_passenger:
+            self._generate_passenger(minus_color=self.car_stop.color.color)
 
 
     def generate_bank(self):
@@ -207,6 +208,9 @@ class TMapPart:
         left, top = self._get_passenger_position_at_car_stop()
         g = TRobberSprite(self.road.screen, left, top)
         self.car_stop.traveller = g
+
+    def generate_forest(self):
+        self.car_stop = TForest(self.screen, self.road.car_stop_position[0], self.road.car_stop_position[1])
 
     def generate_repair_station(self):
         self.car_stop = TRepairStation(self.screen, self.road.car_stop_position[0], self.road.car_stop_position[1])
@@ -281,6 +285,8 @@ class TMapPart:
             return "Repair station"
         elif isinstance(self.car_stop, THospital):
             return "Hospital"
+        elif isinstance(self.car_stop, TForest):
+            return "Forest"
         else:
             return "unknown object"
 
