@@ -42,7 +42,7 @@ namespace KartGame.KartSystems
         {
         	
             Axis2 = new AxisInfo(0.05F);
-            Axis3 = new AxisInfo(0.5F);// special for Vanya
+            Axis3 = new AxisInfo(0.7F);// special for Vanya
         }
 
 	private bool CalcAxis(string btnName, string axisName, AxisInfo axis_info)
@@ -62,7 +62,7 @@ namespace KartGame.KartSystems
                 } 
                 else  {
                     axis = AxisInfo.UnpressedValue; // convert null to normal unpressed value
-		            //print ("axis_info.HasEverChanged  " + axis_info.HasEverChanged + " set axis =" + axis);
+	            print ("axis_info.HasEverChanged  " + axis_info.HasEverChanged + " set axis =" + axis);
                 }
             }
             axis = (axis + 1.0F ) / 2.0F; // convert "centered axes" to "not-centered axes" [-1, 1] -> [0, 1]
