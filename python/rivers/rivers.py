@@ -272,8 +272,8 @@ class TRiverGame:
 
         self.map_part_next = self._create_next_map_part()
 
-        self.sprites.rivers.add(self.map_part.river)
-        self.sprites.bridges.add(self.map_part.bridge)
+        self.sprites.rivers.add(self.map_part.river, self.map_part_next.river)
+        self.sprites.bridges.add(self.map_part.bridge, self.map_part_next.bridge)
         self.sprites.roads.add(self.map_part.road, self.map_part_next.road)
         self.sprites.towns.add(self.map_part.car_stop, self.map_part_next.car_stop)
         if self.map_part.car_stop.traveller:
@@ -288,7 +288,8 @@ class TRiverGame:
             if speed > 0:
                 self.map_part.change_spite_position(speed)
                 self.map_part_next.change_spite_position(speed)
-            is_map_part_finished = self.map_part.river.rect.top > min(self.height - 100, self.my_car.sprite.rect.bottom + 200)
+            #is_map_part_finished = self.map_part.river.rect.top > min(self.height - 100, self.my_car.sprite.rect.bottom + 200)
+            is_map_part_finished = self.map_part.river.rect.top >= self.height
             #is_map_part_finished = self.map_part.river.rect.top > self.height
 
             if is_map_part_finished:
@@ -323,6 +324,9 @@ class TRiverGame:
     def granny_leaves_the_car(self):
         if self.car_is_ambulance:
             #self.sounds.play_sound('granny_wants_to_hospital')
+            pass
+        elif not hasattr(self.map_part.car_stop, "color"):
+            #it is not a town
             pass
         elif self.map_part.car_stop.color.color == self.get_granny_in_car_color():
             self.logger.info("granny leaves the car")
@@ -577,6 +581,8 @@ class TRiverGame:
         if self.args.engine_auto_start:
             self.my_car.start_warm_engine()
         cycle_index = 0
+
+        #dummy = TPrison(self.screen, 0, -20)
 
         while not self.game_over and not self.exit_game:
             self.process_wheel_pedals()

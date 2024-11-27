@@ -236,6 +236,7 @@ class TMapPart:
 
 
     def change_spite_position(self, delta):
+
         self.river.change_spite_position(delta)
         self.bridge.change_spite_position(delta)
         self.road.change_spite_position(delta)
