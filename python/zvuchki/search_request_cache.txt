@@ -2111,5 +2111,77 @@
         "https://www.youtube.com/watch?v=JVITKs4Oifk&t=1561",
         "https://www.youtube.com/watch?v=hlvCwg6Etds",
         "https://www.youtube.com/watch?v=wmO3sjTKRhw&lc=z13fu3uhwxfjiv3a404cgtur5orgv3fxyr00k"
+    ],
+    "РЕТРО тест драйв от первого лица": [
+        "https://www.youtube.com/watch?v=Zi5eEqmaR2E",
+        "https://www.youtube.com/watch?v=6kyEJUTck1U",
+        "https://www.youtube.com/watch?v=hu0BnG7ZHps",
+        "https://www.youtube.com/watch?v=kCMm2XR8Ihg",
+        "https://www.youtube.com/watch?v=KBiwRiMhQJk",
+        "https://www.youtube.com/watch?v=cRojFhRFxj0",
+        "https://www.youtube.com/watch?v=lR-SOPUWQVY",
+        "https://www.youtube.com/watch?v=IlNMjIdMlPc"
+    ],
+    "РЕТРО . тест драйв от первого лица": [
+        "https://www.youtube.com/watch?v=Zi5eEqmaR2E",
+        "https://www.youtube.com/watch?v=6kyEJUTck1U",
+        "https://www.youtube.com/watch?v=hu0BnG7ZHps",
+        "https://www.youtube.com/watch?v=kCMm2XR8Ihg",
+        "https://www.youtube.com/watch?v=KBiwRiMhQJk",
+        "https://www.youtube.com/watch?v=cRojFhRFxj0",
+        "https://www.youtube.com/watch?v=lR-SOPUWQVY",
+        "https://www.youtube.com/watch?v=IlNMjIdMlPc"
+    ],
+    "ГАЗАА тест драйв от первого лица": [
+        "https://www.youtube.com/watch?v=VfwA9cbXejQ",
+        "https://www.youtube.com/watch?v=Jc0vnBgK8w4",
+        "https://www.youtube.com/watch?v=qevz-KgPZn4",
+        "https://www.youtube.com/watch?v=FPaWYvHQFW8&pp=ygUGI3FhejIx",
+        "https://www.youtube.com/watch?v=m-YjF7ChSzI",
+        "https://www.youtube.com/watch?v=Hcrdeqpx1pg",
+        "https://www.youtube.com/watch?v=YUt-wV_zxgA",
+        "https://www.youtube.com/watch?v=Zi5eEqmaR2E",
+        "https://m.youtube.com/watch?v=HuhnmJWoWxU",
+        "https://www.youtube.com/watch?v=10apUs8tVZ8"
+    ],
+    "ГАЗ А тест драйв от первого лица": [
+        "https://www.youtube.com/watch?v=Jc0vnBgK8w4",
+        "https://www.youtube.com/watch?v=VfwA9cbXejQ",
+        "https://www.youtube.com/watch?v=BzrTM615c3I",
+        "https://www.youtube.com/watch?v=Zi5eEqmaR2E",
+        "https://www.youtube.com/watch?v=FPaWYvHQFW8&pp=ygUGI3FhejIx",
+        "https://www.youtube.com/watch?v=tw7_vTVwvPw",
+        "https://www.youtube.com/watch?v=jSQFum-lVzY",
+        "https://www.youtube.com/watch?v=Y19mETVI504"
+    ],
+    "ГАЗ 64 тест драйв от первого лица": [
+        "https://www.youtube.com/watch?v=cRojFhRFxj0",
+        "https://www.youtube.com/watch?v=kGCBgsM1gOY",
+        "https://www.youtube.com/watch?v=c4k_a_Wc1y8",
+        "https://www.youtube.com/watch?v=AToy5bvtcBk",
+        "https://www.youtube.com/playlist?list=PLHDJeVFD5UFx_EKz67BoPdH_6t-7RiIKA",
+        "https://www.youtube.com/watch?v=OP7cbFVMY7U",
+        "https://www.youtube.com/watch?v=8SWzlc_PezY",
+        "https://www.youtube.com/watch?v=B_4CGoi-t4Q",
+        "https://www.youtube.com/watch?v=gjB4JmrV438"
+    ],
+    "ГАЗ 64 звук двигателя": [
+        "https://www.youtube.com/watch?v=odov2iunF5M",
+        "https://www.youtube.com/watch?v=wuGmAL1v8OE",
+        "https://www.youtube.com/watch?v=mu9t5rfZj_s",
+        "https://www.youtube.com/watch?v=xApJWaLL0HU",
+        "https://www.youtube.com/watch?v=sbQalAig3uY",
+        "https://www.youtube.com/watch?v=rAj56qPqjts",
+        "https://www.youtube.com/watch?v=INehuQl3LRo",
+        "https://www.youtube.com/watch?v=SMH6PfGKnGI"
+    ],
+    "ГАЗ звук двигателя": [
+        "https://www.youtube.com/watch?v=Xx1yR41BwFM",
+        "https://www.youtube.com/watch?v=Y06GKM5Cpok",
+        "https://www.youtube.com/watch?v=vlPd4elmAD4",
+        "https://www.youtube.com/watch?v=mms_wPsIphI",
+        "https://www.youtube.com/watch?v=aqykUW6uey8",
+        "https://www.youtube.com/watch?v=5JkRh-bwHf0",
+        "https://www.youtube.com/watch?v=5AbDSUK3ETY"
     ]
 }

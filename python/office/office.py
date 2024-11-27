@@ -189,8 +189,8 @@ class TVanyaOffice(tk.Frame):
             words.remove(last_goal)
         new_goal = random.choice(words)
         if random.random() > 0.8:
-            a1 = random.randint(1, 20)
-            a2 = random.randint(6, 12)
+            a1 = random.randint(4, 30)
+            a2 = random.randint(8, 16)
             new_goal = "{} + {} = ".format(a1, a2)
         #w = "ЖУК"
         self.goal_word_widget.delete("1.0", tk.END)
