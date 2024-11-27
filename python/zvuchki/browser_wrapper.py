@@ -1,8 +1,7 @@
 import selenium.common.exceptions
 from selenium import webdriver
-from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.common.by import By
-from selenium.webdriver.support import expected_conditions as EC
+from googleapiclient.discovery import build
 from selenium.common.exceptions import WebDriverException, TimeoutException
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.action_chains import ActionChains, ActionBuilder
@@ -19,6 +18,11 @@ class TBrowser:
         self.cache_path = os.path.join(os.path.dirname(__file__), "search_request_cache.txt")
         self.all_requests = dict()
         self.all_requests_without_spaces = dict()
+        self.google_cse = build(
+            "customsearch", "v1",
+            developerKey=os.environ.get('GOOGLE_API_KEY')
+        )
+
         if os.path.exists(self.cache_path):
             with open(self.cache_path) as inp:
                 s = inp.read()
@@ -42,16 +46,6 @@ class TBrowser:
         self.browser.set_page_load_timeout(20)
         self.browser.set_script_timeout(18)
         self.browser.set_window_position(0, 0)
-
-    # def init_firefox(self):
-    #     opts =  webdriver.FirefoxOptions()
-    #     #opts.log.level = "trace"
-    #     self.browser = webdriver.Firefox(
-    #             options=opts,
-    #             executable_path='/snap/bin/geckodriver',
-    #             #service_log_path=os.path.join(os.path.dirname(__file__), 'geckodriver.log')
-    #                 service_log_path=None
-    #             )
 
     def start_browser(self):
         #self.init_firefox()
@@ -116,7 +110,7 @@ class TBrowser:
             print("exception in navigate: {}".format(e))
             time.sleep(2)
 
-    def play_youtube(self, url, max_duration):
+    def play_youtube(self, url):
         try:
             time.sleep(1)
             print("play {}".format(url))
@@ -125,26 +119,6 @@ class TBrowser:
             print ("sleep 3 sec")
             time.sleep(3)
 
-            # self.browser.switch_to.default_content()
-            # elem = self.browser.find_elements(By.XPATH, "//*[contains(text(), 'Accept all')]")
-            # if not elem:
-            #     elem = self.browser.find_elements(By.XPATH, "//*[contains(text(), 'Принять все')]")
-            #
-            # if elem:
-            #     for i in range(6):
-            #         ActionChains(self.browser).send_keys(Keys.TAB).perform()
-            #         time.sleep(1)
-            #     ActionChains(self.browser).send_keys(Keys.RETURN).perform()
-            #
-            #     #print("scroll to  @Accept all")
-            #     #ActionChains(self.browser).move_to_element(elem[0]).perform()
-            #     #time.sleep(1)
-            #
-            #     #print("click Accept all")
-            #     #elem[0].click()
-            # else:
-            #     print("no accept cookie button found")
-            # time.sleep(1)
 
             element = self.browser.switch_to.active_element
             time.sleep(2)
@@ -161,10 +135,8 @@ class TBrowser:
             #time.sleep(0.5)
             #print ("send p")
             #element.send_keys("p")
+            print ("exit from play_yotube")
 
-            print("sleep for  {} seconds (video duration)".format(max_duration))
-            time.sleep(max_duration)
-            print("time elapsed")
             return True
         except WebDriverException as exp:
             print("exception: {}".format(exp))
@@ -207,7 +179,7 @@ class TBrowser:
         self._cache_request(search_engine_request, search_results)
         return search_results
 
-    def send_request(self, search_engine_request):
+    def send_request_as_human(self, search_engine_request):
         q = urllib.parse.quote(search_engine_request)
         url  = "https://www.google.ru/search?hl=ru&tbm=vid&q=" + q
         self.navigate(url)
@@ -215,6 +187,22 @@ class TBrowser:
         search_results = self._parse_serp()
         self._cache_request(search_engine_request, search_results)
         return search_results
+
+    def send_request_via_api(self, search_engine_request):
+        res = (
+            self.google_cse.cse()
+            .list(
+                q=search_engine_request,
+                cx="23bc393c3e0864c5d",
+            )
+            .execute()
+        )
+        search_results =   list(i['link'] for i in res['items'])
+        return search_results
+
+    def send_request(self, search_engine_request):
+        #return self.send_request_as_human(search_engine_request)
+        return self.send_request_via_api(search_engine_request)
 
 
 if __name__ == "__main__":

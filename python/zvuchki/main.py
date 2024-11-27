@@ -1,6 +1,3 @@
-import json
-from json.decoder import BACKSLASH
-
 from car_brands import CARS, URLS, BIRDS, COMPOSERS, OTHER_SRC, CAR_EN
 from browser_wrapper import TBrowser
 from yandex_mus import TYandexMusic
@@ -9,6 +6,7 @@ import selenium
 import os
 import sys
 import argparse
+import json
 import tkinter as tk
 import tkinter.font as tkFont
 import time
@@ -48,7 +46,7 @@ class VideoPlayer (threading.Thread):
 
     def stop_playing(self):
         self._interrupted = True
-        self.browser.close_all_windows()
+        time.sleep(1)
 
     def next_track(self):
         self.browser.send_shift_n()
@@ -60,11 +58,18 @@ class VideoPlayer (threading.Thread):
         for try_index in range(2):
             if not self.parent.is_running or self._interrupted:
                 break
-            res = self.browser.play_youtube(self.url, self.seconds)
-            self.browser.close_all_windows()
-            if res:
-                break
-        self.parent.on_video_finish()
+            if self.browser.play_youtube(self.url):
+                print("sleep for  {} seconds (video duration)".format(self.seconds))
+                for i in range(self.seconds):
+                    if self._interrupted:
+                        break
+                    time.sleep(1)
+                self.browser.close_all_windows()
+                self.parent.on_video_finish()
+                return
+            if self._interrupted:
+                return
+
 
 
 def transliterate(s):
@@ -123,11 +128,10 @@ class TZvuchki(tk.Frame):
                                    font=self.editor_font)
 
         self.text_widget.bind('<Return>', self.on_return)
-        self.text_widget.bind('<Escape>', self.on_return)
+        self.text_widget.bind('<Escape>', self.on_stop_playing)
         self.text_widget.bind('<F1>', self.on_backspace)
         self.bind('<Return>', self.on_return)
-        self.bind('<Escape>', self.on_return)
-        #self.text_widget.bind("<Button-1>", self.on_return)
+        self.bind('<Escape>', self.on_stop_playing)
         self.text_widget.focus_force()
         if self.args.audio_keys:
             self.master.bind_all('<KeyPress>', self.report_key_press)
@@ -218,7 +222,6 @@ class TZvuchki(tk.Frame):
 
     def on_video_finish(self):
         self.logger.info('on_video_finish...')
-        #self.video_player_thread.join(0.1)
         self.video_player_thread = None
         self.entry_text.set("")
 
@@ -228,28 +231,42 @@ class TZvuchki(tk.Frame):
         self.entry_text.set(s[:-1])
         self.text_widget.select_clear()
 
-    def on_return(self, event):
-        ts = time.time()
-        if ts - self.last_char_timestamp < 2 and '\n' == self.last_char:
-            return
-        self.last_char_timestamp = ts
-        self.last_char = '\n'
-
-        self.play_audio("enter.wav", 50)
-        self.text_widget.select_clear()
-        self.logger.info("on_return")
+    def get_playing_source(self):
         if self.video_player_thread is not None:
+            return "youtube"
+        elif  self.yandex_music_client and self.yandex_music_client.is_playing():
+            return "yandex_music"
+        else:
+            return None
+
+    def on_stop_playing(self, event):
+        src = self.get_playing_source()
+        if src == "youtube":
+            self.logger.info("stop playing youtube")
             try:
                 self.video_player_thread.stop_playing()
                 self.on_video_finish()
             except selenium.common.exceptions.WebDriverException:
                 pass
-        elif  self.yandex_music_client and self.yandex_music_client.is_playing():
+        elif src == "yandex_music":
             self.logger.info("stop yandex music player")
             self.yandex_music_client.stop_player()
-        else:
-            s = self.entry_text.get()
-            self.play_request(s)
+
+    def on_return(self, event):
+        if self.get_playing_source() is not None:
+            self.logger.info("press esc to stop player")
+            return
+
+        ts = time.time()
+        if ts - self.last_char_timestamp < 2 and '\n' == self.last_char:
+            return
+        self.last_char_timestamp = ts
+        self.last_char = '\n'
+        self.play_audio("enter.wav", 50)
+        self.text_widget.select_clear()
+        self.logger.info("on_return")
+        s = self.entry_text.get()
+        self.play_request(s)
 
     def get_url_video_from_google_or_cached(self, request, position):
         search_results = self.browser.get_cached_request(request)
@@ -458,7 +475,7 @@ def parse_args():
     parser.add_argument("--transliterate", dest='transliterate', default=False, action="store_true")
     parser.add_argument("--free", dest='free_request', default=False, action="store_true")
     parser.add_argument("--disable-ya-music", dest='enable_ya_music', default=True, action="store_false")
-    parser.add_argument("--attach-browser-address")
+    parser.add_argument("--attach-browser-address", help="run before google-chrome --remote-debugging-port=8888")
     return parser.parse_args()
 
 
