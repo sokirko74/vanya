@@ -247,13 +247,15 @@ class TRiverGame:
             mp.generate_repair_station()
         elif self.my_car.broken_tires and random.random() > 0.4 and not isinstance(self.map_part.car_stop, TRepairStation):
             mp.generate_repair_station()
-        elif random.random() < self.args.forest_prob:
-            mp.generate_forest()
-        elif random.random() < self.get_bank_probability():
-            mp.generate_bank()
         else:
-            gen_granny = not self.car_has_passenger() and random.random() < self.args.passenger_at_stop_prob and not self.map_part.has_passengers()
-            mp.generate_town(gen_granny)
+            r = random.random()
+            if r <= self.args.forest_prob:
+                mp.generate_forest()
+            elif r <= self.args.forest_prob + self.get_bank_probability():
+                mp.generate_bank()
+            else:
+                gen_granny = not self.car_has_passenger() and random.random() < self.args.passenger_at_stop_prob and not self.map_part.has_passengers()
+                mp.generate_town(gen_granny)
         return mp
 
     def init_new_map_part(self):
@@ -637,7 +639,7 @@ def parse_args():
     parser.add_argument("--engine-auto-start", dest='engine_auto_start', default=False, action="store_true")
     parser.add_argument("--passenger-at-stop-prob", dest='passenger_at_stop_prob', default=0.7, type=float)
     parser.add_argument("--min-chase-bridge-count", dest='min_chase_bridge_count', default=3, type=int)
-    parser.add_argument("--bank-prob", dest='bank_prob', default=0.1, type=float)
+    parser.add_argument("--bank-prob", dest='bank_prob', default=0.05, type=float)
     parser.add_argument("--forest-prob", dest='forest_prob', default=0.03, type=float)
 
     return parser.parse_args()
