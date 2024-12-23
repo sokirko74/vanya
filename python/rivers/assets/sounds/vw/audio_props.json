@@ -1,0 +1,8 @@
+{
+  "stable": {"path": "stable.wav", "volume": 0.2},
+  "engine_start": {"path": "start.wav"},
+  "door_open": {
+    "path": "door_open.wav",
+    "volume": 0.8
+  }
+}

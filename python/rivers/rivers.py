@@ -35,6 +35,7 @@ class TRiverGame:
         self.chase_bridge_count = 0
         self.game_over = False
         self.game_paused = False
+        self.some_index  = 0
 
         if args.full_screen:
             self.screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
@@ -540,7 +541,8 @@ class TRiverGame:
         elif river is not None:
             self.check_river_collision(river)
         if self.car_has_granny() and not self.car_is_ambulance:
-            if (int(time.time()) % 33 == 0) and random.random() < self.args.granny_heart_attack_probability:
+            self.some_index += 1
+            if (self.some_index % 60  == 0) and random.random() < self.args.granny_heart_attack_probability:
                 self.my_car = self.create_ambulance()
 
     def init_game_loop(self):
@@ -631,12 +633,12 @@ def parse_args():
     parser.add_argument("--engine-audio-folder", dest='engine_audio_folder',
                         default= os.path.join(os.path.dirname(__file__), 'assets/sounds/ford'))
     parser.add_argument("--girl-probability", dest='girl_probability', default=0.4, type=float)
-    parser.add_argument("--granny-heart-attack-probability", dest='granny_heart_attack_probability', default=0.01, type=float)
+    parser.add_argument("--granny-heart-attack-probability", dest='granny_heart_attack_probability', default=0.003, type=float)
     parser.add_argument("--engine-auto-start", dest='engine_auto_start', default=False, action="store_true")
     parser.add_argument("--passenger-at-stop-prob", dest='passenger_at_stop_prob', default=0.7, type=float)
     parser.add_argument("--min-chase-bridge-count", dest='min_chase_bridge_count', default=3, type=int)
     parser.add_argument("--bank-prob", dest='bank_prob', default=0.1, type=float)
-    parser.add_argument("--forest-prob", dest='forest_prob', default=0.1, type=float)
+    parser.add_argument("--forest-prob", dest='forest_prob', default=0.03, type=float)
 
     return parser.parse_args()
 
