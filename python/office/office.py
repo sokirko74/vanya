@@ -15,7 +15,6 @@ from tkinter.messagebox import askyesno
 
 
 MAX_WORD_FAIL_COUNT = 2
-MAX_VICTORIES_COUNT = 20
 
 
 BLACK = (0, 0, 0)
@@ -135,7 +134,8 @@ class TVanyaOffice(tk.Frame):
     def read_goal_words(self):
         #path = os.path.join(os.path.dirname(__file__), "goal_words.txt")
         #path = os.path.join(os.path.dirname(__file__), "nouns5.txt")
-        path = os.path.join(os.path.dirname(__file__), "nouns6.txt")
+        #path = os.path.join(os.path.dirname(__file__), "nouns6.txt")
+        path = os.path.join(os.path.dirname(__file__), "english_0.txt")
         with open(path) as inp:
             for i in inp:
                 self.goal_words.append(i.strip())
@@ -190,7 +190,7 @@ class TVanyaOffice(tk.Frame):
         new_goal = random.choice(words)
         if random.random() > 0.8:
             a1 = random.randint(4, 30)
-            a2 = random.randint(8, 16)
+            a2 = random.randint(11, 19)
             new_goal = "{} + {} = ".format(a1, a2)
         #w = "ЖУК"
         self.goal_word_widget.delete("1.0", tk.END)
@@ -212,7 +212,10 @@ class TVanyaOffice(tk.Frame):
         self.print_to_log("victory count = {}\n".format(self.victory_count))
         # self.play_file("victory.wav")
         if goal_word.isdigit():
-            self.play_file('fanfare.wav', 50)
+            self.play_file('fanfare.wav', 30)
+            time.sleep(1)
+        elif goal_word.isalpha() and goal_word.isascii():
+            self.play_file('fanfare.wav', 30)
             time.sleep(1)
         else:
             b = Bar()
@@ -229,7 +232,7 @@ class TVanyaOffice(tk.Frame):
             fluidsynth.play_Bar(b)
             time.sleep(3)
         self.text_widget.delete('1.0', tk.END)
-        if self.victory_count == MAX_VICTORIES_COUNT:
+        if self.victory_count == self.args.victory_count:
             self.play_file('victory.wav', 50)
             self.master.grab_set()  # Prevent clicking root while messagebox is open
             ans = askyesno('', 'Выйти? Press Yes / No')
@@ -297,6 +300,7 @@ def parse_args():
     parser.add_argument("--not-fullscreen", dest='fullscreen', default=True, action="store_false")
     parser.add_argument("--write-font-size", dest='write_font_size', default=200, type=int)
     parser.add_argument("--read-font-size", dest='read_font_size', default=200, type=int)
+    parser.add_argument("--victory-count", default=20, type=int)
     return parser.parse_args()
 
 
