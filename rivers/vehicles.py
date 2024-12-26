@@ -1,3 +1,5 @@
+from librosa import samples_to_time
+
 from river_sprites import TCarSprite, TSprite
 from car_dashboard import TCarDashboard
 import gif_pygame
@@ -86,7 +88,11 @@ class BaseCar:
 
     def repair_car(self):
         self.car_needs_repair = False
-        self.sounds.play_sound("repair_car", loops=0)
+        if self.broken_tires:
+            repair_sound = "pump"
+        else:
+            repair_sound = random.choice("repair_car", "welding", "hummer")
+        self.sounds.play_sound(repair_sound)
         self.init_engine_sound()
         self.broken_tires = False
 
