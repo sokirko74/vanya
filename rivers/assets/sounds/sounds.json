@@ -85,5 +85,15 @@
   },
   "blackbird": {
     "volume": 1
+  },
+  "pump": {
+    "volume": 1
+  }
+  ,
+  "welding": {
+    "volume": 1
+  },
+  "hummer": {
+    "volume": 1.2
   }
 }
