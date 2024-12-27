@@ -201,8 +201,10 @@ class TBrowser:
         return search_results
 
     def send_request(self, search_engine_request):
-        #return self.send_request_as_human(search_engine_request)
-        return self.send_request_via_api(search_engine_request)
+        return self.send_request_as_human(search_engine_request)
+	
+	# на волгарь выдала daewoo
+        #return self.send_request_via_api(search_engine_request)
 
 
 if __name__ == "__main__":

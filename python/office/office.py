@@ -188,7 +188,7 @@ class TVanyaOffice(tk.Frame):
         if last_goal in words:
             words.remove(last_goal)
         new_goal = random.choice(words)
-        if random.random() > 0.8:
+        if random.random() > 1.0 - self.args.math_prob:
             a1 = random.randint(4, 30)
             a2 = random.randint(11, 19)
             new_goal = "{} + {} = ".format(a1, a2)
@@ -301,6 +301,7 @@ def parse_args():
     parser.add_argument("--write-font-size", dest='write_font_size', default=200, type=int)
     parser.add_argument("--read-font-size", dest='read_font_size', default=200, type=int)
     parser.add_argument("--victory-count", default=20, type=int)
+    parser.add_argument("--math-prob", default=0.2, type=float)
     return parser.parse_args()
 
 

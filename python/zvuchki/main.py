@@ -331,6 +331,8 @@ class TZvuchki(tk.Frame):
             elif token == 'T':
                 self.logger.info('add en test drive')
                 add_to_query.append(test_drive_en)
+            elif token == 'R':
+                add_to_query.append('retro')
             elif token == 'ТД':
                 add_to_query.append( test_drive)
                 add_sec = 120
@@ -343,6 +345,8 @@ class TZvuchki(tk.Frame):
                 add_to_query.append( "крик")
             elif token == 'З':
                 add_to_query.append( "звук двигателя")
+            elif token == 'S':
+                add_to_query.append("engine start")
             elif token == 'ЗВУК':
                 add_to_query.append( "звук")
             elif token == 'ЗПМ':
