@@ -272,7 +272,7 @@ class TMapPart:
         left, top = self._get_passenger_position_at_car_stop()
         passenger.rect.left = left
         passenger.rect.top = top
-        self.car_stop.traveller = passenger
+        self.car_stop.traveller = None
 
     def get_descr(self):
         if  isinstance(self.car_stop, TTownSprite):

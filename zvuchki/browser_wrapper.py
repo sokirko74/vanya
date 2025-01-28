@@ -85,6 +85,25 @@ class TBrowser:
             .key_down(Keys.END) \
             .perform()
 
+    def send_left(self):
+        ActionChains(self.browser) \
+            .key_down(Keys.LEFT) \
+            .perform()
+
+    def send_right(self):
+        try:
+            print('send_right')
+            element = self.browser.switch_to.active_element
+            time.sleep(0.1)
+            element.send_keys(Keys.RIGHT)
+        except WebDriverException as exp:
+            print("exception: {}".format(exp))
+            return False
+
+        # ActionChains(self.browser) \
+        #     .key_down(Keys.RIGHT) \
+        #     .perform()
+
     def send_ctrl_home(self):
         ActionChains(self.browser) \
             .key_down(Keys.CONTROL) \
@@ -103,12 +122,28 @@ class TBrowser:
             .key_down('p') \
             .perform()
 
+    # def send_f(self):
+    #     ActionChains(self.browser) \
+    #         .key_down('f') \
+    #         .perform()
+
     def navigate(self, url):
         try:
             self.browser.get(url)
         except selenium.common.exceptions.TimeoutException as e:
             print("exception in navigate: {}".format(e))
             time.sleep(2)
+
+    def send_f(self):
+        try:
+            element = self.browser.switch_to.active_element
+            time.sleep(0.2)
+            print ("send f")
+            element.send_keys("f")
+        except WebDriverException as exp:
+            print("exception: {}".format(exp))
+            return False
+
 
     def play_youtube(self, url):
         try:

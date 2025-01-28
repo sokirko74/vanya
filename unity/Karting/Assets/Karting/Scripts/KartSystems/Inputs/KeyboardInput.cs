@@ -42,7 +42,7 @@ namespace KartGame.KartSystems
         {
         	
             Axis2 = new AxisInfo(0.05F);
-            Axis3 = new AxisInfo(0.7F);// special for Vanya
+            Axis3 = new AxisInfo(0.51F);// special for Vanya, the greater value the less sensitive is brake pedal
         }
 
 	private bool CalcAxis(string btnName, string axisName, AxisInfo axis_info)

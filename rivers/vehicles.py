@@ -91,7 +91,7 @@ class BaseCar:
         if self.broken_tires:
             repair_sound = "pump"
         else:
-            repair_sound = random.choice("repair_car", "welding", "hummer")
+            repair_sound = random.choice(["repair_car", "welding", "hummer"])
         self.sounds.play_sound(repair_sound)
         self.init_engine_sound()
         self.broken_tires = False

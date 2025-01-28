@@ -83,9 +83,6 @@
   "hospital": {
     "volume": 1
   },
-  "blackbird": {
-    "volume": 1
-  },
   "pump": {
     "volume": 1
   }

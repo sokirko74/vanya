@@ -14,6 +14,8 @@ import vlc
 from functools import partial
 import threading
 import unidecode
+import wmctrl
+
 
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 from utils.logging_wrapper import setup_logging
@@ -59,6 +61,7 @@ class VideoPlayer (threading.Thread):
             if not self.parent.is_running or self._interrupted:
                 break
             if self.browser.play_youtube(self.url):
+                self.parent.set_window_focus()
                 print("sleep for  {} seconds (video duration)".format(self.seconds))
                 for i in range(self.seconds):
                     if self._interrupted:
@@ -94,7 +97,8 @@ class TZvuchki(tk.Frame):
         self.font_size = self.args.font_size
         self.keyboard_column_count = 12
         self.master = tk.Tk()
-        self.master.title("ZvuchkiApp")
+        self.window_title = "ZvuchkiApp"
+        self.master.title(self.window_title)
         if self.args.enable_ya_music:
             self.yandex_music_client = TYandexMusic(self, self.args.prefer_rap)
         else:
@@ -116,6 +120,7 @@ class TZvuchki(tk.Frame):
                 self.master.geometry("1600x800")
             else:
                 self.master.geometry("1600x200")
+        self.master.attributes("-topmost", True)
         self.audioplayer = None
         self.music_player_pid = None
         self.editor_coef_height = 0.28
@@ -129,9 +134,14 @@ class TZvuchki(tk.Frame):
 
         self.text_widget.bind('<Return>', self.on_return)
         self.text_widget.bind('<Escape>', self.on_stop_playing)
+        self.text_widget.bind('<Right>', self.on_right)
+        self.text_widget.bind('<Left>', self.on_left)
         self.text_widget.bind('<F1>', self.on_backspace)
         self.bind('<Return>', self.on_return)
         self.bind('<Escape>', self.on_stop_playing)
+        self.bind('<Left>', self.on_left)
+        self.bind('<Right>', self.on_right)
+
         self.text_widget.focus_force()
         if self.args.audio_keys:
             self.master.bind_all('<KeyPress>', self.report_key_press)
@@ -160,6 +170,9 @@ class TZvuchki(tk.Frame):
 
     def report_key_press(self, e):
         ch = e.char.upper()
+        if (ch  == "П" or ch  == "G") and self.get_playing_source():
+            self.on_toggle_full(e)
+
         if ch == '*':
             return
         if ch == '\x08':
@@ -239,6 +252,27 @@ class TZvuchki(tk.Frame):
         else:
             return None
 
+    def on_left(self, event):
+        src = self.get_playing_source()
+        if src == "youtube":
+            self.browser.send_left()
+            self.set_window_focus()
+
+    def set_window_focus(self):
+        print("set_window_focus")
+        wmctrl.Window.by_name(self.window_title)[0].activate()
+
+    def on_toggle_full(self, event):
+        self.logger.info("on_toggle_full")
+        self.browser.send_f()
+        self.set_window_focus()
+
+    def on_right(self, event):
+        src = self.get_playing_source()
+        if src == "youtube":
+            self.browser.send_right()
+            self.set_window_focus()
+
     def on_stop_playing(self, event):
         src = self.get_playing_source()
         if src == "youtube":
@@ -280,10 +314,9 @@ class TZvuchki(tk.Frame):
         return search_results[position]
 
     def set_focus_to_text(self):
-        time.sleep(1)
-        self.logger.info("set focus to text window")
-        r = os.system('/usr/bin/wmctrl -v  -a ZvuchkiApp')
-        self.logger.info("result = " + str(r))
+        print("set_focus_to_text")
+        time.sleep(0.1)
+        self.set_window_focus()
         self.text_widget.focus_force()
 
     def is_relevant(self, w):

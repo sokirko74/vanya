@@ -1,3 +1,4 @@
 python-vlc
 selenium
 google-api-python-client
+wmctrl

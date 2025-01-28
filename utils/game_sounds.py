@@ -1,13 +1,18 @@
-import os 
+import os
+import random
+
 import pygame 
 import json
 
 
 class TSounds:
 
-    def __init__(self, sounds_dir, enable_sounds):
+    def __init__(self, sounds_dir, enable_sounds, logger):
         self.enable_sounds = enable_sounds
+        self.logger = logger
         self._sounds = dict()
+        self._birds = list()
+
         if self.enable_sounds:
             pygame.mixer.init()
             with open (os.path.join(sounds_dir, "sounds.json")) as inp:
@@ -16,6 +21,14 @@ class TSounds:
                     sound = pygame.mixer.Sound(path)
                     sound.set_volume(v['volume'])
                     self._sounds[k] = sound
+            bird_dir = os.path.join(sounds_dir, "birds")
+            for f in os.listdir(bird_dir):
+                if f.endswith('.wav'):
+                    path = os.path.join(bird_dir, f)
+                    sound = pygame.mixer.Sound(path)
+                    self._sounds[f] = sound
+                    self._birds.append(f)
+            self.logger.info("birds: {}".format(self._birds))
 
     def set_sound(self, key, path, volume=None):
         if path is None and key in self._sounds:
@@ -34,12 +47,15 @@ class TSounds:
             k.stop()
 
     def play_sound(self, sound_type, loops=0, volume=None):
-        length = 0
-        if self.enable_sounds:
-            if volume is not None:
-                self._sounds[sound_type].set_volume(volume)
-            self._sounds[sound_type].play(loops=loops)
-            length = self._sounds[sound_type].get_length()
+        if not self.enable_sounds:
+            return 0
+        if sound_type == 'bird':
+            sound_type = random.choice(self._birds)
+        if volume is not None:
+            self._sounds[sound_type].set_volume(volume)
+        self.logger.info("play {}".format(sound_type))
+        self._sounds[sound_type].play(loops=loops)
+        length = self._sounds[sound_type].get_length()
         return length
 
     def this_sound_is_playing(self, sound_type):

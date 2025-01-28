@@ -29,7 +29,7 @@ class TRiverGame:
         self.finish_top = 300
         self.road_width = 30
         self.start_time_on_the_road_side = None
-        self.sounds = TSounds(SOUNDS_DIR, not args.silent)
+        self.sounds = TSounds(SOUNDS_DIR, not args.silent, self.logger)
         self.racing_wheel = TRacingWheel(self.logger, args.wheel_center, angle_level_ratio=args.angle_level_ratio)
         self.river_collisions_1 = 0
         self.chase_bridge_count = 0
@@ -243,7 +243,7 @@ class TRiverGame:
             mp.generate_gas_station()
         elif self.my_car_has_robber() and random.random()  < 0.8:
             mp.generate_prison()
-        elif self.my_car.car_needs_repair and random.random() > 0.5:
+        elif self.my_car.car_needs_repair and random.random() > 0.4:
             mp.generate_repair_station()
         elif self.my_car.broken_tires and random.random() > 0.4 and not isinstance(self.map_part.car_stop, TRepairStation):
             mp.generate_repair_station()
@@ -343,9 +343,9 @@ class TRiverGame:
             self.sounds.play_sound("wrong_stop", loops=0)
             time.sleep(1)
 
-    def blackbird_sings(self):
-        self.logger.info("a blackbird sings")
-        self.sounds.play_sound("blackbird", loops=0)
+    def bird_sings(self):
+        self.logger.info("a bird sings")
+        self.sounds.play_sound("bird", loops=0)
 
     def open_door(self):
         if self.my_car.get_speed() == 1:
@@ -391,7 +391,7 @@ class TRiverGame:
         elif car_stop and self.car_has_granny() and is_town:
             self.granny_leaves_the_car()
         elif car_stop and isinstance(car_stop, TForest):
-            self.blackbird_sings()
+            self.bird_sings()
         elif car_stop and self.car_has_girl():
             self.logger.info("girl refuses to leave the car")
             self.sounds.play_sound("door_open", loops=0)
