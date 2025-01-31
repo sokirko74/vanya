@@ -10,6 +10,7 @@ import os
 import json
 import time
 import urllib.parse
+import re
 
 
 class TBrowser:
@@ -186,7 +187,7 @@ class TBrowser:
         for element in self.browser.find_elements(By.TAG_NAME, "a"):
             url = element.get_attribute("href")
             if url is not None and url != '#' and url.startswith('http'):
-                if "youtube" in url:
+                if "youtube.com/watch" in url and re.search('t=[0-9]', url) is None:
                     if url not in search_results:
                         search_results.append(url)
         return search_results

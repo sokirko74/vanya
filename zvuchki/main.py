@@ -387,7 +387,9 @@ class TZvuchki(tk.Frame):
             elif token == 'R':
                 add_to_query.append("rapper")
             elif token == 'СТ':
-                add_to_query.append("СТАРЫЙ")
+                #add_to_query.append("СТАРЫЙ")
+            #search_request_cache.txtelif token == 'С':
+                add_to_query.append("СТАРТИНГ")
             elif token == 'М':
                 add_to_query.append("МАШИНА")
             elif token == 'Э':
