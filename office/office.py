@@ -134,8 +134,8 @@ class TVanyaOffice(tk.Frame):
     def read_goal_words(self):
         #path = os.path.join(os.path.dirname(__file__), "goal_words.txt")
         #path = os.path.join(os.path.dirname(__file__), "nouns5.txt")
-        #path = os.path.join(os.path.dirname(__file__), "nouns6.txt")
-        path = os.path.join(os.path.dirname(__file__), "english_0.txt")
+        path = os.path.join(os.path.dirname(__file__), "nouns6.txt")
+        #path = os.path.join(os.path.dirname(__file__), "english2.txt")
         with open(path) as inp:
             for i in inp:
                 self.goal_words.append(i.strip())
@@ -145,13 +145,13 @@ class TVanyaOffice(tk.Frame):
         frame1.pack(side=tk.TOP)
 
         self.goal_word_widget = tk.Text(
-            frame1, width=8, font=self.read_font, height=1)
+            frame1, width=15, font=self.read_font, height=1)
         self.goal_word_widget.pack(side=tk.LEFT)
 
         frame2 = tk.Frame(self.master)
         frame2.pack(side=tk.TOP)
         self.text_widget = tk.Text(frame2,
-                                   width=20,
+                                   width=15,
                                    height=1,
                                    font=self.write_font)
         self.text_widget.pack(side=tk.LEFT)

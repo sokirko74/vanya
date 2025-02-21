@@ -128,7 +128,7 @@ class TZvuchki(tk.Frame):
         self.editor_font = tkFont.Font(family="DejaVu Sans Mono", size=editor_font_size)
         self.entry_text = tk.StringVar()
         self.text_widget = tk.Entry(self.master,
-                                   width=15,
+                                   width=10,
                                    textvariable = self.entry_text,
                                    font=self.editor_font)
 
@@ -374,21 +374,19 @@ class TZvuchki(tk.Frame):
                 add_sec = 240
             elif token == 'К':
                 add_to_query.append("в кабине водителя")
-            elif token == 'КРИК':
-                add_to_query.append( "крик")
-            elif token == 'З':
+            elif token == 'АВТОС':
+                query_words.append( "АВТОСИГНАЛИЗАЦИЯ")
+            elif token == 'ЗД':
                 add_to_query.append( "звук двигателя")
+            elif token == 'З':
+                add_to_query.append("звук")
             elif token == 'S':
                 add_to_query.append("engine start")
-            elif token == 'ЗВУК':
-                add_to_query.append( "звук")
             elif token == 'ЗПМ':
                 add_to_query.append("звук пишущей машинки")
             elif token == 'R':
                 add_to_query.append("rapper")
             elif token == 'СТ':
-                #add_to_query.append("СТАРЫЙ")
-            #search_request_cache.txtelif token == 'С':
                 add_to_query.append("СТАРТИНГ")
             elif token == 'М':
                 add_to_query.append("МАШИНА")
