@@ -132,9 +132,14 @@ class TVanyaOffice(tk.Frame):
         #self.play_file("word_fail.wav")
 
     def read_goal_words(self):
+        path = self.args.word_file
+        if path is None:
+            path = os.path.join(os.path.dirname(__file__), "nouns6.txt")
+        else:
+            if not os.path.exists(path):
+                path = os.path.join(os.path.dirname(__file__), path)
         #path = os.path.join(os.path.dirname(__file__), "goal_words.txt")
         #path = os.path.join(os.path.dirname(__file__), "nouns5.txt")
-        path = os.path.join(os.path.dirname(__file__), "nouns6.txt")
         #path = os.path.join(os.path.dirname(__file__), "english2.txt")
         with open(path) as inp:
             for i in inp:
@@ -302,6 +307,7 @@ def parse_args():
     parser.add_argument("--read-font-size", dest='read_font_size', default=200, type=int)
     parser.add_argument("--victory-count", default=20, type=int)
     parser.add_argument("--math-prob", default=0.2, type=float)
+    parser.add_argument("--word-file")
     return parser.parse_args()
 
 
