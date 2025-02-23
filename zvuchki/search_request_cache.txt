@@ -4186,5 +4186,26 @@
         "https://www.youtube.com/watch?v=BsUsdewCcoY",
         "https://www.youtube.com/watch?v=O9KhAgTFUhs",
         "https://www.youtube.com/watch?v=4evIZNBicAA"
+    ],
+    "МОСВИЧ НА": [
+        "https://www.youtube.com/watch?v=IV8gMla4nk8",
+        "https://www.youtube.com/watch?v=s4nq21jiGiI",
+        "https://www.youtube.com/watch?v=dWgk527c2Nw",
+        "https://www.youtube.com/watch?v=BX7BNOhh41I",
+        "https://www.youtube.com/watch?v=OApCRet7IBA",
+        "https://www.youtube.com/watch?v=nlTRluKnirI",
+        "https://www.youtube.com/watch?v=RXZJKViaA3Q",
+        "https://www.youtube.com/watch?v=wKcVIgH2HXw",
+        "https://www.youtube.com/watch?v=slSO2-s12Qc",
+        "https://www.youtube.com/watch?v=s7-Ezxc_7Ik",
+        "https://www.youtube.com/watch?v=3WIl4atIh50",
+        "https://www.youtube.com/watch?v=Mf_Tdc6MO2s",
+        "https://www.youtube.com/watch?v=FepcZwqFnvU",
+        "https://www.youtube.com/watch?v=H7wn0hXGgYw",
+        "https://www.youtube.com/watch?v=kt9gpUnie2I",
+        "https://www.youtube.com/watch?v=QbwGbzHGgBk",
+        "https://www.youtube.com/watch?v=RwvA6Iw3KW0",
+        "https://www.youtube.com/watch?v=Tag2Pe0oS9E",
+        "https://www.youtube.com/watch?v=ll2DYntv2Kc"
     ]
 }

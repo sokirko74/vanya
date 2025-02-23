@@ -302,8 +302,12 @@ class TZvuchki(tk.Frame):
         s = self.entry_text.get()
         self.play_request(s)
 
-    def get_url_video_from_google_or_cached(self, request, position):
-        search_results = self.browser.get_cached_request(request)
+    def get_url_video_from_google_or_cached(self, request, position, use_cache):
+        if use_cache:
+            search_results = self.browser.get_cached_request(request)
+        else:
+            search_results = None
+
         if search_results is None:
             search_results = self.browser.send_request(request)
             self.browser.close_all_windows()
@@ -347,8 +351,9 @@ class TZvuchki(tk.Frame):
         free_request = self.args.free_request
         test_drive = "тест драйв от первого лица"
         test_drive_en  = "test drive"
+        use_cache = True
         for token_index, token in enumerate(words):
-            if token.isdigit() and clip_index is None and int(token) < 10 and token_index > 0:
+            if token.isdigit() and clip_index is None and int(token) < 20 and token_index > 0:
                 clip_index = int(token)
                 continue
             token = token.upper()
@@ -394,6 +399,8 @@ class TZvuchki(tk.Frame):
                 add_to_query.append( "эксплуатация")
             elif token == 'Р':
                 add_to_query.append("реставрация")
+            elif token == 'НОВ':
+                use_cache = False
             elif token == 'П':
                 use_old_urls = True
             elif token == 'Г':
@@ -444,7 +451,7 @@ class TZvuchki(tk.Frame):
                 if add_to_query:
                     query += " " + " ".join(add_to_query)
                 self.logger.info("req={}, dur={}, serp_index={}".format(query, duration, clip_index))
-                url = self.get_url_video_from_google_or_cached(query, clip_index)
+                url = self.get_url_video_from_google_or_cached(query, clip_index, use_cache)
         self.play_youtube_video(url, duration)
         return True
 
