@@ -330,4 +330,11 @@ class TRiverSprites:
         self.towns.draw(screen)
         self.passengers_at_car_stop.draw(screen)
 
+    def update_spites(self, map: TMapPart):
+        self.rivers.add(map.river)
+        self.bridges.add(map.bridge)
+        self.roads.add(map.road)
+        self.towns.add(map.car_stop)
+        if map.car_stop.traveller:
+            self.towns.add(map.car_stop.traveller)
 

@@ -15,6 +15,8 @@ class TCarDashboard:
         self.red_lamp_font = pygame.font.SysFont(None, 230)
         self.is_on_alarm = True
         self.count_call = 0
+        self.chase_bridge_count = 0
+
 
     def print_text(self, text, x, y):
         screen_text = self.font.render(text, True, TColors.white)
@@ -22,6 +24,9 @@ class TCarDashboard:
 
     def get_score(self):
         return self.bridge_passing_count - self.river_accident_count + self.success_tasks_count
+
+    def too_many_rivers_accidents(self):
+        return self.river_accident_count > 0 and (self.river_accident_count % 3 == 0)
 
     def draw_params(self, game_paused, my_car_top, game_speed, car_is_broken, broken_tires,
                     fuel_volume, fuel_red_lamp, engine, passengers):

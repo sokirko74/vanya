@@ -28,14 +28,12 @@ class TRiverGame:
         self.sprites = TRiverSprites()
         self.finish_top = 300
         self.road_width = 30
-        self.start_time_on_the_road_side = None
         self.sounds = TSounds(SOUNDS_DIR, not args.silent, self.logger)
         self.racing_wheel = TRacingWheel(self.logger, args.wheel_center, angle_level_ratio=args.angle_level_ratio)
-        self.river_collisions_1 = 0
-        self.chase_bridge_count = 0
         self.game_over = False
         self.game_paused = False
-        self.some_index  = 0
+        self.exit_game = False
+        self.ambulance_index  = 0
 
         if args.full_screen:
             self.screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
@@ -53,7 +51,6 @@ class TRiverGame:
 
         self.map_part: TMapPart = None
         self.map_part_next = None
-        self.exit_game = False
 
     def get_car_top(self):
         return self.my_car.sprite.rect.top
@@ -102,7 +99,7 @@ class TRiverGame:
         if self.robber_car is not None:
             return
 
-        self.chase_bridge_count = 0
+        self.get_dashboard().chase_bridge_count = 0
         self.logger.info("create robber car")
         self.robber_car = BaseCar(self.logger,
                                   self.screen,
@@ -121,7 +118,7 @@ class TRiverGame:
 
     def destroy_robber_car(self, success=True):
         self.logger.info('destroy robber car')
-        self.chase_bridge_count = 0
+        self.get_dashboard().chase_bridge_count = 0
         self.my_car.stop_engine()
         if success:
             length = self.sounds.stop_all_and_play('handcuffs', loops=0)
@@ -170,14 +167,12 @@ class TRiverGame:
         self.get_engine_sound().set_idling_state()
         river_sprite.collided = True
         self.get_dashboard().river_accident_count += 1
-        self.river_collisions_1 += 1
         if self.car_has_granny():
             self.my_car.passenger.river_fall_count += 1
             if self.my_car.passenger.river_fall_count >= 3:
                 self.passenger_goes_to_river("granny_sea_voyage")
-                #self.make_normal_car()
 
-        if self.river_collisions_1 == 2:
+        if self.get_dashboard().too_many_rivers_accidents():
             self.my_car.bad_collision()
 
     def draw_game_intro(self, message_text=None):
@@ -197,8 +192,8 @@ class TRiverGame:
             self.get_dashboard().bridge_passing_count += 1
             length = self.sounds.play_sound("bridge_passing", loops=0)
             if self.robber_car is not None:
-                self.chase_bridge_count += 1
-                if self.chase_bridge_count >= self.args.min_chase_bridge_count:
+                self.get_dashboard().chase_bridge_count += 1
+                if self.get_dashboard().chase_bridge_count >= self.args.min_chase_bridge_count:
                     time.sleep(length)
                     self.destroy_robber_car()
 
@@ -269,20 +264,11 @@ class TRiverGame:
                                     self.get_car_top(), self.args.bridge_width, 10)
             self.map_part = TMapPart(self.screen, 0, self.args.bridge_width, self.road_width, dummy_rct, self.args.girl_probability)
             self.map_part.generate_town(True)
-            #self.logger.info("prev rect {}".format(dummy_rct))
-            #self.logger.info("car rect {}".format(self.my_car.rect))
             pygame.draw.rect(self.screen, TColors.white, dummy_rct)
 
         self.map_part_next = self._create_next_map_part()
-
-        self.sprites.rivers.add(self.map_part.river, self.map_part_next.river)
-        self.sprites.bridges.add(self.map_part.bridge, self.map_part_next.bridge)
-        self.sprites.roads.add(self.map_part.road, self.map_part_next.road)
-        self.sprites.towns.add(self.map_part.car_stop, self.map_part_next.car_stop)
-        if self.map_part.car_stop.traveller:
-            self.sprites.towns.add(self.map_part.car_stop.traveller)
-        if self.map_part_next.car_stop.traveller:
-            self.sprites.towns.add(self.map_part_next.car_stop.traveller)
+        self.sprites.update_spites(self.map_part)
+        self.sprites.update_spites(self.map_part_next)
         self.logger.info(self.map_part.get_descr())
 
     def change_obstacle_positions(self):
@@ -291,9 +277,7 @@ class TRiverGame:
             if speed > 0:
                 self.map_part.change_spite_position(speed)
                 self.map_part_next.change_spite_position(speed)
-            #is_map_part_finished = self.map_part.river.rect.top > min(self.height - 100, self.my_car.sprite.rect.bottom + 200)
             is_map_part_finished = self.map_part.river.rect.top >= self.height
-            #is_map_part_finished = self.map_part.river.rect.top > self.height
 
             if is_map_part_finished:
                 if not self.map_part.river.collided:
@@ -307,9 +291,6 @@ class TRiverGame:
         self.sprites.passengers_at_car_stop.empty()
         self.map_part.car_stop.traveller = None
         self.my_car.add_passenger(sprite)
-
-        pass
-
 
     def passenger_leaves_car(self, sound_name, success=True):
         len = self.sounds.play_sound(sound_name, loops=0)
@@ -347,7 +328,7 @@ class TRiverGame:
         self.logger.info("a bird sings")
         self.sounds.play_sound("bird", loops=0)
 
-    def open_door(self):
+    def on_press_main_user_button(self):
         if self.my_car.get_speed() == 1:
             self.my_car.use_brakes()
             time.sleep(2)
@@ -358,7 +339,6 @@ class TRiverGame:
         car_stop = self.my_car.find_collision(self.sprites.towns)
         if (self.my_car.car_needs_repair or self.my_car.broken_tires) and isinstance(car_stop, TRepairStation):
             self.my_car.repair_car()
-            self.river_collisions_1 = 0
             return
 
         if isinstance(car_stop, TGasStation):
@@ -409,9 +389,6 @@ class TRiverGame:
                 self.my_car.start_warm_engine()
             else:
                 self.passenger_leaves_car("lets_robber", False)
-
-
-
 
     def set_alarm_on(self):
         self.logger.info("set_alarm_on")
@@ -474,7 +451,7 @@ class TRiverGame:
                 elif event.key == pygame.K_SPACE:
                     self.game_paused = not self.game_paused
                 elif event.key == pygame.K_o:
-                    self.open_door()
+                    self.on_press_main_user_button()
                 elif event.key == pygame.K_F1:
                     self.racing_wheel.save_wheel_center()
                 elif event.key == pygame.K_F2:
@@ -494,7 +471,7 @@ class TRiverGame:
                 self.set_alarm_on()
 
         if self.racing_wheel.left_hat_was_pressed():
-            self.open_door()
+            self.on_press_main_user_button()
 
         if self.racing_wheel.right_hat_was_pressed():
             self.my_car.toggle_engine()
@@ -543,8 +520,8 @@ class TRiverGame:
         elif river is not None:
             self.check_river_collision(river)
         if self.car_has_granny() and not self.car_is_ambulance:
-            self.some_index += 1
-            if (self.some_index % 60  == 0) and random.random() < self.args.granny_heart_attack_probability:
+            self.ambulance_index += 1
+            if (self.ambulance_index % 60 == 0) and random.random() < self.args.granny_heart_attack_probability:
                 self.my_car = self.create_ambulance()
 
     def init_game_loop(self):
@@ -556,7 +533,6 @@ class TRiverGame:
             self.map_part = None
         self.redraw_background()
         self.init_new_map_part()
-        self.river_collisions_1 = 0
 
 
     def update_robber_car_position(self):
