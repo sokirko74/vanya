@@ -35,6 +35,7 @@ class TRiverGame:
         self.game_paused = False
         self.exit_game = False
         self.ambulance_index  = 0
+        self.x_change = 0
 
         if args.full_screen:
             self.screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
@@ -456,6 +457,20 @@ class TRiverGame:
         self.sounds.play_sound("set_on_alarm", loops=0)
         time.sleep(1)
 
+    def set_horn_on(self):
+        if not  self.get_dashboard().is_on_horn:
+            self.logger.info("set_horn_on")
+            self.get_dashboard().is_on_horn = True
+            self.sounds.stop_sound("car_horn")
+            self.sounds.play_sound("car_horn", loops=10)
+            self.check_gates()
+
+    def set_horn_off(self):
+        if self.get_dashboard().is_on_horn:
+            self.logger.info("set_horn_off")
+            self.get_dashboard().is_on_horn = False
+            self.sounds.stop_sound("car_horn")
+
     def set_alarm_off(self):
         self.logger.info("set_alarm_off")
         self.get_dashboard().is_on_alarm = False
@@ -478,26 +493,62 @@ class TRiverGame:
     def make_tires_broken(self):
         self.my_car.broken_tires = True
 
-    def process_keyboard_and_wheel_events(self, x_change):
+    def process_wheel_events(self):
+        if self.game_paused:
+            return
+        if not self.racing_wheel.is_attached():
+            return
+        if self.racing_wheel.is_right_pedal_pressed():
+            #self.logger.info("left pedal is on")
+            self.increase_speeds()
+        else:
+            #self.logger.info("left pedal is off    ")
+            self.decrease_speeds()
+
+        if self.racing_wheel.is_left_pedal_pressed():
+            #self.logger.info("right pedal is on")
+            self.my_car.use_brakes()
+
         self.racing_wheel.read_wheel_events()
         wheel_angle = self.racing_wheel.get_wheel_angle()
         if wheel_angle is not None:
-            x_change = wheel_angle
+            self.x_change = wheel_angle
+        if TRacingWheel.right_button in self.racing_wheel.pressed_buttons:
+            self.racing_wheel.pressed_buttons.remove(TRacingWheel.right_button)
+            if self.get_dashboard().is_on_alarm:
+                self.set_alarm_off()
+            else:
+                self.set_alarm_on()
+
+        if TRacingWheel.left_button in self.racing_wheel.pressed_buttons:
+            self.set_horn_on()
+        else:
+            self.set_horn_off()
+
+        if self.racing_wheel.left_hat_was_pressed():
+            self.on_press_main_user_button()
+
+        if self.racing_wheel.right_hat_was_pressed():
+            self.my_car.toggle_engine()
+
+    def process_keyboard_events(self):
         for event in pygame.event.get():
             #self.logger.debug('event = {}'.format(event))
             if event.type == pygame.QUIT:
                 self.game_over = True
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_LEFT:
-                    x_change = -self.my_car.horizontal_speed
+                    self.x_change = -self.my_car.horizontal_speed
                 elif event.key == pygame.K_RIGHT:
-                    x_change = +self.my_car.horizontal_speed
+                    self.x_change = +self.my_car.horizontal_speed
                 elif event.key == pygame.K_UP:
                     self.logger.info("pygame.K_UP")
                     self.increase_speeds()
                 elif event.key == pygame.K_s:
                     self.logger.info("pygame.К_s")
                     self.set_alarm_on()
+                elif event.key == pygame.K_h:
+                    self.set_horn_on()
                 elif event.key == pygame.K_f:
                     self.logger.info("pygame.К_f")
                     self.set_alarm_off()
@@ -519,46 +570,20 @@ class TRiverGame:
 
             if event.type == pygame.KEYUP:
                 if event.key == pygame.K_LEFT or event.key == pygame.K_RIGHT:
-                    x_change = 0
-                if event.key == pygame.K_UP:
+                    self.x_change = 0
+                elif event.key == pygame.K_UP:
                     self.decrease_speeds()
+                elif event.key == pygame.K_h:
+                    self.set_horn_off()
 
-        if TRacingWheel.right_button in self.racing_wheel.pressed_buttons:
-            self.racing_wheel.pressed_buttons.remove(TRacingWheel.right_button)
-            if self.get_dashboard().is_on_alarm:
-                self.set_alarm_off()
-            else:
-                self.set_alarm_on()
 
-        if self.racing_wheel.left_hat_was_pressed():
-            self.on_press_main_user_button()
-
-        if self.racing_wheel.right_hat_was_pressed():
-            self.my_car.toggle_engine()
-
+    def move_horizontally(self):
         if self.my_car.horizontal_speed_increase_with_get_speed:
             car_speed = self.my_car.get_speed()
             if car_speed > 0:
-                x_change += 0.01 * x_change * math.sqrt(car_speed)
+                self.x_change += 0.01 * self.x_change * math.sqrt(car_speed)
+        self.my_car.shift_horizontally(self.x_change, self.width)
 
-        self.my_car.shift_horizontally(x_change, self.width)
-        return x_change
-
-    def process_wheel_pedals(self):
-        if self.game_paused:
-            return
-        if not self.racing_wheel.is_attached():
-            return
-        if self.racing_wheel.is_right_pedal_pressed():
-            #self.logger.info("left pedal is on")
-            self.increase_speeds()
-        else:
-            #self.logger.info("left pedal is off    ")
-            self.decrease_speeds()
-
-        if self.racing_wheel.is_left_pedal_pressed():
-            #self.logger.info("right pedal is on")
-            self.my_car.use_brakes()
 
     def redraw_all(self):
         self.redraw_background()
@@ -619,7 +644,7 @@ class TRiverGame:
 
     def game_loop(self):
         self.init_game_loop()
-        x_change = 0
+        self.x_change = 0
         #self.make_ambulance()
         if self.args.engine_auto_start:
             self.my_car.start_warm_engine()
@@ -628,8 +653,9 @@ class TRiverGame:
         #dummy = TPrison(self.screen, 0, -20)
 
         while not self.game_over and not self.exit_game:
-            self.process_wheel_pedals()
-            x_change = self.process_keyboard_and_wheel_events(x_change)
+            self.process_wheel_events()
+            self.process_keyboard_events()
+            self.move_horizontally()
             if not self.game_paused:
                 self.change_obstacle_positions()
             self.check_finish()

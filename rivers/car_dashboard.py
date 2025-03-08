@@ -15,6 +15,7 @@ class TCarDashboard:
         self.font = pygame.font.SysFont(None, 30)
         self.red_lamp_font = pygame.font.SysFont(None, 230)
         self.is_on_alarm = True
+        self.is_on_horn = False
         self.count_call = 0
         self.chase_bridge_count = 0
 
@@ -44,10 +45,11 @@ class TCarDashboard:
             ("km", self.map_parts_count),
             ("volume", fuel_volume),
             ("alarm", self.is_on_alarm),
+            ("horn", self.is_on_horn),
             ("engine", engine),
             ("tires", (not broken_tires)),
             ("passengers", passengers),
-            ("gates", self.gates_accident_count)
+            ("gates", self.gates_accident_count),
         ]
         y = 0
         for title, value in params:
