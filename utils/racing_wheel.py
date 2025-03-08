@@ -77,6 +77,14 @@ class TRacingWheel:
                 return True
         return False
 
+    def _key_is_up(self, event: InputEvent, key_code):
+        if key_code in self.pressed_buttons:
+            check_type = event.type == ecodes.EV_ABS or event.type == ecodes.EV_KEY
+            check_up = event.value == 0
+            return check_type and (event.code == key_code) and check_up
+        else:
+            return False
+
     def _left_hat_is_pressed(self, event):
         return self._key_is_pressed(event, TRacingWheel.left_hat_button_x) or \
             self._key_is_pressed(event, TRacingWheel.left_hat_button_y)
@@ -130,6 +138,8 @@ class TRacingWheel:
             elif self._left_small_button_is_pressed(event):
                 self.logger.info("left small button is pressed")
                 self.pressed_buttons.add(TRacingWheel.left_button)
+            elif self._key_is_up(event, TRacingWheel.left_button):
+                self.pressed_buttons.remove(TRacingWheel.left_button)
             elif self._right_small_button_is_pressed(event):
                 self.logger.info("right small button is pressed")
                 self.pressed_buttons.add(TRacingWheel.right_button)

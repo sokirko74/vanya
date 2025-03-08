@@ -375,7 +375,7 @@ class TRiverGame:
         print("len(self.sprites.gates) = {}".format(len(self.sprites.gates)))
         gates = list()
         for g in self.sprites.gates:
-            if g.alive() and not g.collided and self.my_car.sprite.rect.top > 1:
+            if g.alive() and not g.collided and g.rect.top > 1:
                 gates.append((self.my_car.sprite.rect.top, g))
 
         for _, g  in sorted(gates, reverse=True, key=lambda x: x[0]):
@@ -521,8 +521,10 @@ class TRiverGame:
                 self.set_alarm_on()
 
         if TRacingWheel.left_button in self.racing_wheel.pressed_buttons:
+            #self.logger.info("call self.set_horn_on")
             self.set_horn_on()
         else:
+            #self.logger.info("call self.set_horn_off")
             self.set_horn_off()
 
         if self.racing_wheel.left_hat_was_pressed():

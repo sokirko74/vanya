@@ -94,10 +94,10 @@
     "volume": 1.2
   },
   "gates_accident": {
-    "volume": 0.5
+    "volume": 1.0
   },
   "rolling_gates_open":{
-    "volume": 0.5
+    "volume": 0.8
   },
   "car_horn":{
     "volume": 1.0
