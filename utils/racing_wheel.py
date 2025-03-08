@@ -35,7 +35,7 @@ class TRacingWheel:
         joysticks = list_devices()
         if len(joysticks) > 0:
             self.device = InputDevice(joysticks[0])
-            self.read_events()
+            self.read_wheel_events()
         else:
             self.logger.error("no racing wheel found")
             self.device = None
@@ -108,7 +108,7 @@ class TRacingWheel:
     def _right_small_button_is_pressed(self, event):
         return self._key_is_pressed(event, TRacingWheel.right_button)
 
-    def read_events(self):
+    def read_wheel_events(self):
         event = self.read_one_event()
 
         while event is not None:
@@ -159,8 +159,7 @@ class TRacingWheel:
         if key in self.pressed_buttons:
             self.pressed_buttons.remove(key)
 
-    def get_angle(self):
-        self.read_events()
+    def get_wheel_angle(self):
         if self.raw_angle is not None:
             return int((self.raw_angle - self.center) / self.angle_level_ratio)
 
@@ -172,7 +171,7 @@ class TRacingWheel:
         pygame.display.init()
         pygame.mixer.init()
         while run:
-            self.read_events()
+            self.read_wheel_events()
             #   print ("aaa")
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:

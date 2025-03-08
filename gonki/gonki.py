@@ -393,7 +393,7 @@ class TRacesGame:
         self.obstacle_sprites.add(self.repair_point)
 
     def process_keyboard_and_wheel_events(self, x_change):
-        wheel_angle = self.racing_wheel.get_angle()
+        wheel_angle = self.racing_wheel.read_wheel_events()
         if wheel_angle is not None:
             x_change = wheel_angle
 

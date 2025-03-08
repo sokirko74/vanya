@@ -42,7 +42,7 @@ class TGameIntro:
         self.action = None
         while self.action is None:
             self.racing_wheel.forget_buttons()
-            self.racing_wheel.read_events()
+            self.racing_wheel.read_wheel_events()
             if TRacingWheel.left_button in self.racing_wheel.pressed_buttons:
                 self.action = TGameIntro.start_game_action
                 break
