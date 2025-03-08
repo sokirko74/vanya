@@ -8,6 +8,7 @@ from river_sprites import TSprite, TMapPart, TGrannySprite, TRepairStation, TGir
     TRiverSprites,  THospital, TTownSprite, TBank, TRobberSprite, TForest
 from car_dashboard import TCarDashboard
 from vehicles import BaseCar
+from threading import Thread
 
 import pygame
 import time
@@ -175,6 +176,16 @@ class TRiverGame:
         if self.get_dashboard().too_many_rivers_accidents():
             self.my_car.bad_collision()
 
+    def check_gates_collision(self, gate_sprite):
+        if not gate_sprite.alive() or gate_sprite.collided:
+            return
+        self.logger.info("gate collision")
+        self.sounds.play_sound("gates_accident", loops=0)
+        self.get_engine_sound().set_idling_state()
+        gate_sprite.collided = True
+        self.get_dashboard().gates_accident_count += 1
+        self.my_car.bad_collision()
+
     def draw_game_intro(self, message_text=None):
         self.sounds.stop_sounds()
         self.my_car.stop_engine()
@@ -229,6 +240,21 @@ class TRiverGame:
                 return 0
         return self.args.bank_prob
 
+    def get_random_car_stop_type(self):
+        r = random.random()
+        weights  = [
+                (self.args.forest_prob, "forest"),
+                (self.get_bank_probability(), "bank"),
+                (self.args.gates_prob, "gates"),
+            ]
+        s = 0
+        for w, name in weights:
+            s += w
+            if r <= s:
+                return name
+        return "town"
+
+
     def _create_next_map_part(self):
         mp = TMapPart(self.screen, -self.height, self.args.bridge_width, self.road_width,
                                       self.map_part.bridge.rect, self.args.girl_probability)
@@ -243,12 +269,15 @@ class TRiverGame:
         elif self.my_car.broken_tires and random.random() > 0.4 and not isinstance(self.map_part.car_stop, TRepairStation):
             mp.generate_repair_station()
         else:
-            r = random.random()
-            if r <= self.args.forest_prob:
+            t = self.get_random_car_stop_type()
+            if t == "forest":
                 mp.generate_forest()
-            elif r <= self.args.forest_prob + self.get_bank_probability():
+            elif t == "bank":
                 mp.generate_bank()
+            elif t == "gates":
+                mp.generate_gates()
             else:
+                assert t == "town"
                 gen_granny = not self.car_has_passenger() and random.random() < self.args.passenger_at_stop_prob and not self.map_part.has_passengers()
                 mp.generate_town(gen_granny)
         return mp
@@ -328,12 +357,42 @@ class TRiverGame:
         self.logger.info("a bird sings")
         self.sounds.play_sound("bird", loops=0)
 
+    def move_gates_to_the_left(self, gates):
+        gates.collided = True
+        seconds = int(self.sounds.play_sound("car_horn"))
+        time.sleep(seconds)
+        time.sleep(1)
+        seconds = int(self.sounds.play_sound("rolling_gates_open")) - 4
+        step = gates.rect.right / (seconds - 5)
+        for i in range(int(seconds)):
+            gates.rect.left -= step
+            #self.redraw_all()
+            time.sleep(1)
+        gates.kill()
+
+    def check_gates(self):
+        print("len(self.sprites.gates) = {}".format(len(self.sprites.gates)))
+        gates = list()
+        for g in self.sprites.gates:
+            if g.alive() and not g.collided and self.my_car.sprite.rect.top > 1:
+                gates.append((self.my_car.sprite.rect.top, g))
+
+        for _, g  in sorted(gates, reverse=True, key=lambda x: x[0]):
+            thread = Thread(target=self.move_gates_to_the_left, args=(g,))
+            thread.start()
+            return True
+
+        return False
+
     def on_press_main_user_button(self):
         if self.my_car.get_speed() == 1:
             self.my_car.use_brakes()
             time.sleep(2)
 
         if self.my_car.get_speed() != 0:
+            return
+
+        if self.check_gates():
             return
 
         car_stop = self.my_car.find_collision(self.sprites.towns)
@@ -515,10 +574,13 @@ class TRiverGame:
     def check_all_collisions(self):
         bridge = self.my_car.find_collision(self.sprites.bridges)
         river = self.my_car.find_collision(self.sprites.rivers)
+        gates = self.my_car.find_collision(self.sprites.gates)
         if bridge is not None:
             pass
         elif river is not None:
             self.check_river_collision(river)
+        elif gates is not None:
+            self.check_gates_collision(gates)
         if self.car_has_granny() and not self.car_is_ambulance:
             self.ambulance_index += 1
             if (self.ambulance_index % 60 == 0) and random.random() < self.args.granny_heart_attack_probability:
@@ -595,28 +657,29 @@ class TRiverGame:
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--silent", dest='silent', default=False, action="store_true")
-    parser.add_argument("--wheel-center", dest='wheel_center', default=300, type=int)
-    parser.add_argument("--great-victory-level", dest='great_victory_level', default=15, type=int)
-    parser.add_argument("--full-screen", dest='full_screen', default=False, action="store_true")
-    parser.add_argument("--width", dest='width', default=1600, type=int)
-    parser.add_argument("--height", dest='height', default=1000, type=int)
-    parser.add_argument("--max-car-speed-limit", dest='max_car_speed_limit', default=10, type=int)
-    parser.add_argument("--bridge-width", dest='bridge_width', default=300, type=int)
-    parser.add_argument("--verbose", dest='verbose', default=False, action="store_true")
+    parser.add_argument("--silent", default=False, action="store_true")
+    parser.add_argument("--wheel-center", default=300, type=int)
+    parser.add_argument("--great-victory-level",  default=15, type=int)
+    parser.add_argument("--full-screen",  default=False, action="store_true")
+    parser.add_argument("--width",  default=1600, type=int)
+    parser.add_argument("--height",  default=1000, type=int)
+    parser.add_argument("--max-car-speed-limit",  default=10, type=int)
+    parser.add_argument("--bridge-width",  default=300, type=int)
+    parser.add_argument("--verbose",  default=False, action="store_true")
 
     parser.add_argument("--car-sprite-folder", dest='my_sprite_folder')
-    parser.add_argument("--angle-level-ratio", dest='angle_level_ratio', type=float, default=30,
+    parser.add_argument("--angle-level-ratio", type=float, default=30,
                         help="the less value, the less one must turn the angle to change the direction")
-    parser.add_argument("--engine-audio-folder", dest='engine_audio_folder',
+    parser.add_argument("--engine-audio-folder",
                         default= os.path.join(os.path.dirname(__file__), 'assets/sounds/ford'))
-    parser.add_argument("--girl-probability", dest='girl_probability', default=0.4, type=float)
-    parser.add_argument("--granny-heart-attack-probability", dest='granny_heart_attack_probability', default=0.003, type=float)
-    parser.add_argument("--engine-auto-start", dest='engine_auto_start', default=False, action="store_true")
-    parser.add_argument("--passenger-at-stop-prob", dest='passenger_at_stop_prob', default=0.7, type=float)
-    parser.add_argument("--min-chase-bridge-count", dest='min_chase_bridge_count', default=3, type=int)
-    parser.add_argument("--bank-prob", dest='bank_prob', default=0.05, type=float)
-    parser.add_argument("--forest-prob", dest='forest_prob', default=0.03, type=float)
+    parser.add_argument("--girl-probability",  default=0.4, type=float)
+    parser.add_argument("--granny-heart-attack-probability",  default=0.003, type=float)
+    parser.add_argument("--engine-auto-start", default=False, action="store_true")
+    parser.add_argument("--passenger-at-stop-prob", default=0.7, type=float)
+    parser.add_argument("--min-chase-bridge-count",  default=3, type=int)
+    parser.add_argument("--bank-prob", default=0.05, type=float)
+    parser.add_argument("--forest-prob", default=0.03, type=float)
+    parser.add_argument("--gates-prob", default=0.03, type=float)
 
     return parser.parse_args()
 

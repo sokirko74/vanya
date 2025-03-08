@@ -161,6 +161,11 @@ class TForest(TCarStop):
     def __init__(self, screen, left, top):
         super().__init__(screen, "forest.png", left, top, 300)
 
+class TGates(TCarStop):
+    def __init__(self, screen, left, top):
+        super().__init__(screen, "gates.png", left, top,
+                         300, replicate_width=3)
+
 
 class TRepairStation(TCarStop):
     def __init__(self, screen, left, top, width=300):
@@ -202,12 +207,14 @@ class TMapPart:
         if generate_passenger:
             self._generate_passenger(minus_color=self.car_stop.color.color)
 
-
     def generate_bank(self):
         self.car_stop = TBank(self.screen, self.road.car_stop_position[0], self.road.car_stop_position[1])
         left, top = self._get_passenger_position_at_car_stop()
         g = TRobberSprite(self.road.screen, left, top)
         self.car_stop.traveller = g
+
+    def generate_gates(self):
+        self.car_stop = TGates(self.screen, self.road.car_stop_position[0], self.road.car_stop_position[1])
 
     def generate_forest(self):
         self.car_stop = TForest(self.screen, self.road.car_stop_position[0], self.road.car_stop_position[1])
@@ -313,13 +320,14 @@ class TRiverSprites:
         self.roads = pygame.sprite.Group()
         self.towns = pygame.sprite.Group()
         self.passengers_at_car_stop = pygame.sprite.Group()
-
+        self.gates = pygame.sprite.Group()
 
     def clear_groups(self):
         self.rivers.empty()
         self.bridges.empty()
         self.roads.empty()
         self.towns.empty()
+        self.gates.empty()
         self.passengers_at_car_stop.empty()
 
 
@@ -328,6 +336,7 @@ class TRiverSprites:
         self.roads.draw(screen)
         self.bridges.draw(screen)
         self.towns.draw(screen)
+        #no gates
         self.passengers_at_car_stop.draw(screen)
 
     def update_spites(self, map: TMapPart):
@@ -337,4 +346,6 @@ class TRiverSprites:
         self.towns.add(map.car_stop)
         if map.car_stop.traveller:
             self.towns.add(map.car_stop.traveller)
+        if isinstance(map.car_stop, TGates):
+            self.gates.add(map.car_stop)
 

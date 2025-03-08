@@ -92,5 +92,14 @@
   },
   "hummer": {
     "volume": 1.2
+  },
+  "gates_accident": {
+    "volume": 0.5
+  },
+  "rolling_gates_open":{
+    "volume": 0.5
+  },
+  "car_horn":{
+    "volume": 1.0
   }
-}
+  }
