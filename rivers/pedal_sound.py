@@ -33,7 +33,9 @@ def main():
     channel_right = pygame.mixer.Channel(1)
     while not stop:
         if racing_wheel.is_attached():
-            wheel_angle = racing_wheel.get_angle()
+            racing_wheel.read_wheel_events()
+            wheel_angle = racing_wheel.get_wheel_angle()
+
             print (wheel_angle)
         for event in pygame.event.get():
             if event.type == pygame.QUIT:

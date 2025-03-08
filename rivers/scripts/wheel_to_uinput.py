@@ -10,7 +10,7 @@ def main():
     wheel = TRacingWheel(logger, -30, sound_pedals=False)
     keyboard = KeyControls()
     while True:
-        wheel.read_events()
+        wheel.read_wheel_events()
         if wheel.right_under_wheel_button in wheel.pressed_buttons:
             wheel.forget_key(wheel.right_under_wheel_button)
             print("center wheel")
@@ -30,7 +30,9 @@ def main():
         else:
             keyboard.unpress_up_and_down()
 
-        wheel_angle = wheel.get_angle()
+        wheel.read_wheel_events()
+        wheel_angle = wheel.get_wheel_angle()
+
         if wheel_angle is not None:
             if wheel_angle > 10:
                 keyboard.press_right()

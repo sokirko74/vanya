@@ -479,7 +479,8 @@ class TRiverGame:
         self.my_car.broken_tires = True
 
     def process_keyboard_and_wheel_events(self, x_change):
-        wheel_angle = self.racing_wheel.get_angle()
+        self.racing_wheel.read_wheel_events()
+        wheel_angle = self.racing_wheel.get_wheel_angle()
         if wheel_angle is not None:
             x_change = wheel_angle
         for event in pygame.event.get():
