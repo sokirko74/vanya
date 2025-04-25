@@ -1,7 +1,7 @@
 {
   "stable": {
     "path": "stable.wav",
-    "volume": 0.7
+    "volume": 0.6
   },
   "engine_start": {
     "path": "start.wav"

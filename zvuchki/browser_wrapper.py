@@ -60,6 +60,7 @@ class TBrowser:
         options.add_argument("--disable-dev-shm-usage")
         options.add_argument("--disable-browser-side-navigation")
         options.add_argument("--disable-gpu")
+        print ("attach to chrome..")
         self.browser = webdriver.Chrome(
             options=options)
         self.browser.set_page_load_timeout(20)

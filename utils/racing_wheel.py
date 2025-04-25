@@ -16,11 +16,11 @@ class TRacingWheel:
     right_hat_button_x = 298
     right_hat_button_y = 299
 
-    def __init__(self, logger, center, level=120, sound_pedals=False, angle_level_ratio=30):
+    def __init__(self, logger, center, left_level=120, sound_pedals=False, angle_level_ratio=30):
         self.logger = logger
         self.raw_angle = None
         self.center = center
-        self.level = level
+        self.left_level = left_level
         self.pressed_buttons = set()
         self.last_press_times = defaultdict(int)
         self.last_left_hat_button_time = 0
@@ -144,14 +144,14 @@ class TRacingWheel:
                 self.logger.info("right small button is pressed")
                 self.pressed_buttons.add(TRacingWheel.right_button)
             elif event.code == TRacingWheel.left_pedal:
-                if event.value > self.level:
+                if event.value > self.left_level:
                     self.logger.info("left pedal")
                     self.pressed_buttons.add(TRacingWheel.left_pedal)
                 else:
                     self.forget_key(TRacingWheel.left_pedal)
-                #self.logger.info("left_pedal value={} {}".format(event.value, self.pressed_buttons))
+                #self.logger.info("left_pedal value={} {} level={}".format(event.value, self.pressed_buttons, self.left_level))
             elif event.code == TRacingWheel.right_pedal:
-                if event.value > 20:
+                if event.value > 50:
                     self.logger.info("right_pedal")
                     self.pressed_buttons.add(TRacingWheel.right_pedal)
                 else:
@@ -176,7 +176,7 @@ class TRacingWheel:
     def test(self):
         run = True
         self.sound_pedals = True
-        self.level = 30
+        self.level = 40
         print("aaa")
         pygame.display.init()
         pygame.mixer.init()

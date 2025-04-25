@@ -353,7 +353,7 @@ class TZvuchki(tk.Frame):
         test_drive_en  = "test drive"
         use_cache = True
         for token_index, token in enumerate(words):
-            if token.isdigit() and clip_index is None and int(token) < 20 and token_index > 0:
+            if token.isdigit() and clip_index is None and int(token) < 200 and token_index > 0:
                 clip_index = int(token)
                 continue
             token = token.upper()
