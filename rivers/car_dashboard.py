@@ -18,7 +18,7 @@ class TCarDashboard:
         self.is_on_horn = False
         self.count_call = 0
         self.chase_bridge_count = 0
-
+        self.door_open_count = 0
 
     def print_text(self, text, x, y):
         screen_text = self.font.render(text, True, TColors.white)

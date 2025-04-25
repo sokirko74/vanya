@@ -344,13 +344,11 @@ class TRiverGame:
             pass
         elif self.map_part.car_stop.color.color == self.get_granny_in_car_color():
             self.logger.info("granny leaves the car")
-            self.sounds.play_sound("door_open", loops=0)
-            time.sleep(2)
+            self.door_open()
             self.passenger_leaves_car("thank")
         else:
             self.logger.info("granny refuses to leave the car")
-            self.sounds.play_sound("door_open", loops=0)
-            time.sleep(2)
+            self.door_open()
             self.sounds.play_sound("wrong_stop", loops=0)
             time.sleep(1)
 
@@ -384,6 +382,11 @@ class TRiverGame:
             return True
 
         return False
+
+    def door_open(self):
+        self.sounds.play_sound("door_open", loops=0)
+        time.sleep(2)
+        self.get_dashboard().door_open_count += 1
 
     def on_press_main_user_button(self):
         if self.my_car.get_speed() == 1:
@@ -424,8 +427,7 @@ class TRiverGame:
                 passenger_at_car_stop = car_stop.traveller
         if passenger_at_car_stop and not self.car_has_passenger():
             self.logger.info("granny comes to the car")
-            self.sounds.play_sound("door_open", loops=0)
-            time.sleep(1)
+            self.door_open()
             self.passenger_gets_on_the_car(passenger_at_car_stop)
 
         elif car_stop and self.car_has_granny() and is_town:
@@ -434,8 +436,7 @@ class TRiverGame:
             self.bird_sings()
         elif car_stop and self.car_has_girl():
             self.logger.info("girl refuses to leave the car")
-            self.sounds.play_sound("door_open", loops=0)
-            time.sleep(2)
+            self.door_open()
             self.sounds.play_sound("gde_voda", loops=0)
             time.sleep(1)
         elif bridge and self.car_has_girl():
@@ -449,6 +450,9 @@ class TRiverGame:
                 self.my_car.start_warm_engine()
             else:
                 self.passenger_leaves_car("lets_robber", False)
+        elif not self.my_car.engine and not self.get_dashboard().is_on_alarm and self.get_dashboard().map_parts_count == 0:
+            self.door_open()
+
 
     def set_alarm_on(self):
         self.logger.info("set_alarm_on")
@@ -531,7 +535,8 @@ class TRiverGame:
             self.on_press_main_user_button()
 
         if self.racing_wheel.right_hat_was_pressed():
-            self.my_car.toggle_engine()
+            if self.get_dashboard().door_open_count > 0:
+                self.my_car.toggle_engine()
 
     def process_keyboard_events(self):
         for event in pygame.event.get():
@@ -568,7 +573,7 @@ class TRiverGame:
                 elif event.key == pygame.K_F1:
                     self.racing_wheel.save_wheel_center()
                 elif event.key == pygame.K_F2:
-                    self.sounds.play_sound("door_open", loops=0)
+                    self.door_open()
 
             if event.type == pygame.KEYUP:
                 if event.key == pygame.K_LEFT or event.key == pygame.K_RIGHT:
