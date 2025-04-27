@@ -4,5 +4,10 @@
   "door_open": {
     "path": "door_open.wav",
     "volume": 0.8
+  },
+  "alarm": {
+    "path": "alarm.wav",
+    "volume": 0.8
   }
+
 }
