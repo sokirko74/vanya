@@ -145,14 +145,14 @@ class TRacingWheel:
                 self.pressed_buttons.add(TRacingWheel.right_button)
             elif event.code == TRacingWheel.left_pedal:
                 if event.value > self.left_level:
-                    self.logger.info("left pedal")
+                    self.logger.info("left pedal {}".format(event.value))
                     self.pressed_buttons.add(TRacingWheel.left_pedal)
                 else:
                     self.forget_key(TRacingWheel.left_pedal)
                 #self.logger.info("left_pedal value={} {} level={}".format(event.value, self.pressed_buttons, self.left_level))
             elif event.code == TRacingWheel.right_pedal:
-                if event.value > 50:
-                    self.logger.info("right_pedal")
+                if event.value > 70:
+                    self.logger.info("right_pedal: {}".format(event.value))
                     self.pressed_buttons.add(TRacingWheel.right_pedal)
                 else:
                     self.forget_key(TRacingWheel.right_pedal)
