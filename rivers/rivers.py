@@ -524,12 +524,17 @@ class TRiverGame:
             else:
                 self.set_alarm_on()
 
-        if TRacingWheel.left_button in self.racing_wheel.pressed_buttons:
-            #self.logger.info("call self.set_horn_on")
-            self.set_horn_on()
+        if self.car_is_ambulance:
+            if TRacingWheel.left_button in self.racing_wheel.pressed_buttons:
+                self.racing_wheel.pressed_buttons.remove(TRacingWheel.left_button)
+                self.my_car.switch_siren()
         else:
-            #self.logger.info("call self.set_horn_off")
-            self.set_horn_off()
+            if TRacingWheel.left_button in self.racing_wheel.pressed_buttons:
+                #self.logger.info("call self.set_horn_on")
+                self.set_horn_on()
+            else:
+                #self.logger.info("call self.set_horn_off")
+                self.set_horn_off()
 
         if self.racing_wheel.left_hat_was_pressed():
             self.on_press_main_user_button()
@@ -554,6 +559,8 @@ class TRiverGame:
                 elif event.key == pygame.K_s:
                     self.logger.info("pygame.К_s")
                     self.set_alarm_on()
+                elif event.key == pygame.K_i:
+                    self.my_car.switch_siren()
                 elif event.key == pygame.K_h:
                     self.set_horn_on()
                 elif event.key == pygame.K_f:

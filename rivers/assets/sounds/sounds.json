@@ -44,6 +44,12 @@
   "siren": {
     "volume": 0.04
   },
+  "siren2": {
+    "volume": 0.1
+  },
+  "siren3": {
+    "volume": 0.1
+  },
   "granny_wants_to_hospital": {
     "volume": 1.2
   },

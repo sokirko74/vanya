@@ -38,6 +38,7 @@ class BaseCar:
         self.sprite_group.add(self.sprite)
         if self.siren:
             self.sounds.stop_all_and_play(self.siren)
+
         self.init_engine_sound(False)
         self.horizontal_speed = horizontal_speed
         self.horizontal_speed_increase_with_get_speed = True
@@ -46,6 +47,7 @@ class BaseCar:
         self.dashboard = TCarDashboard(screen)
         self.passenger: TSprite = None
         self.passengers_in_car = pygame.sprite.Group()
+
 
     def init_engine_sound(self, start_playing=True):
         if self.car_needs_repair:
@@ -70,6 +72,17 @@ class BaseCar:
             self.sprite.rect.left = 0
         if self.sprite.rect.left > max_width - 50:
             self.sprite.rect.left = max_width - 50
+
+    def switch_siren(self):
+        if self.siren:
+            self.sounds.stop_sound(self.siren)
+        if self.siren == "siren":
+            self.siren = "siren2"
+        elif self.siren == "siren2":
+            self.siren = "siren3"
+        else:
+            self.siren = "siren"
+        self.sounds.play_sound(self.siren)
 
     def promote_to_finish(self, delta):
         self.sprite.rect.top -= delta
