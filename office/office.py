@@ -264,6 +264,7 @@ class TVanyaOffice(tk.Frame):
         if self.fail_count > MAX_WORD_FAIL_COUNT:
             self.play_file("word_fail.wav")
             time.sleep(1)
+            self.args.victory_count += 1
             self.new_game()
         else:
             self.play_file("key_fail.wav")
