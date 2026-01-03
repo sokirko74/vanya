@@ -21,7 +21,7 @@ import argparse
 
 class TMaze:
     def __init__(self, use_joystick, is_full_screen, rooms_count, speed, block_size, maze_width=1000, maze_height=800,
-                 joystick_next_btn_id=6):
+                 joystick_next_btn_id=0):
         self.logger = setup_logging("maze_logger")
         self.gen = generator.Generator(logger=self.logger, rooms=max(rooms_count, 2))
         self.tiles = []
@@ -61,6 +61,14 @@ class TMaze:
         self.joystick = None
         if use_joystick:
             self.joystick = init_joystick(self.logger)
+
+    def is_solved(self):
+        for s in self.all_sprites:
+            if s.alive():
+                if isinstance(s, TCat) or isinstance(s, TDog) or isinstance(s, TFlower):
+                    return False
+        return True
+
 
     def clear_map(self):
         self.tiles.clear()
@@ -227,7 +235,7 @@ class TMaze:
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--use-joystick", dest='use_joystick', default=False, action="store_true")
-    parser.add_argument("--joystick-next-button-id", dest='joystick_next_btn_id', default=10)
+    parser.add_argument("--joystick-next-button-id", dest='joystick_next_btn_id', default=0)
     parser.add_argument("--fullscreen", dest='fullscreen', default=False, action="store_true")
     parser.add_argument("--rooms-count", dest='rooms_count', default=2, type=int)
     parser.add_argument("--speed", dest='speed', default=2, type=int)
