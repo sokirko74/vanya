@@ -70,6 +70,12 @@ class MazePlayer(pygame.sprite.Sprite):
 
     def check_all_collisions(self, play_sound=True):
         if self.collision_check(self.parent.target_tiles) is not None:
+
+            if not self.parent.is_solved():
+                if not self.parent.chan_2.get_busy():
+                    self.parent.chan_2.play(self.sound_crash)
+                return False
+
             pygame.mixer.music.stop()
             time.sleep(0.1)
             if not self.parent.chan_2.get_busy():
