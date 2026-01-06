@@ -86,7 +86,8 @@ class MazePlayer(pygame.sprite.Sprite):
             self.kill()
             for f in self.parent.objects:
                 f.kill()
-            self.parent.print_victory = True
+            self.parent.make_victory()
+
             return True
         else:
             wall_collision = self.collision_check(self.parent.walls)

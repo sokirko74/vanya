@@ -34,6 +34,7 @@ class TMaze:
         self.all_sprites = None
         self.objects = None
         self.print_victory = False
+        self.victory_count  = 0
         self.joystick_next_btn_id = joystick_next_btn_id
         if is_full_screen:
             self.left_maze = 80
@@ -201,6 +202,11 @@ class TMaze:
             elif event.key == pygame.K_o:
                 self.open_closed_rooms()
 
+    def make_victory(self):
+        self.print_victory = True
+        self.victory_count += 1
+        self.logger.info('VICTORY COUNT = {}'.format(self.victory_count))
+
     def main_loop(self):
         self.start_game()
         clock = pygame.time.Clock()
@@ -224,6 +230,7 @@ class TMaze:
                 font = pygame.font.SysFont(None, 300)
                 screen_text = font.render('ПОБЕДА!', True, (0, 200, 0))
                 self.screen.blit(screen_text, (250, 280))
+
 
             #   pygame.draw.rect(self.screen, TColors.black, self.player            .rect, width=1)
             #pygame.draw.rect(self.screen, TColors.black, self.player.image.get_rect(), width=1)
