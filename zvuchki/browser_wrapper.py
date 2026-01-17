@@ -14,8 +14,10 @@ import re
 
 
 class TBrowser:
-    def __init__(self):
+    def __init__(self, logger, use_cache=True):
         self.browser = None
+        self.logger = logger
+        self.use_cache = use_cache
         self.cache_path = os.path.join(os.path.dirname(__file__), "search_request_cache.txt")
         self.all_requests = dict()
         self.all_requests_without_spaces = dict()
@@ -24,7 +26,7 @@ class TBrowser:
             developerKey=os.environ.get('GOOGLE_API_KEY')
         )
 
-        if os.path.exists(self.cache_path):
+        if os.path.exists(self.cache_path) and self.use_cache:
             with open(self.cache_path) as inp:
                 s = inp.read()
                 if len(s) > 0:
@@ -60,7 +62,7 @@ class TBrowser:
         options.add_argument("--disable-dev-shm-usage")
         options.add_argument("--disable-browser-side-navigation")
         options.add_argument("--disable-gpu")
-        print ("attach to chrome..")
+        self.logger.info ("attach to chrome..")
         self.browser = webdriver.Chrome(
             options=options)
         self.browser.set_page_load_timeout(20)
@@ -81,11 +83,14 @@ class TBrowser:
     def mouse_click(self, x, y):
         self.browser.execute_script('el = document.elementFromPoint({}, {}); el.click();'.format(x, y))
 
-    def send_ctrl_end(self):
+    def send_ctrl_end(self, timeout=2):
+        self.logger.info('send_ctrl_end and wait ...')
         ActionChains(self.browser) \
             .key_down(Keys.CONTROL) \
             .key_down(Keys.END) \
             .perform()
+        time.sleep(timeout)
+
 
     def send_left(self):
         ActionChains(self.browser) \
@@ -94,7 +99,7 @@ class TBrowser:
 
     def send_right(self):
         try:
-            print('send_right')
+            self.logger.info('send_right')
             element = self.browser.switch_to.active_element
             time.sleep(0.1)
             element.send_keys(Keys.RIGHT)
@@ -106,11 +111,13 @@ class TBrowser:
         #     .key_down(Keys.RIGHT) \
         #     .perform()
 
-    def send_ctrl_home(self):
+    def send_ctrl_home(self, timeout=1):
+        self.logger.info('send_ctrl_home')
         ActionChains(self.browser) \
             .key_down(Keys.CONTROL) \
             .key_down(Keys.HOME) \
             .perform()
+        time.sleep(timeout)
 
     def send_shift_n(self):
         ActionChains(self.browser) \
@@ -182,9 +189,9 @@ class TBrowser:
     def _parse_serp(self):
         search_results = []
         self.send_ctrl_end()
-        time.sleep(1)
+        self.send_ctrl_end()
+        self.send_ctrl_end()
         self.send_ctrl_home()
-        time.sleep(1)
         for element in self.browser.find_elements(By.TAG_NAME, "a"):
             url = element.get_attribute("href")
             if url is not None and url != '#' and url.startswith('http'):
@@ -213,15 +220,18 @@ class TBrowser:
         element.send_keys(Keys.RETURN)
         time.sleep(3)
         search_results = self._parse_serp()
+        self.logger.info("found {} links in serp".format(len(search_results)))
         self._cache_request(search_engine_request, search_results)
         return search_results
 
     def send_request_as_human(self, search_engine_request):
-        q = urllib.parse.quote(search_engine_request)
+        q = urllib.parse.quote(search_engine_request + " site:youtube.com")
         url  = "https://www.google.ru/search?hl=ru&tbm=vid&q=" + q
         self.navigate(url)
         time.sleep(1)
         search_results = self._parse_serp()
+        self.logger.info("found_as_human {} links in serp".format(len(search_results)))
+
         self._cache_request(search_engine_request, search_results)
         return search_results
 

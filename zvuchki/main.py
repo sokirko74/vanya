@@ -82,9 +82,9 @@ def transliterate(s):
 class TZvuchki(tk.Frame):
     def __init__(self, master=None):
         self.args = parse_args()
-        self.browser:TBrowser  = TBrowser()
         log_path = os.path.join(os.path.dirname(__file__), "zvuchki.log")
         self.logger = setup_logging(log_file_name=log_path, append_mode=True)
+        self.browser:TBrowser  = TBrowser(self.logger, self.args.use_cache)
 
         self.logger.info("Number of cached urls: {}".format(len(self.browser.all_requests)))
         if self.args.attach_browser_address is not None:
@@ -303,7 +303,7 @@ class TZvuchki(tk.Frame):
         self.play_request(s)
 
     def get_url_video_from_google_or_cached(self, request, position, use_cache):
-        if use_cache:
+        if use_cache and self.browser.use_cache:
             search_results = self.browser.get_cached_request(request)
         else:
             search_results = None
@@ -520,6 +520,7 @@ def parse_args():
     parser.add_argument("--free", dest='free_request', default=False, action="store_true")
     parser.add_argument("--disable-ya-music", dest='enable_ya_music', default=True, action="store_false")
     parser.add_argument("--attach-browser-address", help="run before google-chrome --remote-debugging-port=8888")
+    parser.add_argument("--disable-cache", action="store_false", dest='use_cache', default=True)
     return parser.parse_args()
 
 

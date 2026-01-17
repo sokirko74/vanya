@@ -228,7 +228,8 @@ class TMaze:
             if self.print_victory:
                 self.screen.fill((0, 0, 255))
                 font = pygame.font.SysFont(None, 300)
-                screen_text = font.render('ПОБЕДА!', True, (0, 200, 0))
+                screen_text = font.render('ПОБЕДА N {}!'.format(self.victory_count),
+                                          True, (0, 190, 0))
                 self.screen.blit(screen_text, (250, 280))
 
 
