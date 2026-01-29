@@ -31,9 +31,13 @@ from dnslib import DNSRecord, DNSHeader, RCODE
 
 BLACK_DOMAINS={
     "www.google.com",
+    "google.com",
     "ya.ru",
     "yandex.ru",
-    "youtube.com"
+    "youtube.com",
+    "www.youtube.com",
+    "youtube-ui.l.google.com",
+    "wide-youtube.l.google.com"
 }
 
 yandex = ["yandex.ru","ya.ru","bookmate.ru", "bookmate.yandex.net", "yastatic.net"]
@@ -45,7 +49,8 @@ wb = ["wb.ru", "wbbasket.ru", "wildberries.ru"]
 whatsup = ["whatsapp.com", "whatsapp.net"]
 wiki = ["wikipedia.org", "wikimedia.org"]
 mosru = ["mos.ru", "wikimedia.org"]
-white = yandex + google + wb + whatsup + wiki + mosru
+system = ["ubuntu.com"]
+white = yandex + google + wb + whatsup + wiki + mosru + system
 white_re_str = "|".join(map(lambda x: "({}$)".format(x), white))
 WHITE_REGEXP = re.compile(white_re_str)
 
