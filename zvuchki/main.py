@@ -1,10 +1,10 @@
-from car_brands import CARS, URLS, BIRDS, COMPOSERS, OTHER_SRC, CAR_EN
+from utils.logging_wrapper import setup_logging
 from browser_wrapper import TBrowser
 from yandex_mus import TYandexMusic
 import selenium
+from request_process import TReqProcessor
 
 import os
-import sys
 import argparse
 import json
 import tkinter as tk
@@ -12,14 +12,11 @@ import tkinter.font as tkFont
 import time
 import vlc
 from functools import partial
-import threading
 import unidecode
 import wmctrl
 
-
-sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
-from utils.logging_wrapper import setup_logging
-
+from zvuchki.config import TConfig
+from zvuchki.video_player import VideoPlayer
 
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
@@ -37,44 +34,6 @@ class TChars:
     SPACE = ' '
 
 
-class VideoPlayer (threading.Thread):
-    def __init__(self, parent, url, seconds):
-        threading.Thread.__init__(self)
-        self.parent = parent
-        self.browser: TBrowser = parent.browser
-        self.url = url
-        self.seconds = seconds
-        self._interrupted = False
-
-    def stop_playing(self):
-        self._interrupted = True
-        time.sleep(1)
-
-    def next_track(self):
-        self.browser.send_shift_n()
-
-    def prev_track(self):
-        self.browser.send_shift_p()
-
-    def run(self):
-        for try_index in range(2):
-            if not self.parent.is_running or self._interrupted:
-                break
-            if self.browser.play_youtube(self.url):
-                self.parent.set_window_focus()
-                print("sleep for  {} seconds (video duration)".format(self.seconds))
-                for i in range(self.seconds):
-                    if self._interrupted:
-                        break
-                    time.sleep(1)
-                self.browser.close_all_windows()
-                self.parent.on_video_finish()
-                return
-            if self._interrupted:
-                return
-
-
-
 def transliterate(s):
     return unidecode.unidecode(s)
 
@@ -82,6 +41,8 @@ def transliterate(s):
 class TZvuchki(tk.Frame):
     def __init__(self, master=None):
         self.args = parse_args()
+        self.config = TConfig()
+
         log_path = os.path.join(os.path.dirname(__file__), "zvuchki.log")
         self.logger = setup_logging(log_file_name=log_path, append_mode=True)
         self.browser:TBrowser  = TBrowser(self.logger, self.args.use_cache)
@@ -111,16 +72,10 @@ class TZvuchki(tk.Frame):
 
 
         super().__init__(master)
-        if self.args.fullscreen:
-            if self.master.winfo_screenwidth() > 2000:
-                self.master.geometry("1600x800+2000+0")
-            self.master.attributes("-fullscreen", True)
-        else:
-            if self.args.gui_keyboard:
-                self.master.geometry("1600x800")
-            else:
-                self.master.geometry("1600x200")
+        self.master.geometry("1600x200")
         self.master.attributes("-topmost", True)
+
+
         self.audioplayer = None
         self.music_player_pid = None
         self.editor_coef_height = 0.28
@@ -145,27 +100,10 @@ class TZvuchki(tk.Frame):
         self.text_widget.focus_force()
         if self.args.audio_keys:
             self.master.bind_all('<KeyPress>', self.report_key_press)
-        if not self.args.gui_keyboard:
-            self.text_widget.place(relx=0, rely=0, relwidth=1,
-                                   relheight=1)
-            self.master.update()
-        else:
-            self.text_widget.place(relx=0, rely=0, relwidth=1, relheight=self.editor_coef_height)
-            self.keyb_window = tk.Frame(
-                self.master,
-                #background="yellow"
-            )
-            self.keyb_window.place(
-                relx=0,
-                rely=self.editor_coef_height,
-                relwidth=1,
-                relheight=(1.0-self.editor_coef_height),
-            )
-            self.master.update()
-            self.key_font = tkFont.Font(family="DejaVu Sans Mono", size=self.args.font_size)
-            self.key_font_umlaut = tkFont.Font(family="DejaVu Sans Mono", size=int(self.args.font_size * 0.7))
+        self.text_widget.place(relx=0, rely=0, relwidth=1,
+                               relheight=1)
+        self.master.update()
 
-            self.init_all_abc_keyboard_layout(self.args.layout)
         self.video_player_thread = None
 
     def report_key_press(self, e):
@@ -185,53 +123,6 @@ class TZvuchki(tk.Frame):
         if os.path.exists(path):
             self.play_audio(filename)
 
-    def init_all_abc_keyboard_layout(self, layout_path):
-        with open(layout_path) as inp:
-            keyb_layout = json.load(inp)
-        assert len(keyb_layout) == self.key_row_count
-        for row_index, row in enumerate(keyb_layout):
-            self.add_keyboard_row(row_index, row)
-
-    def get_key_row_height(self):
-        h = self.keyb_window.winfo_height() / self.key_row_count
-        return int(h)
-
-    def add_keyboard_row(self, row_index, row):
-        normal_btn_width = self.master.winfo_width() / self.keyboard_column_count
-        left = row_index * normal_btn_width / 3.0
-        top = row_index * (self.get_key_row_height() + 5)
-
-        for key_info in row:
-            key_title = key_info['char']
-            if key_info.get("long"):
-                key_title = " " + key_title + " "
-            background = key_info.get("background")
-            font = self.key_font
-            title_top = -5
-
-            if key_info.get("umlaut"):
-                font = self.key_font_umlaut
-                title_top = 0
-
-            button_width = len(key_title) * normal_btn_width
-            canvas = tk.Canvas(
-                self.keyb_window,
-                background=background,
-                width=button_width
-            )
-            canvas.create_text(
-                15,
-                title_top,
-                text=key_title,
-                font=font, anchor=tk.NW)
-            canvas.place(
-                x=left,
-                y=top,
-                width=button_width,
-                relheight=1 / self.key_row_count
-            )
-            canvas.bind("<Button-1>", partial(self.gui_keyboard_click, key_info['char']))
-            left += button_width
 
     def on_video_finish(self):
         self.logger.info('on_video_finish...')
@@ -324,7 +215,7 @@ class TZvuchki(tk.Frame):
         self.text_widget.focus_force()
 
     def is_relevant(self, w):
-        return w in CARS or w in BIRDS or w in COMPOSERS or w in OTHER_SRC or w in CAR_EN
+        return w in self.config.simple_queries
 
     def is_relevant_plus(self, w ):
         if self.is_relevant(w):
@@ -341,97 +232,29 @@ class TZvuchki(tk.Frame):
         self.set_focus_to_text()
 
     def play_request(self, request):
-        words = request.strip().split(' ')
-        query_words = list()
-        clip_index = None
-        add_to_query = list()
-        add_sec = 0
-        use_old_urls = False
-        use_yandex_music = False
-        free_request = self.args.free_request
-        test_drive = "тест драйв от первого лица"
-        test_drive_en  = "test drive"
-        use_cache = True
-        for token_index, token in enumerate(words):
-            if token.isdigit() and clip_index is None and int(token) < 200 and token_index > 0:
-                clip_index = int(token)
-                continue
-            token = token.upper()
-            if token == 'Д':
-                add_sec = 120
-            elif token == 'ДД':
-                add_sec = 240
-            elif token == 'Т':
-                if self.args.transliterate:
-                    add_to_query.append(test_drive_en)
-                else:
-                    add_to_query.append(test_drive)
-            elif token == 'T':
-                self.logger.info('add en test drive')
-                add_to_query.append(test_drive_en)
-            elif token == 'R':
-                add_to_query.append('retro')
-            elif token == 'ТД':
-                add_to_query.append( test_drive)
-                add_sec = 120
-            elif token == 'ТДД':
-                add_to_query.append( test_drive)
-                add_sec = 240
-            elif token == 'К':
-                add_to_query.append("в кабине водителя")
-            elif token == 'АВТОС':
-                query_words.append( "АВТОСИГНАЛИЗАЦИЯ")
-            elif token == 'ЗД':
-                add_to_query.append( "звук двигателя")
-            elif token == 'З':
-                add_to_query.append("звук")
-            elif token == 'S':
-                add_to_query.append("engine start")
-            elif token == 'ЗПМ':
-                add_to_query.append("звук пишущей машинки")
-            elif token == 'R':
-                add_to_query.append("rapper")
-            elif token == 'СТ':
-                add_to_query.append("СТАРТИНГ")
-            elif token == 'М':
-                add_to_query.append("МАШИНА")
-            elif token == 'Э':
-                add_to_query.append( "эксплуатация")
-            elif token == 'Р':
-                add_to_query.append("реставрация")
-            elif token == 'НОВ':
-                use_cache = False
-            elif token == 'П':
-                use_old_urls = True
-            elif token == 'Г':
-                free_request = True
-            elif token.lower() == 'я':
-                use_yandex_music = True
-            elif token.lower() == 'y':
-                use_yandex_music = True
-            else:
-                if len(token) > 0:
-                    query_words.append(token)
-        if clip_index is None:
-            self.logger.error("specify video clip index (integer after query)")
+        req = TReqProcessor(self.logger, self.config, request)
+        if not req.process_req():
             return False
-        if len(query_words) == 0:
-            self.logger.error("no query")
+
+        if req.request_command == "ПАМ" and self.browser.last_channel_name:
+            self.config.save_channel_alias(self.browser.last_channel_name, req.query)
+            self.play_audio("enter.wav", 50)
             return False
-        query = " ".join(query_words)
-        if use_old_urls:
-            key = '{}{}'.format(query, clip_index).lower()
-            if key not in URLS:
+
+        query = req.query
+        if req.use_old_urls:
+            key = '{}{}'.format(req.query, req.clip_index).lower()
+            if key not in self.config.saved_urls:
                 self.logger.error("no stored key {}".format(key))
                 return False
-            url, timeout = URLS[key]
+            url, timeout = self.config.saved_urls[key]
             if self.args.max_play_seconds < timeout:
                 timeout = self.args.max_play_seconds
-            duration = timeout + add_sec
+            duration = timeout + req.add_sec
         else:
-            search_obj = query.lower()
-            if use_yandex_music:
-                pid = self.yandex_music_client.play_track(search_obj, clip_index)
+            if req.use_yandex_music:
+                search_obj = query.lower()
+                pid = self.yandex_music_client.play_track(search_obj, req.clip_index)
                 if pid is not None:
                     self.entry_text.set("")
                     self.set_focus_to_text()
@@ -440,18 +263,11 @@ class TZvuchki(tk.Frame):
                     self.logger.error("bad artist")
                     return False
             else:
-                if not free_request:
-                    if not self.is_relevant_plus(search_obj):
-                        self.logger.error("bad query search: " + search_obj)
-                        return False
-                duration = 300 + add_sec
-                #duration = 10 + add_sec
+                duration = 300 + req.add_sec
                 if self.args.transliterate:
                     query = transliterate(query)
-                if add_to_query:
-                    query += " " + " ".join(add_to_query)
-                self.logger.info("req={}, dur={}, serp_index={}".format(query, duration, clip_index))
-                url = self.get_url_video_from_google_or_cached(query, clip_index, use_cache)
+                self.logger.info("req={}, dur={}, serp_index={}".format(query, duration, req.clip_index))
+                url = self.get_url_video_from_google_or_cached(query, req.clip_index, req.use_cache)
         self.play_youtube_video(url, duration)
         return True
 
@@ -517,7 +333,6 @@ def parse_args():
     parser.add_argument("--no-gui-keyboard", dest='gui_keyboard', default=True, action="store_false")
     parser.add_argument("--audio-keys", dest='audio_keys', default=False, action="store_true")
     parser.add_argument("--transliterate", dest='transliterate', default=False, action="store_true")
-    parser.add_argument("--free", dest='free_request', default=False, action="store_true")
     parser.add_argument("--disable-ya-music", dest='enable_ya_music', default=True, action="store_false")
     parser.add_argument("--attach-browser-address", help="run before google-chrome --remote-debugging-port=8888")
     parser.add_argument("--disable-cache", action="store_false", dest='use_cache', default=True)

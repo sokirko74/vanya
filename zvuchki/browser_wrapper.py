@@ -5,6 +5,8 @@ from googleapiclient.discovery import build
 from selenium.common.exceptions import WebDriverException, TimeoutException
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.action_chains import ActionChains, ActionBuilder
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 
 import os
 import json
@@ -21,6 +23,7 @@ class TBrowser:
         self.cache_path = os.path.join(os.path.dirname(__file__), "search_request_cache.txt")
         self.all_requests = dict()
         self.all_requests_without_spaces = dict()
+        self.last_channel_name = None
         self.google_cse = build(
             "customsearch", "v1",
             developerKey=os.environ.get('GOOGLE_API_KEY')
@@ -56,13 +59,14 @@ class TBrowser:
 
     def attach_to_browser(self, address):
         options = webdriver.ChromeOptions()
+        assert not address.startswith('http')
         options.debugger_address = address
         options.add_argument("enable-automation")
         options.add_argument("--no-sandbox")
         options.add_argument("--disable-dev-shm-usage")
         options.add_argument("--disable-browser-side-navigation")
         options.add_argument("--disable-gpu")
-        self.logger.info ("attach to chrome..")
+        self.logger.info ("attach to chrome {}..".format(address))
         self.browser = webdriver.Chrome(
             options=options)
         self.browser.set_page_load_timeout(20)
@@ -156,6 +160,7 @@ class TBrowser:
 
     def play_youtube(self, url):
         try:
+            self.last_channel_name = None
             time.sleep(1)
             print("play {}".format(url))
             self.navigate(url)
@@ -179,7 +184,22 @@ class TBrowser:
             #time.sleep(0.5)
             #print ("send p")
             #element.send_keys("p")
-            print ("exit from play_yotube")
+            # Source - https://stackoverflow.com/a
+            # Posted by undetected Selenium, modified by community. See post 'Timeline' for change history
+            # Retrieved 2026-01-29, License - CC BY-SA 4.0
+
+            channel_elem_class = "ytd-channel-name"
+
+            try:
+                channel_elem = WebDriverWait(self.browser, 20).until(
+                    EC.visibility_of_element_located((By.CLASS_NAME, channel_elem_class)))
+                #channel_name_elem = self.browser.find_element(By.CLASS_NAME, channel_elem_class)
+                if channel_elem:
+                    channel_name = str(channel_elem.text)
+                    self.logger.info('play channel "{}"'.format(channel_name))
+                    self.last_channel_name = channel_name
+            except TimeoutException:
+                self.logger.error("cannot find(wait) element {}".format(channel_elem_class))
 
             return True
         except WebDriverException as exp:

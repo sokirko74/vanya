@@ -701,5 +701,29 @@
         "https://www.youtube.com/watch?v=1VPmRKttXjg",
         "https://www.youtube.com/watch?v=GdI1eMkjZIQ",
         "https://www.youtube.com/watch?v=5o_JclXfDUo"
+    ],
+    "ГАЗ24": [
+        "https://www.youtube.com/watch?v=PQ_8F9zoiyM",
+        "https://www.youtube.com/watch?v=UqDtEiDsiiQ",
+        "https://www.youtube.com/watch?v=F_gPctKhInI",
+        "https://www.youtube.com/watch?v=xQ_Y8v6Hayc",
+        "https://www.youtube.com/watch?v=eEpru4Smbks",
+        "https://www.youtube.com/watch?v=81m2qiu9eXw",
+        "https://www.youtube.com/watch?v=ImW3-Wxo-oI",
+        "https://www.youtube.com/watch?v=d84BzdHcl9U",
+        "https://www.youtube.com/watch?v=dh5sWw-ZuCQ",
+        "https://www.youtube.com/watch?v=9ygYRSICBVw"
+    ],
+    "ВАЗ21": [
+        "https://www.youtube.com/watch?v=8z99WlhoR2A",
+        "https://www.youtube.com/watch?v=ejEh20s_HHk",
+        "https://www.youtube.com/watch?v=j4M8pOtsNfc",
+        "https://www.youtube.com/watch?v=tcEvMCrRJFw",
+        "https://www.youtube.com/watch?v=WTE2PgD-OzE",
+        "https://www.youtube.com/watch?v=A2BlZr0NVww",
+        "https://www.youtube.com/watch?v=bDBUgKXkoqk",
+        "https://www.youtube.com/watch?v=_UBhD2X8KsU",
+        "https://www.youtube.com/watch?v=Dy5gGymCZSI",
+        "https://www.youtube.com/watch?v=4OGru50Fk5U"
     ]
 }
