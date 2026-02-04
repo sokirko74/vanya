@@ -24,6 +24,7 @@ class TBrowser:
         self.all_requests = dict()
         self.all_requests_without_spaces = dict()
         self.last_channel_name = None
+        self.last_channel_id = None
         self.google_cse = build(
             "customsearch", "v1",
             developerKey=os.environ.get('GOOGLE_API_KEY')
@@ -195,9 +196,17 @@ class TBrowser:
                     EC.visibility_of_element_located((By.CLASS_NAME, channel_elem_class)))
                 #channel_name_elem = self.browser.find_element(By.CLASS_NAME, channel_elem_class)
                 if channel_elem:
-                    channel_name = str(channel_elem.text)
-                    self.logger.info('play channel "{}"'.format(channel_name))
-                    self.last_channel_name = channel_name
+                    self.last_channel_name = str(channel_elem.text)
+
+                    html =self.browser.page_source
+                    found = re.search(r'(?<="channelId":)"UC[^"]+"', html)
+                    if found:
+                        self.last_channel_id = found.group(0).strip('"')
+                    else:
+                        self.last_channel_id = None
+
+                    self.logger.info('play channel "{}" channel_id = {}'.format(
+                        self.last_channel_name, self.last_channel_id))
             except TimeoutException:
                 self.logger.error("cannot find(wait) element {}".format(channel_elem_class))
 
@@ -267,7 +276,35 @@ class TBrowser:
         search_results =   list(i['link'] for i in res['items'])
         return search_results
 
-    def send_request(self, search_engine_request):
+    def collect_youtube_clips(self, channel_id):
+        url  = "https://www.youtube.com/channel/{}/videos".format(channel_id)
+        self.navigate(url)
+        time.sleep(1)
+        self.send_ctrl_end()
+        self.send_ctrl_end()
+        self.send_ctrl_end()
+        self.send_ctrl_end()
+        self.send_ctrl_home()
+        search_results = list()
+
+        with open("last.html", "w") as outp:
+            outp.write(self.browser.page_source)
+
+        links = self.browser.find_elements(
+            By.XPATH,
+            '//a[@id="thumbnail" and contains(@href, "/watch")]'
+        )
+        for link in links:
+            url = link.get_attribute("href")
+            self.logger.debug("url={}".format(url))
+            if url not in search_results:
+                search_results.append(url)
+
+        self.logger.info("found youtube {} links in channel".format(len(search_results)))
+        self._cache_request(channel_id, search_results)
+        return search_results
+
+    def send_search_request(self, search_engine_request):
         return self.send_request_as_human(search_engine_request)
 	
 	# на волгарь выдала daewoo

@@ -11,6 +11,7 @@ class TReqProcessor:
         self.use_yandex_music = False
         self.use_cache = True
         self.request_command = None
+        self.channel_id = None
 
     def process_req(self):
         words = self._request.strip().split(' ')
@@ -24,6 +25,8 @@ class TReqProcessor:
         test_drive_en  = "test drive"
         self.use_cache = True
         self.request_command = None
+        self.channel_id = None
+
         for token_index, token in enumerate(words):
             if token.isdigit() and self.clip_index is None and int(token) < 200 and token_index > 0:
                 self.clip_index = int(token)
@@ -82,12 +85,14 @@ class TReqProcessor:
             elif token.lower() == 'y':
                 self.use_yandex_music = True
             else:
-                real_word =  self.config.translate_alias(token)
-                if real_word  is not None:
-                    token = real_word
+                channel_id =  self.config.translate_alias(token)
+                if channel_id  is not None:
+                    token = channel_id
+                    self.channel_id = channel_id
+
                 if len(token) > 0:
                     query_words.append(token)
-        if self.clip_index is None:
+        if self.clip_index is None and self.request_command is None:
             self.logger.error("specify video clip index (integer after query)")
             return False
 

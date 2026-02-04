@@ -24,12 +24,16 @@ class TConfig:
 
     def _write(self):
         with open(self._path, "w") as outp:
-            json.dump(self._config, outp)
+            json.dump(self._config, outp, ensure_ascii=False, indent=4)
 
-    def save_channel_alias(self, real_channel_name, alias):
+    def save_channel_alias(self, real_channel_name, real_channel_id, alias):
         if 'channel_aliases' not in self._config:
             self._config['channel_aliases'] = dict()
-        self._config['channel_aliases'][alias] = real_channel_name
+        self._config['channel_aliases'][alias] = {
+            'name': real_channel_name,
+            'channel_id' : real_channel_id,
+        }
+        self._write()
 
     def translate_alias(self, alias):
-        return self._config.get('channel_aliases', {}).get(alias)
+        return self._config.get('channel_aliases', {}).get(alias, {}).get('channel_id')

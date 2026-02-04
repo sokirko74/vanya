@@ -1,12 +1,13 @@
 from utils.logging_wrapper import setup_logging
 from browser_wrapper import TBrowser
 from yandex_mus import TYandexMusic
-import selenium
 from request_process import TReqProcessor
+from zvuchki.config import TConfig
+from zvuchki.video_player import VideoPlayer
 
+import selenium
 import os
 import argparse
-import json
 import tkinter as tk
 import tkinter.font as tkFont
 import time
@@ -15,15 +16,7 @@ from functools import partial
 import unidecode
 import wmctrl
 
-from zvuchki.config import TConfig
-from zvuchki.video_player import VideoPlayer
 
-BLACK = (0, 0, 0)
-WHITE = (255, 255, 255)
-RED = (255, 0, 0)
-GREEN = (0, 255, 0)
-BLUE = (0, 0, 255)
-YELLOW = (228, 155, 0)
 
 MAX_TEXT_LEN = 25
 
@@ -98,8 +91,7 @@ class TZvuchki(tk.Frame):
         self.bind('<Right>', self.on_right)
 
         self.text_widget.focus_force()
-        if self.args.audio_keys:
-            self.master.bind_all('<KeyPress>', self.report_key_press)
+        self.master.bind_all('<KeyPress>', self.report_key_press)
         self.text_widget.place(relx=0, rely=0, relwidth=1,
                                relheight=1)
         self.master.update()
@@ -109,19 +101,23 @@ class TZvuchki(tk.Frame):
     def report_key_press(self, e):
         ch = e.char.upper()
         if (ch  == "П" or ch  == "G") and self.get_playing_source():
+            self.logger.debug("toggle_full")
             self.on_toggle_full(e)
+            return
 
         if ch == '*':
             return
-        if ch == '\x08':
-            self.play_audio('backspace.wav', 50)
-        #print ('press '+ ch)
-        if ch == ' ':
-            ch = 'space'
-        filename = 'char.' + ch + '.mp3'
-        path = os.path.join(os.path.dirname(__file__), 'sound', filename)
-        if os.path.exists(path):
-            self.play_audio(filename)
+
+        if self.args.audio_keys:
+            if ch == '\x08':
+                self.play_audio('backspace.wav', 50)
+            #print ('press '+ ch)
+            if ch == ' ':
+                ch = 'space'
+            filename = 'char.' + ch + '.mp3'
+            path = os.path.join(os.path.dirname(__file__), 'sound', filename)
+            if os.path.exists(path):
+                self.play_audio(filename)
 
 
     def on_video_finish(self):
@@ -193,20 +189,24 @@ class TZvuchki(tk.Frame):
         s = self.entry_text.get()
         self.play_request(s)
 
-    def get_url_video_from_google_or_cached(self, request, position, use_cache):
+    def get_url_video_from_google_or_cached(self, request, position, use_cache, use_youtube):
         if use_cache and self.browser.use_cache:
             search_results = self.browser.get_cached_request(request)
         else:
             search_results = None
 
         if search_results is None:
-            search_results = self.browser.send_request(request)
+            if not use_youtube:
+                search_results = self.browser.send_search_request(request)
+            else:
+                search_results = self.browser.collect_youtube_clips(request)
             self.browser.close_all_windows()
         if position > 0:
             position -= 1
         if position >= len(search_results):
             position = len(search_results) - 1
         return search_results[position]
+
 
     def set_focus_to_text(self):
         print("set_focus_to_text")
@@ -236,9 +236,16 @@ class TZvuchki(tk.Frame):
         if not req.process_req():
             return False
 
-        if req.request_command == "ПАМ" and self.browser.last_channel_name:
-            self.config.save_channel_alias(self.browser.last_channel_name, req.query)
-            self.play_audio("enter.wav", 50)
+        if req.request_command == "ПАМ":
+            if self.browser.last_channel_id:
+                self.config.save_channel_alias(
+                    self.browser.last_channel_name,
+                    self.browser.last_channel_id,
+                    req.query)
+                self.play_audio("saved.wav", 20)
+                self.entry_text.set("")
+            else:
+                self.logger.error("no channel name")
             return False
 
         query = req.query
@@ -267,7 +274,12 @@ class TZvuchki(tk.Frame):
                 if self.args.transliterate:
                     query = transliterate(query)
                 self.logger.info("req={}, dur={}, serp_index={}".format(query, duration, req.clip_index))
-                url = self.get_url_video_from_google_or_cached(query, req.clip_index, req.use_cache)
+                url = self.get_url_video_from_google_or_cached(
+                    query,
+                    req.clip_index,
+                    req.use_cache,
+                    req.channel_id is not None
+                )
         self.play_youtube_video(url, duration)
         return True
 
@@ -303,12 +315,12 @@ class TZvuchki(tk.Frame):
             self.add_char(char)
         self.logger.info("text={}".format(self.entry_text.get()))
 
-    def play_audio(self, file_path, volume=None):
+    def play_audio(self, file_path, volume=100):
         file_path = os.path.join(os.path.dirname(__file__), "sound", file_path)
         if self.audioplayer is not None:
             self.audioplayer.stop()
         self.audioplayer = vlc.MediaPlayer(file_path)
-        self.audioplayer.audio_set_volume(100)
+        self.audioplayer.audio_set_volume(volume)
         # if volume is not None:
         #     save_volume = self.audioplayer.audio_get_volume()
         #     self.audioplayer.audio_set_volume(volume)
