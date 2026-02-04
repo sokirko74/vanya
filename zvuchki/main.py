@@ -242,7 +242,8 @@ class TZvuchki(tk.Frame):
                     self.browser.last_channel_name,
                     self.browser.last_channel_id,
                     req.query)
-                self.play_audio("saved.wav", 20)
+                self.logger.error("saved {}".format(self.browser.last_channel_id))
+                self.play_audio("saved.wav", 30)
                 self.entry_text.set("")
             else:
                 self.logger.error("no channel name")
@@ -282,38 +283,6 @@ class TZvuchki(tk.Frame):
                 )
         self.play_youtube_video(url, duration)
         return True
-
-    def backspace(self):
-        s = self.entry_text.get()
-        if len(s) > 0:
-            self.entry_text.set(s[:-1])
-
-    def add_char(self, char):
-        s = self.entry_text.get()
-        if len(s) > MAX_TEXT_LEN:
-            return
-        self.entry_text.set(s + char)
-
-    def gui_keyboard_click(self, char, event):
-        if self.video_player_thread is not None:
-            if char and char.upper() == 'Н':
-                self.video_player_thread.next_track()
-            if char and char.upper() == 'П':
-                self.video_player_thread.prev_track()
-        if char == TChars.BACKSPACE:
-            self.on_backspace()
-            self.play_audio("key_sound.wav")
-        elif char == '*':
-            pass
-        else:
-            ts = time.time()
-            if ts - self.last_char_timestamp < 1 and char == self.last_char:
-                return
-            self.last_char_timestamp = ts
-            self.last_char = char
-            self.play_audio("key_sound.wav")
-            self.add_char(char)
-        self.logger.info("text={}".format(self.entry_text.get()))
 
     def play_audio(self, file_path, volume=100):
         file_path = os.path.join(os.path.dirname(__file__), "sound", file_path)
