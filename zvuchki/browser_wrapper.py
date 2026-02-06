@@ -20,7 +20,7 @@ class TBrowser:
         self.browser = None
         self.logger = logger
         self.use_cache = use_cache
-        self.cache_path = os.path.join(os.path.dirname(__file__), "search_request_cache.txt")
+        self.cache_path = os.path.join(os.path.dirname(__file__), "userdata/search_request_cache.txt")
         self.all_requests = dict()
         self.all_requests_without_spaces = dict()
         self.last_channel_name = None

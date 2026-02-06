@@ -6,7 +6,7 @@ import os
 class TConfig:
     def __init__(self):
         self._path =  os.path.join(
-            os.path.dirname(__file__), "settings.json")
+            os.path.dirname(__file__), "userdata/settings.json")
 
         self.saved_urls = dict()
         self.simple_queries = set()

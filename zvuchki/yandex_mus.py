@@ -19,16 +19,17 @@ class TYandexMusic:
         self.parent = parent
         self.logger = parent.logger
         self.prefer_rap = prefer_rap
-        with open(os.path.join(os.path.dirname(__file__), "yandex_music_access_token.txt")) as inp:
-            token = inp.read().strip()
+        token = os.environ.get('YAMUSIC_ASSESS_TOKEN')
+        assert token
         self.client = Client(token)
         self.client.init()
-        self.track_folder = os.path.join(os.path.dirname(__file__), "yandex_music_tracks")
+        self.track_folder = os.path.join(
+            os.path.dirname(__file__), "userdata/yandex_music_tracks")
         if not os.path.exists(self.track_folder):
             os.mkdir(self.track_folder)
         self.totem_player = None
-        #self.totem_player = Popen(['/usr/bin/totem'])  # something long running
-        self.artist_info_path = os.path.join(os.path.join(os.path.dirname(__file__)), 'yandex_music_artist.json')
+        self.artist_info_path = os.path.join(os.path.join(os.path.dirname(__file__)),
+                                             'userdata/yandex_music_artist.json')
         self.artist_info = dict()
         self.read_artist_info()
         self.start_time_stamp = None
@@ -37,6 +38,7 @@ class TYandexMusic:
         if os.path.exists(self.artist_info_path):
             with open(self.artist_info_path) as inp:
                 self.artist_info =  json.load(inp)
+
     def write_artist_info(self):
         with open(self.artist_info_path, "w") as outp:
             json.dump(self.artist_info, outp)

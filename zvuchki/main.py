@@ -12,7 +12,6 @@ import tkinter as tk
 import tkinter.font as tkFont
 import time
 import vlc
-from functools import partial
 import unidecode
 import wmctrl
 
