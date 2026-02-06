@@ -62,7 +62,6 @@ class TZvuchki(tk.Frame):
         self.last_char = None
         self.last_char_timestamp = time.time()
 
-
         super().__init__(master)
         self.master.geometry("1600x200")
         self.master.attributes("-topmost", True)

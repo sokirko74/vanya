@@ -35,6 +35,7 @@ class VideoPlayer (threading.Thread):
                     if self._interrupted:
                         break
                     time.sleep(1)
+                self.browser.save_play_history(self.url)
                 self.browser.close_all_windows()
                 self.parent.on_video_finish()
                 return

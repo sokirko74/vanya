@@ -13,6 +13,7 @@ import json
 import time
 import urllib.parse
 import re
+import datetime
 
 
 class TBrowser:
@@ -21,10 +22,13 @@ class TBrowser:
         self.logger = logger
         self.use_cache = use_cache
         self.cache_path = os.path.join(os.path.dirname(__file__), "userdata/search_request_cache.txt")
+        self.play_history_path = os.path.join(os.path.dirname(__file__), "userdata/play_history.txt")
         self.all_requests = dict()
         self.all_requests_without_spaces = dict()
         self.last_channel_name = None
         self.last_channel_id = None
+        self.last_clip_length = None
+        self.play_history = dict()
         self.google_cse = build(
             "customsearch", "v1",
             developerKey=os.environ.get('GOOGLE_API_KEY')
@@ -37,6 +41,11 @@ class TBrowser:
                     self.all_requests = json.loads(s)
                     for k, v  in self.all_requests.items():
                         self.all_requests_without_spaces[k.replace(' ', '')] = v
+
+        if os.path.exists(self.play_history_path):
+            with open(self.play_history_path) as inp:
+                self.play_history = json.load(inp)
+
 
     def init_chrome(self):
         options = webdriver.ChromeOptions()
@@ -53,6 +62,24 @@ class TBrowser:
         self.browser.set_page_load_timeout(20)
         self.browser.set_script_timeout(18)
         self.browser.set_window_position(0, 0)
+
+    def save_play_history(self, url):
+        duration_in_sec = self.get_current_duration()
+        if duration_in_sec >= self.last_clip_length:
+            duration_in_sec = 0
+        self.logger.info('save_play_history {} {} {}'.format(
+            url, duration_in_sec, self.last_clip_length
+        ))
+        self.play_history[url] = {
+            'played_duration':  duration_in_sec,
+            'clip_length': self.last_clip_length,
+            'assess_time': datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        }
+        with open(self.play_history_path, "w") as outp:
+            json.dump(self.play_history, outp, indent=4, ensure_ascii=False)
+
+    def get_played_duration(self, url):
+        return self.play_history.get(url, {}).get('played_duration', 0)
 
     def start_browser(self):
         #self.init_firefox()
@@ -159,56 +186,58 @@ class TBrowser:
             return False
 
 
+    def get_current_duration(self):
+        current_time = self.browser.execute_script("""
+            const v = document.querySelector('video');
+            return v ? v.currentTime : null;
+        """)
+        return int(current_time)
+
     def play_youtube(self, url):
         try:
             self.last_channel_name = None
             time.sleep(1)
             print("play {}".format(url))
-            self.navigate(url)
+            already = self.get_played_duration(url)
+            if already == 0:
+                self.navigate(url)
+            else:
+                self.navigate(url + "&t={}s".format(already))
 
             print ("sleep 3 sec")
             time.sleep(3)
 
+            #element = self.browser.switch_to.active_element
+            #time.sleep(2)
 
-            element = self.browser.switch_to.active_element
-            time.sleep(2)
+            html =self.browser.page_source
+            found = re.search(r'(?<="channelName":)"[^"]+"', html)
+            if not found:
+                found = re.search(r'(?<="ownerChannelName":)"[^"]+"', html)
+            if found:
+                self.last_channel_name = found.group(0).strip('"')
+            else:
+                self.last_channel_name = None
 
+            found = re.search(r'(?<="channelId":)"UC[^"]+"', html)
+            if found:
+                self.last_channel_id = found.group(0).strip('"')
+            else:
+                self.last_channel_id = None
 
-            # print ("send к")
-            # element.send_keys("k")
-            # time.sleep(1)
+            found = re.search(r'(?<="approxDurationMs":)"[^"]+"', html)
+            if found:
+                self.last_clip_length = int(int(found.group(0).strip('"')) / 1000)
+            else:
+                self.last_clip_length = None
+            if already == 0:
+                self.save_play_history(url)
 
-            #time.sleep(0.5)
-            #print ("send f")
-            #element.send_keys("f")
-
-            #time.sleep(0.5)
-            #print ("send p")
-            #element.send_keys("p")
-            # Source - https://stackoverflow.com/a
-            # Posted by undetected Selenium, modified by community. See post 'Timeline' for change history
-            # Retrieved 2026-01-29, License - CC BY-SA 4.0
-
-            channel_elem_class = "ytd-channel-name"
-
-            try:
-                channel_elem = WebDriverWait(self.browser, 20).until(
-                    EC.visibility_of_element_located((By.CLASS_NAME, channel_elem_class)))
-                #channel_name_elem = self.browser.find_element(By.CLASS_NAME, channel_elem_class)
-                if channel_elem:
-                    self.last_channel_name = str(channel_elem.text)
-
-                    html =self.browser.page_source
-                    found = re.search(r'(?<="channelId":)"UC[^"]+"', html)
-                    if found:
-                        self.last_channel_id = found.group(0).strip('"')
-                    else:
-                        self.last_channel_id = None
-
-                    self.logger.info('play channel "{}" channel_id = {}'.format(
-                        self.last_channel_name, self.last_channel_id))
-            except TimeoutException:
-                self.logger.error("cannot find(wait) element {}".format(channel_elem_class))
+            self.logger.info('play channel "{}" channel_id = {} dur_sec = {}'.format(
+                self.last_channel_name,
+                self.last_channel_id,
+                self.last_clip_length
+            ))
 
             return True
         except WebDriverException as exp:
