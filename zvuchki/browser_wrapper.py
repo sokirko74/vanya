@@ -101,9 +101,11 @@ class TBrowser:
         self.browser.set_script_timeout(18)
 
     def close_all_windows(self):
-        for handle in self.browser.window_handles[1:]:
-            self.browser.switch_to.window(handle)
+        handles = self.browser.window_handles
+        for i in range(len(handles) - 1, 0, -1):
+            self.browser.switch_to.window(handles[i])
             self.browser.close()
+        self.browser.switch_to.window(handles[0])
         self.browser.get('about:blank')
 
     def close_browser(self):
@@ -191,7 +193,11 @@ class TBrowser:
             const v = document.querySelector('video');
             return v ? v.currentTime : null;
         """)
-        return int(current_time)
+        if current_time is None:
+            print("cannot find duration time ")
+            return 0
+        else:
+            return int(current_time)
 
     def play_youtube(self, url):
         try:
