@@ -893,6 +893,58 @@
         "ЖАМ": {
             "name": "Jamboolio",
             "channel_id": "UCfDGIMgaDNROKsb9nBZyrHQ"
+        },
+        "ФЛЕ": {
+            "name": "Flexiny",
+            "channel_id": "UC2sk_DCJF14zjvaUja19HoA"
+        },
+        "АЛАН": {
+            "name": "Alan Enileev",
+            "channel_id": "UCIKJXqQGc6pCCaVaqhkHLQA"
+        },
+        "НТР": {
+            "name": "Канал Не Тормози",
+            "channel_id": "UCrMuCcF2OxzFU646EBc6Dkw"
+        },
+        "НТМ": {
+            "name": "Канал Не Тормози",
+            "channel_id": "UCrMuCcF2OxzFU646EBc6Dkw"
+        },
+        "МЕРС": {
+            "name": "Mercedes-Benz Deutschland",
+            "channel_id": "UCVxun8KIhpt4ebkA5QAHljA"
+        },
+        "ШАХ": {
+            "name": "Hitekkleo truckings",
+            "channel_id": "UCHo09advdvl-bA4IETpoAcw"
+        },
+        "ТРОЛ": {
+            "name": "КАРТОШКА ШОУ",
+            "channel_id": "UCtX69wmZ2yMBUgLaUq3xa6A"
+        },
+        "БЕЛ": {
+            "name": "Alexsej TV",
+            "channel_id": "UCP7ERzuFu_d6yzQUP0BC3TQ"
+        },
+        "ТРОЛЬ": {
+            "name": "Владислав П",
+            "channel_id": "UCDMg6OPuKrmLVh2quzYaF3w"
+        },
+        "УСАЧ": {
+            "name": "КАРТОШКА ШОУ",
+            "channel_id": "UCtX69wmZ2yMBUgLaUq3xa6A"
+        },
+        "ТВ": {
+            "name": "Alexsej TV",
+            "channel_id": "UCP7ERzuFu_d6yzQUP0BC3TQ"
+        },
+        "ЭЛ": {
+            "name": "Koball",
+            "channel_id": "UCiHfvxyMBrpUooSs4vTU7cQ"
+        },
+        "ПРЦ": {
+            "name": "100% Automotovideo",
+            "channel_id": "UCed4quDwJfcZVR9NVpL5Nrw"
         }
     }
 }

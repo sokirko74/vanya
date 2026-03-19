@@ -203,6 +203,7 @@ class TZvuchki(tk.Frame):
             position -= 1
         if position >= len(search_results):
             position = len(search_results) - 1
+
         return search_results[position]
 
 
@@ -230,7 +231,7 @@ class TZvuchki(tk.Frame):
         self.set_focus_to_text()
 
     def play_request(self, request):
-        req = TReqProcessor(self.logger, self.config, request)
+        req = TReqProcessor(self.logger, self.config, request, self.args.transliterate)
         if not req.process_req():
             return False
 

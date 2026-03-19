@@ -1,7 +1,8 @@
 from config import TConfig
 class TReqProcessor:
-    def __init__(self, logger, config, request):
+    def __init__(self, logger, config, request, transliterate):
         self.logger = logger
+        self.transliterate = transliterate
         self.config: TConfig = config
         self._request = request
         self.query = ""
@@ -39,7 +40,7 @@ class TReqProcessor:
             elif token == 'ДД':
                 self.add_sec = 240
             elif token == 'Т':
-                if self.args.transliterate:
+                if self.transliterate:
                     add_to_query.append(test_drive_en)
                 else:
                     add_to_query.append(test_drive)
