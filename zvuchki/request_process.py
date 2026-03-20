@@ -117,12 +117,18 @@ class TReqProcessor:
 
     def determine_url_and_duration(self, args, browser):
         if self.use_old_urls:
-            # Поиск в локально сохраненных URL (если есть такая логика в конфиге)
             key = f"{self.query}{self.clip_index}".lower()
             url_data = self.config.saved_urls.get(key)
+            if url_data not in self.config.saved_urls:
             if url_data:
-                self.url, saved_timeout = url_data
-                self.duration = min(self.duration, saved_timeout) + self.add_sec
+                self.url, timeout = url_data
+                if args.max_play_seconds < timeout:
+                    timeout = args.max_play_seconds
+                self.duration = timeout + self.add_sec
+            else:
+                browser.logger.error("no stored key {}".format(key))
+                self.url = "about:blank"
+                self.duration = 0
         else:
             # Поиск через Selenium (Google или YouTube)
             query = unidecode.unidecode(self.query) if args.transliterate else self.query
