@@ -5,8 +5,6 @@ from googleapiclient.discovery import build
 from selenium.common.exceptions import WebDriverException, TimeoutException
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.action_chains import ActionChains, ActionBuilder
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
 
 import os
 import json
@@ -18,7 +16,7 @@ import datetime
 
 class TBrowser:
     def __init__(self, logger, use_cache=True):
-        self.browser = None
+        self.driver = None
         self.logger = logger
         self.use_cache = use_cache
         self.cache_path = os.path.join(os.path.dirname(__file__), "userdata/search_request_cache.txt")
@@ -56,12 +54,12 @@ class TBrowser:
         options.add_argument("--disable-dev-shm-usage")
         options.add_argument("--disable-browser-side-navigation")
         options.add_argument("--disable-gpu")
-        self.browser = webdriver.Chrome(
+        self.driver = webdriver.Chrome(
             options=options,
             )
-        self.browser.set_page_load_timeout(20)
-        self.browser.set_script_timeout(18)
-        self.browser.set_window_position(0, 0)
+        self.driver.set_page_load_timeout(20)
+        self.driver.set_script_timeout(18)
+        self.driver.set_window_position(0, 0)
 
     def save_play_history(self, url):
         duration_in_sec = self.get_current_duration()
@@ -95,31 +93,110 @@ class TBrowser:
         options.add_argument("--disable-browser-side-navigation")
         options.add_argument("--disable-gpu")
         self.logger.info ("attach to chrome {}..".format(address))
-        self.browser = webdriver.Chrome(
+        self.driver = webdriver.Chrome(
             options=options)
-        self.browser.set_page_load_timeout(20)
-        self.browser.set_script_timeout(18)
+        self.driver.set_page_load_timeout(20)
+        self.driver.set_script_timeout(18)
 
-    def close_all_windows(self):
-        handles = self.browser.window_handles
-        for i in range(len(handles) - 1, 0, -1):
-            self.browser.switch_to.window(handles[i])
-            self.browser.close()
-        self.browser.switch_to.window(handles[0])
-        self.browser.get('about:blank')
+    def is_alive(self):
+        if not self.driver:
+            self.logger.info("driver is  not initialized")
+            return False
+        try:
+            if self.driver.window_handles:
+                #self.logger.info("driver is alive")
+                return True
 
-    def close_browser(self):
-        if self.browser is not None:
-            self.browser.close()
-            time.sleep(1)
-            self.browser.quit()
+        except:
+            self.logger.warning("browser is dead")
+            return False
+
+    def is_normal_window(self):
+        try:
+            size = self.driver.get_window_size()
+            if size['width'] <= 1:
+                return False
+            url = self.driver.current_url
+            return (   url.startswith("http")
+                    or url == "about:blank"
+                    or url == "chrome://new-tab-page/" # new version
+                    )
+
+        except Exception:
+            self.logger.error("current window does not respond...")
+            return False
+
+    def get_open_tabs(self):
+        good_handles = list()
+        try:
+            handles = list(self.driver.window_handles)
+        except Exception as exp:
+            self.logger.error("get_open_tabs failed exp={}".format(exp))
+            raise
+
+        self.logger.info("get_open_tabs, found {} total handles".format(len(handles)))
+
+        for handle in handles:
+            try:
+                self.driver.switch_to.window(handle)
+                if self.is_normal_window():
+                    self.logger.info("found real tab: {}".format(self.driver.title))
+                    good_handles.append(handle)
+            except Exception as e:
+                self.logger.warning(f"Skipping unresponsive handle {handle}")
+                continue
+
+        self.logger.info("get_open_tabs, filtered to {} real tabs".format(len(good_handles)))
+        return good_handles
+
+    def reset_to_one_empty_window(self):
+        assert self.is_alive()
+        self.logger.info("enter reset_to_one_empty_window")
+        # try:
+        #     self.logger.info("try to stop video in  browser ...")
+        #     # 1. Сначала принудительно ставим видео на паузу и "убиваем" элемент
+        #     self.driver.execute_script("""
+        #         const videos = document.querySelectorAll('video');
+        #         videos.forEach(v => {
+        #             v.pause();
+        #             v.src = "";
+        #             v.load();
+        #             v.remove();
+        #         });
+        #     """)
+        # except Exception as e:
+        #     self.logger.warning(f"Error in close_all_windows(1), cannot stop video using JS: {e}")
+
+        #assert self.is_alive()
+
+        # 2. Закрываем все вкладки, кроме основной (или вообще все, если нужно)
+        handles = self.get_open_tabs()
+        self.logger.info("number of browser windows = {}".format(len(handles)))
+        if len(handles) > 1:
+            self.logger.info("found {} open tabs, close all windows but the first...".format(len(handles)))
+            try:
+                for handle in handles[1:]:
+                    self.logger.info("close handler {}".format(handle))
+                    self.driver.switch_to.window(handle)
+                    self.driver.close()
+                self.driver.switch_to.window(handles[0])
+            except Exception as e:
+                self.logger.warning(f"Error in close_all_windows(2): {e}")
+
+        try:
+            # 3. Уходим с YouTube на пустую страницу
+            self.logger.info("navigate to about:blank")
+            self.driver.get('about:blank')
+            self.logger.info("Video stopped and switched to blank")
+        except Exception as e:
+            self.logger.warning(f"Error in close_all_windows(3): {e}")
 
     def mouse_click(self, x, y):
-        self.browser.execute_script('el = document.elementFromPoint({}, {}); el.click();'.format(x, y))
+        self.driver.execute_script('el = document.elementFromPoint({}, {}); el.click();'.format(x, y))
 
     def send_ctrl_end(self, timeout=2):
         self.logger.info('send_ctrl_end and wait ...')
-        ActionChains(self.browser) \
+        ActionChains(self.driver) \
             .key_down(Keys.CONTROL) \
             .key_down(Keys.END) \
             .perform()
@@ -127,40 +204,37 @@ class TBrowser:
 
 
     def send_left(self):
-        ActionChains(self.browser) \
+        ActionChains(self.driver) \
             .key_down(Keys.LEFT) \
             .perform()
 
     def send_right(self):
         try:
             self.logger.info('send_right')
-            element = self.browser.switch_to.active_element
+            element = self.driver.switch_to.active_element
             time.sleep(0.1)
             element.send_keys(Keys.RIGHT)
         except WebDriverException as exp:
             print("exception: {}".format(exp))
             return False
 
-        # ActionChains(self.browser) \
-        #     .key_down(Keys.RIGHT) \
-        #     .perform()
 
     def send_ctrl_home(self, timeout=1):
         self.logger.info('send_ctrl_home')
-        ActionChains(self.browser) \
+        ActionChains(self.driver) \
             .key_down(Keys.CONTROL) \
             .key_down(Keys.HOME) \
             .perform()
         time.sleep(timeout)
 
     def send_shift_n(self):
-        ActionChains(self.browser) \
+        ActionChains(self.driver) \
             .key_down(Keys.SHIFT) \
             .key_down('n') \
             .perform()
 
     def send_shift_p(self):
-        ActionChains(self.browser) \
+        ActionChains(self.driver) \
             .key_down(Keys.SHIFT) \
             .key_down('p') \
             .perform()
@@ -172,14 +246,34 @@ class TBrowser:
 
     def navigate(self, url):
         try:
-            self.browser.get(url)
-        except selenium.common.exceptions.TimeoutException as e:
-            print("exception in navigate: {}".format(e))
+            self.logger.info('TBrowser.navigate {}'.format(url))
+
+            # Проверяем, жива ли сессия вообще
+            if not self.is_alive():
+                self.logger.error("Driver is dead before navigate")
+                return
+
+            # Если текущее окно "плохое", переключаемся на нормальное
+            if not self.is_normal_window():
+                tabs = self.get_open_tabs()
+                if tabs:
+                    self.driver.switch_to.window(tabs[0])
+                else:
+                    self.logger.error("No normal tabs found to navigate")
+                    return
+
+            self.driver.get(url)
+            self.logger.info("TBrowser.navigate exit with success")
+        except selenium.common.exceptions.InvalidSessionIdException:
+            self.logger.error("Session lost during navigate. Browser might be closed.")
+        except Exception as e:
+            self.logger.error(f"Exception in navigate: {e}")
             time.sleep(2)
+
 
     def send_f(self):
         try:
-            element = self.browser.switch_to.active_element
+            element = self.driver.switch_to.active_element
             time.sleep(0.2)
             print ("send f")
             element.send_keys("f")
@@ -189,7 +283,7 @@ class TBrowser:
 
 
     def get_current_duration(self):
-        current_time = self.browser.execute_script("""
+        current_time = self.driver.execute_script("""
             const v = document.querySelector('video');
             return v ? v.currentTime : null;
         """)
@@ -200,23 +294,25 @@ class TBrowser:
             return int(current_time)
 
     def play_youtube(self, url):
+        assert self.is_alive()
+
         try:
             self.last_channel_name = None
             time.sleep(1)
-            print("play {}".format(url))
+            self.logger.info("play {}".format(url))
             already = self.get_played_duration(url)
             if already == 0:
                 self.navigate(url)
             else:
                 self.navigate(url + "&t={}s".format(already))
 
-            print ("sleep 3 sec")
+            self.logger.info("sleep 3 sec")
             time.sleep(3)
 
             #element = self.browser.switch_to.active_element
             #time.sleep(2)
 
-            html =self.browser.page_source
+            html =self.driver.page_source
             found = re.search(r'(?<="channelName":)"[^"]+"', html)
             if not found:
                 found = re.search(r'(?<="ownerChannelName":)"[^"]+"', html)
@@ -247,7 +343,7 @@ class TBrowser:
 
             return True
         except WebDriverException as exp:
-            print("exception: {}".format(exp))
+            self.logger.error("exception in play_youtube: {}".format(exp))
             return False
 
     def _parse_serp(self):
@@ -256,7 +352,7 @@ class TBrowser:
         self.send_ctrl_end()
         self.send_ctrl_end()
         self.send_ctrl_home()
-        for element in self.browser.find_elements(By.TAG_NAME, "a"):
+        for element in self.driver.find_elements(By.TAG_NAME, "a"):
             url = element.get_attribute("href")
             if url is not None and url != '#' and url.startswith('http'):
                 if "youtube.com/watch" in url and re.search('t=[0-9]', url) is None:
@@ -276,9 +372,9 @@ class TBrowser:
                 json.dump(self.all_requests, outp, ensure_ascii=False, indent=4)
 
     def send_request_old(self, search_engine_request):
-        self.browser.get("https://www.google.ru/videohp?hl=ru")
+        self.driver.get("https://www.google.ru/videohp?hl=ru")
         time.sleep(3)
-        element = self.browser.switch_to.active_element
+        element = self.driver.switch_to.active_element
         element.send_keys(search_engine_request)
         time.sleep(1)
         element.send_keys(Keys.RETURN)
@@ -323,9 +419,9 @@ class TBrowser:
         search_results = list()
 
         with open("last.html", "w") as outp:
-            outp.write(self.browser.page_source)
+            outp.write(self.driver.page_source)
 
-        links = self.browser.find_elements(
+        links = self.driver.find_elements(
             By.XPATH,
             '//a[@id="thumbnail" and contains(@href, "/watch")]'
         )
