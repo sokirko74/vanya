@@ -103,7 +103,6 @@ class TZvuchki(tk.Frame):
                 req = self._handle_search_and_play(task["action"])
 
             elif cmd == "BROWSER_KEY":
-                # Только если браузер жив
                 if self.browser.driver:
                     action = task["action"]
                     try:
@@ -113,12 +112,12 @@ class TZvuchki(tk.Frame):
                             self.browser.send_right()
                         elif action == "FULLSCREEN":
                             self.browser.send_f()
-                        self.set_window_focus()
                     except Exception as e:
                         self.logger.error(f"Key error: {e}")
             elif cmd == "STOP" and req:
                 self._end_video(req)
                 req = None
+            self.set_window_focus()
 
             self.browser.browser_queue.task_done()
 
