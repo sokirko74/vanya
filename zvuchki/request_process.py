@@ -119,7 +119,6 @@ class TReqProcessor:
         if self.use_old_urls:
             key = f"{self.query}{self.clip_index}".lower()
             url_data = self.config.saved_urls.get(key)
-            if url_data not in self.config.saved_urls:
             if url_data:
                 self.url, timeout = url_data
                 if args.max_play_seconds < timeout:
