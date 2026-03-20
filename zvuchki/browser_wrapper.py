@@ -349,7 +349,7 @@ class TBrowser:
 
 
             req.determine_end_time(self.last_clip_length)
-            self.logger("play maximum {} seconds".format(req.duration))
+            self.logger.info("play maximum {} seconds".format(req.duration))
             return True
         except WebDriverException as exp:
             self.logger.error("exception in play_youtube: {}".format(exp))
