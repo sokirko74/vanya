@@ -5,7 +5,6 @@ import tkinter.font as tkFont
 import time
 import os
 import vlc
-import unidecode
 import wmctrl
 import argparse
 
@@ -29,8 +28,6 @@ class TZvuchki(tk.Frame):
         self.browser = TBrowser(self.logger, self.args.use_cache)
         self.is_running = True
 
-        # Очередь для команд (Thread-safe)
-        self.browser_queue = queue.Queue()
 
         # Инициализация Selenium (делаем это до запуска GUI)
         if self.args.attach_browser_address is not None:
@@ -42,7 +39,6 @@ class TZvuchki(tk.Frame):
         self.worker_thread = threading.Thread(target=self._browser_worker, daemon=True)
         self.worker_thread.start()
 
-        # Настройка TKinter
         self.master = master if master else tk.Tk()
         self.window_title = "ZvuchkiApp"
         self.master.title(self.window_title)
@@ -58,6 +54,7 @@ class TZvuchki(tk.Frame):
 
         self._init_ui_elements()
         self.audioplayer = None
+        self.is_playing = False
 
     def _init_ui_elements(self):
         editor_font_size = int(self.args.font_size * 1.28)
@@ -75,191 +72,118 @@ class TZvuchki(tk.Frame):
         self.master.bind_all('<KeyPress>', self.report_key_press)
         self.text_widget.place(relx=0, rely=0, relwidth=1, relheight=1)
         self.text_widget.focus_force()
-        self.video_stop_requested = False
+
+    def put_browser_cmd(self, cmd, action):
+        d = {"cmd": cmd, "action": action}
+        self.browser.browser_queue.put(d)
+
+    def _end_video(self, req):
+        self.is_playing = False
+        self.browser.end_video(req)
+        self.entry_text.set("")
+        self.text_widget.focus_force()
 
     def _browser_worker(self):
+        req = None
         while self.is_running:
+            if req is not None:
+                if time.time() > req.endtime:
+                    self.logger.info("stop video since time is over")
+                    self._end_video(req)
+                    req = None
+
             try:
-                task = self.browser_queue.get(timeout=0.5)
-                cmd = task.get("cmd")
-                self.logger.info("_browser_worker got cmd {}".format(cmd))
-
-                if cmd == "PROCESS_REQUEST":
-                    self.video_stop_requested = False  # Сбрасываем флаг перед новым видео
-                    self._handle_search_and_play(task["request_str"])
-
-                elif cmd == "BROWSER_KEY":
-                    # Только если браузер жив
-                    if self.browser.driver:
-                        action = task["action"]
-                        try:
-                            if action == "LEFT":
-                                self.browser.send_left()
-                            elif action == "RIGHT":
-                                self.browser.send_right()
-                            elif action == "FULLSCREEN":
-                                self.browser.send_f()
-                        except Exception as e:
-                            self.logger.error(f"Key error: {e}")
-
-                elif cmd == "STOP":
-                    # Esc теперь просто взводит флаг
-                    self.video_stop_requested = True
-                    # Если нужно именно закрыть окна, вызываем:
-                    # self.browser.close_all_windows()
-
-                self.browser_queue.task_done()
+                task = self.browser.browser_queue.get(timeout=0.5)
             except queue.Empty:
                 continue
+            self.logger.info("_browser_worker got task {}".format(task))
+            cmd = task.get("cmd")
+
+            if cmd == "PROCESS_REQUEST":
+                req = self._handle_search_and_play(task["action"])
+
+            elif cmd == "BROWSER_KEY":
+                # Только если браузер жив
+                if self.browser.driver:
+                    action = task["action"]
+                    try:
+                        if action == "LEFT":
+                            self.browser.send_left()
+                        elif action == "RIGHT":
+                            self.browser.send_right()
+                        elif action == "FULLSCREEN":
+                            self.browser.send_f()
+                    except Exception as e:
+                        self.logger.error(f"Key error: {e}")
+            elif cmd == "STOP" and req:
+                self._end_video(req)
+                req = None
+
+            self.browser.browser_queue.task_done()
 
     def _handle_search_and_play(self, request_str):
-        """Внутренняя логика воркера: поиск URL и управление воспроизведением"""
         self.logger.info(f"Processing request in worker: {request_str}")
 
-        # 1. Парсим запрос (индексы, прибавки по времени и т.д.)
-        req = TReqProcessor(self.logger, self.config, request_str, self.args.transliterate)
+        req = TReqProcessor(self.logger,
+                            self.config,
+                            request_str,
+                            self.args.transliterate,
+                            self.args.max_play_seconds
+                            )
+
         if not req.process_req():
             self.logger.warning("Failed to process request string")
-            return
+            return None
 
-        # 2. Получаем URL видео
-        url = None
-        duration = self.args.max_play_seconds  # Значение по умолчанию
+        if req.request_command == "ПАМ":
+            if self.browser.last_channel_id:
+                self.config.save_channel_alias(
+                    self.browser.last_channel_name,
+                    self.browser.last_channel_id,
+                    req.query)
+                self.logger.error("saved {}".format(self.browser.last_channel_id))
+                self.play_audio("saved.wav", 30)
+                self.entry_text.set("")
+            else:
+                self.logger.error("no channel name")
+            return None
 
-        if req.use_old_urls:
-            # Поиск в локально сохраненных URL (если есть такая логика в конфиге)
-            key = f"{req.query}{req.clip_index}".lower()
-            url_data = self.config.saved_urls.get(key)
-            if url_data:
-                url, saved_timeout = url_data
-                duration = min(self.args.max_play_seconds, saved_timeout) + req.add_sec
-        else:
-            # Поиск через Selenium (Google или YouTube)
-            query = unidecode.unidecode(req.query) if self.args.transliterate else req.query
-            url = self.get_url_video_from_google_or_cached(
-                query, req.clip_index, req.use_cache, req.channel_id is not None
-            )
-            # Если URL найден, TBrowser обновит self.browser.last_clip_length после play_youtube
-            duration = self.args.max_play_seconds + req.add_sec
+        req.determine_url_and_duration(self.args, self.browser)
 
-        if not url:
+        if not req.url:
             self.logger.warning(f"No URL found for query: {req.query}")
-            return
+            return None
 
-        # 3. Запуск воспроизведения
-        if not self.browser.play_youtube(url):
+        if not self.browser.play_youtube(req):
             if not self.browser.is_alive():
                 self.quit()
 
-        # Возвращаем фокус в окно приложения, чтобы можно было печатать дальше
-        self.master.after(0, self.set_window_focus)
+        self.is_playing = True
 
-        # Если браузер смог достать длину клипа, уточняем duration
-        if self.browser.last_clip_length:
-            real_duration = self.browser.last_clip_length + req.add_sec
-            duration = min(duration, real_duration)
+        return req
 
-        self.logger.info(f"Starting playback: {url} for {duration} seconds")
-
-        # 4. Цикл ожидания окончания видео
-        start_time = time.time()
-        while time.time() - start_time < duration:
-            # ПРОВЕРЯЕМ ОЧЕРЕДЬ прямо во время ожидания
-            if not self.browser_queue.empty():
-                # "Заглядываем" в очередь без извлечения
-                try:
-                    # Если там лежит команда STOP, извлекаем её и выходим
-                    # Мы проверяем тип команды, чтобы не пропустить нажатия кнопок (LEFT/RIGHT)
-                    # которые должны обрабатываться параллельно
-                    peek_task = self.browser_queue.queue[0]
-                    if peek_task.get("cmd") == "STOP":
-                        self.browser_queue.get()  # Удаляем STOP из очереди
-                        self.video_stop_requested = True
-                        self.browser_queue.task_done()
-                except (IndexError, queue.Empty):
-                    pass
-
-            if self.video_stop_requested:
-                self.logger.info("Playback interrupted by Esc (detected in loop)")
-                break
-
-            if not self.browser.is_alive():
-                break
-
-            time.sleep(0.5)
-
-        try:
-            self.browser.save_play_history(url)
-        except Exception as e:
-            self.logger.error(f"Error during  save play_history: {e}")
-
-        assert self.browser.is_alive()
-
-        # 5.1 Завершение: сохраняем историю и чистим окна
-        try:
-            self.browser.reset_to_one_empty_window()
-        except Exception as e:
-            self.logger.error(f"Error during cleanup: {e}")
-
-        # Очищаем поле ввода в GUI
-        self.master.after(0, self.on_video_finish)
-
-    def get_url_video_from_google_or_cached(self, request, position, use_cache, use_youtube):
-        # Эта логика перенесена из вашего старого main.py, но теперь она "живет" в воркере
-        if use_cache and self.browser.use_cache:
-            search_results = self.browser.get_cached_request(request)
-        else:
-            search_results = None
-
-        if search_results is None:
-            if not use_youtube:
-                search_results = self.browser.send_search_request(request)
-            else:
-                search_results = self.browser.collect_youtube_clips(request)
-            self.browser.reset_to_one_empty_window()
-
-        idx = max(0, position - 1)
-        if search_results and idx < len(search_results):
-            return search_results[idx]
-        return None
-
-    # --- ОБРАБОТЧИКИ СОБЫТИЙ GUI (ТОЛЬКО КЛАДУТ В ОЧЕРЕДЬ) ---
 
     def on_return(self, event):
         s = self.entry_text.get()
         if s:
             self.play_audio("enter.wav", 50)
-            self.browser_queue.put({"cmd": "PROCESS_REQUEST", "request_str": s})
+            self.put_browser_cmd("PROCESS_REQUEST", s)
 
     def on_stop_playing(self, event):
-        # 1. Сразу выставляем флаг для прерывания текущего цикла в воркере
-        self.video_stop_requested = True
-
-        # 2. Очищаем очередь
-        while not self.browser_queue.empty():
-            try:
-                self.browser_queue.get_nowait()
-            except queue.Empty:
-                break
-
         self.logger.info("send stop cmd and set flag")
-        # 3. Кладем STOP на случай, если воркер ничем не занят
-        self.browser_queue.put({"cmd": "STOP"})
+        if self.is_playing:
+            self.put_browser_cmd("STOP", None)
 
     def on_left(self, event):
-        self.browser_queue.put({"cmd": "BROWSER_KEY", "action": "LEFT"})
+        if self.is_playing:
+            self.put_browser_cmd("BROWSER_KEY", "LEFT")
 
     def on_right(self, event):
-        self.browser_queue.put({"cmd": "BROWSER_KEY", "action": "RIGHT"})
+        if self.is_playing:
+            self.put_browser_cmd("BROWSER_KEY", "RIGHT")
 
     def on_toggle_full(self, event):
-        self.browser_queue.put({"cmd": "BROWSER_KEY", "action": "FULLSCREEN"})
-
-    # --- ВСПОМОГАТЕЛЬНЫЕ МЕТОДЫ GUI ---
-
-    def on_video_finish(self):
-        self.entry_text.set("")
-        self.text_widget.focus_force()
+        self.put_browser_cmd("BROWSER_KEY", "FULLSCREEN")
 
     def set_window_focus(self):
         try:
@@ -268,11 +192,24 @@ class TZvuchki(tk.Frame):
             pass
 
     def report_key_press(self, e):
-        # Ваша логика озвучки клавиш
         ch = e.char.upper()
+        if (ch  == "П" or ch  == "G") and self.is_playing:
+            self.logger.debug("toggle_full")
+            self.on_toggle_full(e)
+            return
+
+        if ch == '*':
+            return
+
         if self.args.audio_keys:
-            # ... (код озвучки из вашего оригинала)
-            pass
+            if ch == '\x08':
+                self.play_audio('backspace.wav', 50)
+            if ch == ' ':
+                ch = 'space'
+            filename = 'char.' + ch + '.mp3'
+            path = os.path.join(os.path.dirname(__file__), 'sound', filename)
+            if os.path.exists(path):
+                self.play_audio(filename)
 
     def on_backspace(self, event):
         self.play_audio("backspace.wav", 50)

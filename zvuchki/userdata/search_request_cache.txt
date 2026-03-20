@@ -4280,5 +4280,9 @@
         "https://www.youtube.com/watch?v=XPA8W37WEt0&pp=0gcJCcUKAYcqIYzv",
         "https://www.youtube.com/watch?v=fWF0AOIasbM",
         "https://www.youtube.com/watch?v=tdDbPawtqmY&pp=0gcJCcUKAYcqIYzv"
+    ],
+    "НОВОЕ": [
+        "https://www.youtube.com/watch?v=96W2jzaXc38",
+        "https://www.youtube.com/watch?v=Ktww8TYuREw"
     ]
 }

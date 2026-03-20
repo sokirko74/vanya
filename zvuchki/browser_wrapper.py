@@ -1,3 +1,5 @@
+from request_process import TReqProcessor
+
 import selenium.common.exceptions
 from selenium import webdriver
 from selenium.webdriver.common.by import By
@@ -6,6 +8,7 @@ from selenium.common.exceptions import WebDriverException, TimeoutException
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.action_chains import ActionChains, ActionBuilder
 
+import queue
 import os
 import json
 import time
@@ -27,6 +30,8 @@ class TBrowser:
         self.last_channel_id = None
         self.last_clip_length = None
         self.play_history = dict()
+        self.browser_queue = queue.Queue()
+
         self.google_cse = build(
             "customsearch", "v1",
             developerKey=os.environ.get('GOOGLE_API_KEY')
@@ -215,7 +220,7 @@ class TBrowser:
             time.sleep(0.1)
             element.send_keys(Keys.RIGHT)
         except WebDriverException as exp:
-            print("exception: {}".format(exp))
+            self.logger.error("exception: {}".format(exp))
             return False
 
 
@@ -293,8 +298,9 @@ class TBrowser:
         else:
             return int(current_time)
 
-    def play_youtube(self, url):
+    def play_youtube(self, req: TReqProcessor):
         assert self.is_alive()
+        url = req.url
 
         try:
             self.last_channel_name = None
@@ -340,6 +346,9 @@ class TBrowser:
                 self.last_channel_id,
                 self.last_clip_length
             ))
+
+            # после начала проигрывания
+            req.determine_end_time(self.last_clip_length)
 
             return True
         except WebDriverException as exp:
@@ -437,13 +446,37 @@ class TBrowser:
 
     def send_search_request(self, search_engine_request):
         return self.send_request_as_human(search_engine_request)
-	
-	# на волгарь выдала daewoo
-        #return self.send_request_via_api(search_engine_request)
 
+    def get_url_video_from_google_or_cached(self, request, position, use_cache, use_youtube):
+        # Эта логика перенесена из вашего старого main.py, но теперь она "живет" в воркере
+        if use_cache and self.use_cache:
+            search_results = self.get_cached_request(request)
+        else:
+            search_results = None
 
-if __name__ == "__main__":
-    b = TBrowser()
-    b.start_browser()
-    b.play_youtube('https://www.youtube.com/watch?v=NaiCfIcutbM', 10)
-    time.sleep(10000)
+        if search_results is None:
+            if not use_youtube:
+                search_results = self.send_search_request(request)
+            else:
+                search_results = self.collect_youtube_clips(request)
+            self.reset_to_one_empty_window()
+
+        idx = max(0, position - 1)
+        if search_results and idx < len(search_results):
+            return search_results[idx]
+        return None
+
+    def end_video(self, req: TReqProcessor):
+        self.logger.info("end_video")
+        try:
+            self.save_play_history(req.url)
+        except Exception as e:
+            self.logger.error(f"Error during  save play_history: {e}")
+        assert self.is_alive()
+
+        # 5.1 Завершение: сохраняем историю и чистим окна
+        try:
+            self.reset_to_one_empty_window()
+        except Exception as e:
+            self.logger.error(f"Error during cleanup: {e}")
+

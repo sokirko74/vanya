@@ -1,6 +1,10 @@
 from config import TConfig
+import unidecode
+import time
+
+
 class TReqProcessor:
-    def __init__(self, logger, config, request, transliterate):
+    def __init__(self, logger, config, request, transliterate, duration):
         self.logger = logger
         self.transliterate = transliterate
         self.config: TConfig = config
@@ -13,6 +17,9 @@ class TReqProcessor:
         self.use_cache = True
         self.request_command = None
         self.channel_id = None
+        self.url = None
+        self.duration = duration
+        self.endtime = None
 
     def process_req(self):
         words = self._request.strip().split(' ')
@@ -106,3 +113,33 @@ class TReqProcessor:
             self.query += " " + " ".join(add_to_query)
 
         return True
+
+
+    def determine_url_and_duration(self, args, browser):
+        if self.use_old_urls:
+            # Поиск в локально сохраненных URL (если есть такая логика в конфиге)
+            key = f"{self.query}{self.clip_index}".lower()
+            url_data = self.config.saved_urls.get(key)
+            if url_data:
+                self.url, saved_timeout = url_data
+                self.duration = min(self.duration, saved_timeout) + self.add_sec
+        else:
+            # Поиск через Selenium (Google или YouTube)
+            query = unidecode.unidecode(self.query) if args.transliterate else self.query
+            self.url = browser.get_url_video_from_google_or_cached(
+                query,
+                self.clip_index,
+                self.use_cache,
+                self.channel_id is not None
+            )
+            # Если URL найден, TBrowser обновит self.browser.last_clip_length после play_youtube
+            self.duration = args.max_play_seconds + self.add_sec
+
+    def determine_end_time(self, last_clip_length):
+        if last_clip_length:
+            real_duration = last_clip_length + self.add_sec
+            duration = min(self.duration, real_duration)
+        else:
+            duration  = self.duration
+        self.endtime = time.time() + duration
+
