@@ -113,6 +113,7 @@ class TZvuchki(tk.Frame):
                             self.browser.send_right()
                         elif action == "FULLSCREEN":
                             self.browser.send_f()
+                        self.set_window_focus()
                     except Exception as e:
                         self.logger.error(f"Key error: {e}")
             elif cmd == "STOP" and req:
