@@ -171,8 +171,8 @@ class TZvuchki(tk.Frame):
             self.put_browser_cmd("PROCESS_REQUEST", s)
 
     def on_stop_playing(self, event):
-        self.logger.info("send stop cmd and set flag")
         if self.is_playing:
+            self.logger.info("send stop cmd and set flag")
             self.put_browser_cmd("STOP", None)
 
     def on_left(self, event):
@@ -184,7 +184,8 @@ class TZvuchki(tk.Frame):
             self.put_browser_cmd("BROWSER_KEY", "RIGHT")
 
     def on_toggle_full(self, event):
-        self.put_browser_cmd("BROWSER_KEY", "FULLSCREEN")
+        if self.is_playing:
+            self.put_browser_cmd("BROWSER_KEY", "FULLSCREEN")
 
     def set_window_focus(self):
         try:
