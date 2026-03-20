@@ -137,14 +137,11 @@ class TReqProcessor:
                 self.use_cache,
                 self.channel_id is not None
             )
-            # Если URL найден, TBrowser обновит self.browser.last_clip_length после play_youtube
             self.duration = args.max_play_seconds + self.add_sec
 
     def determine_end_time(self, last_clip_length):
         if last_clip_length:
             real_duration = last_clip_length + self.add_sec
-            duration = min(self.duration, real_duration)
-        else:
-            duration  = self.duration
-        self.endtime = time.time() + duration
+            self.duration = min(self.duration, real_duration)
+        self.endtime = time.time() + self.duration
 

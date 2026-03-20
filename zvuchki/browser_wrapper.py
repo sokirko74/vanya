@@ -128,7 +128,7 @@ class TBrowser:
                     )
 
         except Exception:
-            self.logger.error("current window does not respond...")
+            #self.logger.error("current window does not respond...")
             return False
 
     def get_open_tabs(self):
@@ -347,9 +347,9 @@ class TBrowser:
                 self.last_clip_length
             ))
 
-            # после начала проигрывания
-            req.determine_end_time(self.last_clip_length)
 
+            req.determine_end_time(self.last_clip_length)
+            self.logger("play maximum {} seconds".format(req.duration))
             return True
         except WebDriverException as exp:
             self.logger.error("exception in play_youtube: {}".format(exp))
