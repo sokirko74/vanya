@@ -140,7 +140,7 @@ class TBrowser:
             raise
 
         self.logger.info("get_open_tabs, found {} total handles".format(len(handles)))
-
+        save_handle = self.driver.current_window_handle
         for handle in handles:
             try:
                 self.driver.switch_to.window(handle)
@@ -150,49 +150,36 @@ class TBrowser:
             except Exception as e:
                 self.logger.warning(f"Skipping unresponsive handle {handle}")
                 continue
+        self.driver.switch_to.window(save_handle)
 
         self.logger.info("get_open_tabs, filtered to {} real tabs".format(len(good_handles)))
         return good_handles
+
+    def close_other_tabs(self):
+        handles = self.get_open_tabs()
+        self.logger.info("number of browser windows = {}".format(len(handles)))
+        if len(handles) > 1:
+            save_handle = self.driver.current_window_handle
+            self.logger.info("found {} open tabs, close all windows but the first...".format(len(handles)))
+            try:
+                for handle in handles:
+                    if handle != save_handle:
+                        self.logger.info("close handler {}".format(handle))
+                        self.driver.switch_to.window(handle)
+                        self.driver.close()
+                self.driver.switch_to.window(save_handle)
+            except Exception as e:
+                self.logger.warning(f"Error in close_all_windows(2): {e}")
+
 
     def reset_to_one_empty_window(self):
         assert self.is_alive()
         self.logger.info("enter reset_to_one_empty_window")
 
-        try:
-            # Без этой остановки видео google-chromе  146 просто падает, раньше не падал!!!!
-            self.logger.info("try to stop video in  browser ...")
-            # 1. Сначала принудительно ставим видео на паузу и "убиваем" элемент
-            self.driver.execute_script("""
-                const videos = document.querySelectorAll('video');
-                videos.forEach(v => {
-                    v.pause();
-                    v.src = "";
-                    v.load();
-                    v.remove();
-                });
-            """)
-        except Exception as e:
-            self.logger.warning(f"Error in close_all_windows(1), cannot stop video using JS: {e}")
-
-        assert self.is_alive()
-
-        # 2. Закрываем все вкладки, кроме основной (или вообще все, если нужно)
-        handles = self.get_open_tabs()
-        self.logger.info("number of browser windows = {}".format(len(handles)))
-        if len(handles) > 1:
-            self.logger.info("found {} open tabs, close all windows but the first...".format(len(handles)))
-            try:
-                for handle in handles[1:]:
-                    self.logger.info("close handler {}".format(handle))
-                    self.driver.switch_to.window(handle)
-                    self.driver.close()
-                self.driver.switch_to.window(handles[0])
-            except Exception as e:
-                self.logger.warning(f"Error in close_all_windows(2): {e}")
+        # 2. Закрываем все вкладки, кроме текущей
+        self.close_other_tabs()
 
         try:
-            # 3. Уходим с YouTube на пустую страницу
-
             self.logger.info("navigate to about:blank")
             self.driver.get('about:blank')
             self.logger.info("Video stopped and switched to blank")
