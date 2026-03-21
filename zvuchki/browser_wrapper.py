@@ -68,6 +68,10 @@ class TBrowser:
 
     def save_play_history(self, url):
         duration_in_sec = self.get_current_duration()
+        if self.last_clip_length is None:
+            self.logger.error('self.last_clip_length is None, skip saving')
+            returne
+
         if duration_in_sec >= self.last_clip_length:
             duration_in_sec = 0
         self.logger.info('save_play_history {} {} {}'.format(

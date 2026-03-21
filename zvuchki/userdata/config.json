@@ -945,6 +945,18 @@
         "ПРЦ": {
             "name": "100% Automotovideo",
             "channel_id": "UCed4quDwJfcZVR9NVpL5Nrw"
+        },
+        "АУ": {
+            "name": "АВТО channel",
+            "channel_id": "UCY4_CYRnVHPn9ioDXCW5ejQ"
+        },
+        "АВТОСКГБ": {
+            "name": "sigmax69",
+            "channel_id": "UCGYceRM6eLP8ANEIkdb4Ddg"
+        },
+        "РТ": {
+            "name": "Roman TV",
+            "channel_id": "UCMVAAvXkZnQOc2N2As9Wusg"
         }
     }
 }
