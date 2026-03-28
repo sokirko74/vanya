@@ -957,6 +957,70 @@
         "РТ": {
             "name": "Roman TV",
             "channel_id": "UCMVAAvXkZnQOc2N2As9Wusg"
+        },
+        "КГА": {
+            "name": "sigmax69",
+            "channel_id": "UCGYceRM6eLP8ANEIkdb4Ddg"
+        },
+        "КГП": {
+            "name": "CSL",
+            "channel_id": "UCiwkx-7c3gR5ILuDh1PS0GA"
+        },
+        "UCiwkx-7c3gR5ILuDh1PS0GA": {
+            "name": "sigmax69",
+            "channel_id": "UCGYceRM6eLP8ANEIkdb4Ddg"
+        },
+        "КГУ": {
+            "name": "Типичный инженер",
+            "channel_id": "UCDIe63BOcNKMDKZAmp12qdg"
+        },
+        "КГЕ": {
+            "name": "Roman TV",
+            "channel_id": "UCMVAAvXkZnQOc2N2As9Wusg"
+        },
+        "КГК": {
+            "name": "Александр Шкуревских",
+            "channel_id": "UC38M0gUny4tf9MnhFF9tChw"
+        },
+        "КГТ": {
+            "name": "Александр Шкуревских",
+            "channel_id": "UC38M0gUny4tf9MnhFF9tChw"
+        },
+        "КГЧ": {
+            "name": "Александр Шкуревских",
+            "channel_id": "UC38M0gUny4tf9MnhFF9tChw"
+        },
+        "КГС": {
+            "name": "master12volt",
+            "channel_id": "UCKm0R7SnBGhanoA6E-7uWtA"
+        },
+        "КГМ": {
+            "name": "Александр Шкуревских",
+            "channel_id": "UC38M0gUny4tf9MnhFF9tChw"
+        },
+        "КГН": {
+            "name": "sigmax69",
+            "channel_id": "UCGYceRM6eLP8ANEIkdb4Ddg"
+        },
+        "А": {
+            "name": "АВТО channel",
+            "channel_id": "UCY4_CYRnVHPn9ioDXCW5ejQ"
+        },
+        "БРУ": {
+            "name": "Cars and Engines",
+            "channel_id": "UCzaRja_k66jt-KoSBftRTgw"
+        },
+        "UCY4_CYRnVHPn9ioDXCW5ejQ": {
+            "name": "АВТО channel",
+            "channel_id": "UCY4_CYRnVHPn9ioDXCW5ejQ"
+        },
+        "СТАРТ": {
+            "name": "Car News Central",
+            "channel_id": "UCE1rh8YHogAaKFRaUawqL9A"
+        },
+        "Ф": {
+            "name": "SwedishRally",
+            "channel_id": "UC5zeWAIsEWYfUzSZeAHnByA"
         }
     }
 }
