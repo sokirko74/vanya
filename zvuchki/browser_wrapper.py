@@ -426,16 +426,27 @@ class TBrowser:
 
         links = self.driver.find_elements(
             By.XPATH,
-            '//a[@id="thumbnail" and contains(@href, "/watch")]'
+            '//a[contains(@href, "/watch?v=")]'
         )
+
+        # links = self.driver.find_elements(
+        #     By.XPATH,
+        #     '//a[@id="thumbnail" and contains(@href, "/watch")]'
+        # )
+
         for link in links:
             url = link.get_attribute("href")
+            if not url:
+                continue
             self.logger.debug("url={}".format(url))
             if url not in search_results:
                 search_results.append(url)
 
-        self.logger.info("found youtube {} links in channel".format(len(search_results)))
-        self._cache_request(channel_id, search_results)
+        if not search_results:
+            self.logger.error("no clips found, probably youtube has changed its web design!")
+        else:
+            self.logger.info("found youtube {} links in channel".format(len(search_results)))
+            self._cache_request(channel_id, search_results)
         return search_results
 
     def send_search_request(self, search_engine_request):

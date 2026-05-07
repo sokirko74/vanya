@@ -236,7 +236,7 @@ class TZvuchki(tk.Frame):
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--font-size", default=100, type=int)
-    parser.add_argument("--max-play-seconds", default=540, type=int)
+    parser.add_argument("--max-play-seconds", default=300, type=int)
     parser.add_argument("--audio-keys", action="store_true")
     parser.add_argument("--transliterate", action="store_true")
     parser.add_argument("--attach-browser-address", help="например 127.0.0.1:8888")
