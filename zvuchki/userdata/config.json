@@ -1194,14 +1194,6 @@
             "name": "Артём Анохин",
             "channel_id": "UCjxKkGUyLToyaRpPpUCc1-w"
         },
-        "РЯЗ": {
-            "name": "Краснодарский троллейбус🚎",
-            "channel_id": "UC0wBeUmMNSxFMf3p9dxJwHA"
-        },
-        "UC0wBeUmMNSxFMf3p9dxJwHA": {
-            "name": "Краснодарский троллейбус🚎",
-            "channel_id": "UC0wBeUmMNSxFMf3p9dxJwHA"
-        },
         "ЗЗ": {
             "name": "Кузница Тест Драйва",
             "channel_id": "UCZRngpYf0d_hCuvTyUDN6vQ"
@@ -1210,13 +1202,57 @@
             "name": "Владислав П",
             "channel_id": "UCDMg6OPuKrmLVh2quzYaF3w"
         },
-        "ТРР": {
-            "name": "Nerch",
-            "channel_id": "UCt5QBj19sxUecwvZkQJHyQQ"
+        "ЧАЙ": {
+            "name": "𝘼𝙐𝙏𝙊𝙍𝙐𝙎𝙃",
+            "channel_id": "UCxheX7N--4GUNYp5Ofc8r_g"
         },
-        "ТР2": {
-            "name": "Nerch",
-            "channel_id": "UCt5QBj19sxUecwvZkQJHyQQ"
+        "РЯЗ": {
+            "name": "Краснодарский троллейбус🚎",
+            "channel_id": "UC0wBeUmMNSxFMf3p9dxJwHA"
+        },
+        "ПЛИМ": {
+            "name": "Car Acceleration TV",
+            "channel_id": "UCzajHxtZzFYZvptr3Fw_7zg"
+        },
+        "МЕР": {
+            "name": "Александр Винников",
+            "channel_id": "UCbYZxilGkXUnj_fBOWxvnig"
+        },
+        "ОК": {
+            "name": "AUTO ENGINEER",
+            "channel_id": "UCslT3zNr_j7biY2yDHxlBMw"
+        },
+        "МОСКВ": {
+            "name": "Ковал на повал",
+            "channel_id": "UCrnAMu0RkXDw_yAotClgn_w"
+        },
+        "КОП": {
+            "name": "xxbdmnxx",
+            "channel_id": "UC-zRsFl1sIW1C3ReRBsT5kA"
+        },
+        "ПИЛ": {
+            "name": "MiracleOfLife",
+            "channel_id": "UCsSZ8RjqCKUoGcZ87n9Higw"
+        },
+        "ЛЕК": {
+            "name": "Winding Road Magazine - На Русском",
+            "channel_id": "UCuQa5GF0NzRTkdeWlH-YT3A"
+        },
+        "КАД": {
+            "name": "Driving Feel",
+            "channel_id": "UCM7nQ62HLYF0LI5ifwD7Hag"
+        },
+        "АВТОЗ": {
+            "name": "КлаксонТВ",
+            "channel_id": "UCp_ZdjgBUMLlpMCLarUIhgg"
+        },
+        "ОФИГ": {
+            "name": "АВТОТУТ ЛАЙВ",
+            "channel_id": "UCDxNK4huf_vZ6_uOGTrpTeA"
+        },
+        "ФОН": {
+            "name": "Федор Ягудин",
+            "channel_id": "UCj_hoUappI4QcslYHDuCLqw"
         }
     }
 }
