@@ -35,5 +35,14 @@ class TConfig:
         }
         self._write()
 
+    def save_request_alias(self, request, alias):
+        if 'request_aliases' not in self._config:
+            self._config['request_aliases'] = dict()
+        self._config['request_aliases'][alias.upper()] = request
+        self._write()
+
     def translate_alias(self, alias):
         return self._config.get('channel_aliases', {}).get(alias, {}).get('channel_id')
+
+    def get_req_alias(self, alias):
+        return self._config.get('request_aliases', {}).get(alias)

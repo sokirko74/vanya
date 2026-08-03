@@ -29,6 +29,7 @@ class TBrowser:
         self.last_channel_name = None
         self.last_channel_id = None
         self.last_clip_length = None
+        self.last_request = None
         self.play_history = dict()
         self.browser_queue = queue.Queue()
 
@@ -374,19 +375,6 @@ class TBrowser:
             with open(self.cache_path, "w") as outp:
                 json.dump(self.all_requests, outp, ensure_ascii=False, indent=4)
 
-    def send_request_old(self, search_engine_request):
-        self.driver.get("https://www.google.ru/videohp?hl=ru")
-        time.sleep(3)
-        element = self.driver.switch_to.active_element
-        element.send_keys(search_engine_request)
-        time.sleep(1)
-        element.send_keys(Keys.RETURN)
-        time.sleep(3)
-        search_results = self._parse_serp()
-        self.logger.info("found {} links in serp".format(len(search_results)))
-        self._cache_request(search_engine_request, search_results)
-        return search_results
-
     def send_request_as_human(self, search_engine_request):
         q = urllib.parse.quote(search_engine_request + " site:youtube.com")
         url  = "https://www.google.ru/search?hl=ru&tbm=vid&q=" + q
@@ -450,10 +438,11 @@ class TBrowser:
         return search_results
 
     def send_search_request(self, search_engine_request):
+        self.last_request = search_engine_request
         return self.send_request_as_human(search_engine_request)
 
     def get_url_video_from_google_or_cached(self, request, position, use_cache, use_youtube):
-        # Эта логика перенесена из вашего старого main.py, но теперь она "живет" в воркере
+        self.last_request = request
         if use_cache and self.use_cache:
             search_results = self.get_cached_request(request)
         else:

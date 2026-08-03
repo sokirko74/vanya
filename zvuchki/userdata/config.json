@@ -887,8 +887,8 @@
             "channel_id": "UCDMg6OPuKrmLVh2quzYaF3w"
         },
         "UCDMg6OPuKrmLVh2quzYaF3w": {
-            "name": "MegaRetr",
-            "channel_id": "UCfCRDwiCae7UWjBkSuDPnXw"
+            "name": "Владислав П",
+            "channel_id": "UCDMg6OPuKrmLVh2quzYaF3w"
         },
         "ЖАМ": {
             "name": "Jamboolio",
@@ -1143,8 +1143,8 @@
             "channel_id": "UCX3T_SmG9sHv886CkEZf8qw"
         },
         "UCCutSXrFvUgQZBRGF_c97Gw": {
-            "name": "Cpt Kris",
-            "channel_id": "UC_BrU7wRCx-NwbUebb3B_EA"
+            "name": "Cars and Engines",
+            "channel_id": "UCzaRja_k66jt-KoSBftRTgw"
         },
         "ЗАВ": {
             "name": "faker26101989",
@@ -1253,6 +1253,57 @@
         "ФОН": {
             "name": "Федор Ягудин",
             "channel_id": "UCj_hoUappI4QcslYHDuCLqw"
+        },
+        "ЯР": {
+            "name": "Rage Against Rust",
+            "channel_id": "UCelEax1GNBk8Vab2cb8ZXdA"
+        },
+        "ЗЕН": {
+            "name": "Владислав П",
+            "channel_id": "UCDMg6OPuKrmLVh2quzYaF3w"
+        },
+        "ЗН": {
+            "name": "Иван Зенкевич IZ лив лайфф",
+            "channel_id": "UCYX9ywDB1b6EASYEcqeqLeg"
+        },
+        "УР": {
+            "name": "Frankie Lee",
+            "channel_id": "UCQ84N3yXDXkPKbEnaQhTfvw"
+        },
+        "КР": {
+            "name": "Alan Enileev",
+            "channel_id": "UCIKJXqQGc6pCCaVaqhkHLQA"
+        },
+        "АЛЕ": {
+            "name": "Alan Enileev",
+            "channel_id": "UCIKJXqQGc6pCCaVaqhkHLQA"
+        },
+        "UCIKJXqQGc6pCCaVaqhkHLQA": {
+            "name": "Alan Enileev",
+            "channel_id": "UCIKJXqQGc6pCCaVaqhkHLQA"
+        },
+        "И": {
+            "name": "НАШИ ТЭШКИ",
+            "channel_id": "UCsXiz9Dq0_ShcsPTcqmpE0g"
+        },
+        "ФИ": {
+            "name": "Simple Carsharing Driver",
+            "channel_id": "UC0v5fyQhvsEogbAAZNrbDgQ"
+        },
+        "UCk1MFhaGO4Q7q2n5do1Oldg": {
+            "name": "Powerboat Nation",
+            "channel_id": "UCk1MFhaGO4Q7q2n5do1Oldg"
+        },
+        "КА": {
+            "name": "METALL SURGERY",
+            "channel_id": "UCpNlzYM-9Yili9u_cXTJzcw"
+        },
+        "Л": {
+            "name": "Владислав П",
+            "channel_id": "UCDMg6OPuKrmLVh2quzYaF3w"
         }
+    },
+    "request_aliases": {
+        "НГ": "НАГЛЫЙ ВАНЯ"
     }
 }
