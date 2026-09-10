@@ -134,8 +134,19 @@ class TZvuchki(tk.Frame):
         if not req.process_req():
             self.logger.warning("Failed to process request string")
             return None
+        if req.request_command == "СОКР":
+            if not self.browser.last_request:
+                self.logger.error("no channel name")
+            else:
+                self.config.save_request_alias(
+                    self.browser.last_request,
+                    req.query)
+                self.logger.error("saved {} as {}".format(self.browser.last_request, req.query))
+                self.play_audio("saved.wav", 30)
+                self.entry_text.set("")
 
-        if req.request_command == "ПАМ":
+            return None
+        elif req.request_command == "ПАМ":
             if self.browser.last_channel_id:
                 self.config.save_channel_alias(
                     self.browser.last_channel_name,

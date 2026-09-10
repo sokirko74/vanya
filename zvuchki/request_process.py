@@ -40,10 +40,13 @@ class TReqProcessor:
                 self.clip_index = int(token)
                 continue
             token = token.upper()
+            req_alias = self.config.get_req_alias(token)
             if token == 'Д':
                 self.add_sec = 120
             elif token == "ПАМ":
                 self.request_command = "ПАМ"
+            elif token == "СОКР":
+                self.request_command = "СОКР"
             elif token == 'ДД':
                 self.add_sec = 240
             elif token == 'Т':
@@ -72,8 +75,8 @@ class TReqProcessor:
                 add_to_query.append("звук")
             elif token == 'S':
                 add_to_query.append("engine start")
-            elif token == 'ЗПМ':
-                add_to_query.append("звук пишущей машинки")
+            elif req_alias:
+                add_to_query.append(req_alias)
             elif token == 'R':
                 add_to_query.append("rapper")
             elif token == 'СТ':
@@ -104,7 +107,7 @@ class TReqProcessor:
             self.logger.error("specify video clip index (integer after query)")
             return False
 
-        if len(query_words) == 0:
+        if len(query_words) == 0 and not add_to_query:
             self.logger.error("no query")
             return False
 

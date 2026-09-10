@@ -887,8 +887,8 @@
             "channel_id": "UCDMg6OPuKrmLVh2quzYaF3w"
         },
         "UCDMg6OPuKrmLVh2quzYaF3w": {
-            "name": "MegaRetr",
-            "channel_id": "UCfCRDwiCae7UWjBkSuDPnXw"
+            "name": "Владислав П",
+            "channel_id": "UCDMg6OPuKrmLVh2quzYaF3w"
         },
         "ЖАМ": {
             "name": "Jamboolio",
@@ -1143,8 +1143,8 @@
             "channel_id": "UCX3T_SmG9sHv886CkEZf8qw"
         },
         "UCCutSXrFvUgQZBRGF_c97Gw": {
-            "name": "Cpt Kris",
-            "channel_id": "UC_BrU7wRCx-NwbUebb3B_EA"
+            "name": "Cars and Engines",
+            "channel_id": "UCzaRja_k66jt-KoSBftRTgw"
         },
         "ЗАВ": {
             "name": "faker26101989",
@@ -1194,14 +1194,6 @@
             "name": "Артём Анохин",
             "channel_id": "UCjxKkGUyLToyaRpPpUCc1-w"
         },
-        "РЯЗ": {
-            "name": "Краснодарский троллейбус🚎",
-            "channel_id": "UC0wBeUmMNSxFMf3p9dxJwHA"
-        },
-        "UC0wBeUmMNSxFMf3p9dxJwHA": {
-            "name": "Краснодарский троллейбус🚎",
-            "channel_id": "UC0wBeUmMNSxFMf3p9dxJwHA"
-        },
         "ЗЗ": {
             "name": "Кузница Тест Драйва",
             "channel_id": "UCZRngpYf0d_hCuvTyUDN6vQ"
@@ -1210,13 +1202,108 @@
             "name": "Владислав П",
             "channel_id": "UCDMg6OPuKrmLVh2quzYaF3w"
         },
-        "ТРР": {
-            "name": "Nerch",
-            "channel_id": "UCt5QBj19sxUecwvZkQJHyQQ"
+        "ЧАЙ": {
+            "name": "𝘼𝙐𝙏𝙊𝙍𝙐𝙎𝙃",
+            "channel_id": "UCxheX7N--4GUNYp5Ofc8r_g"
         },
-        "ТР2": {
-            "name": "Nerch",
-            "channel_id": "UCt5QBj19sxUecwvZkQJHyQQ"
+        "РЯЗ": {
+            "name": "Краснодарский троллейбус🚎",
+            "channel_id": "UC0wBeUmMNSxFMf3p9dxJwHA"
+        },
+        "ПЛИМ": {
+            "name": "Car Acceleration TV",
+            "channel_id": "UCzajHxtZzFYZvptr3Fw_7zg"
+        },
+        "МЕР": {
+            "name": "Александр Винников",
+            "channel_id": "UCbYZxilGkXUnj_fBOWxvnig"
+        },
+        "ОК": {
+            "name": "AUTO ENGINEER",
+            "channel_id": "UCslT3zNr_j7biY2yDHxlBMw"
+        },
+        "МОСКВ": {
+            "name": "Ковал на повал",
+            "channel_id": "UCrnAMu0RkXDw_yAotClgn_w"
+        },
+        "КОП": {
+            "name": "xxbdmnxx",
+            "channel_id": "UC-zRsFl1sIW1C3ReRBsT5kA"
+        },
+        "ПИЛ": {
+            "name": "MiracleOfLife",
+            "channel_id": "UCsSZ8RjqCKUoGcZ87n9Higw"
+        },
+        "ЛЕК": {
+            "name": "Winding Road Magazine - На Русском",
+            "channel_id": "UCuQa5GF0NzRTkdeWlH-YT3A"
+        },
+        "КАД": {
+            "name": "Driving Feel",
+            "channel_id": "UCM7nQ62HLYF0LI5ifwD7Hag"
+        },
+        "АВТОЗ": {
+            "name": "КлаксонТВ",
+            "channel_id": "UCp_ZdjgBUMLlpMCLarUIhgg"
+        },
+        "ОФИГ": {
+            "name": "АВТОТУТ ЛАЙВ",
+            "channel_id": "UCDxNK4huf_vZ6_uOGTrpTeA"
+        },
+        "ФОН": {
+            "name": "Федор Ягудин",
+            "channel_id": "UCj_hoUappI4QcslYHDuCLqw"
+        },
+        "ЯР": {
+            "name": "Rage Against Rust",
+            "channel_id": "UCelEax1GNBk8Vab2cb8ZXdA"
+        },
+        "ЗЕН": {
+            "name": "Владислав П",
+            "channel_id": "UCDMg6OPuKrmLVh2quzYaF3w"
+        },
+        "ЗН": {
+            "name": "Иван Зенкевич IZ лив лайфф",
+            "channel_id": "UCYX9ywDB1b6EASYEcqeqLeg"
+        },
+        "УР": {
+            "name": "Frankie Lee",
+            "channel_id": "UCQ84N3yXDXkPKbEnaQhTfvw"
+        },
+        "КР": {
+            "name": "Alan Enileev",
+            "channel_id": "UCIKJXqQGc6pCCaVaqhkHLQA"
+        },
+        "АЛЕ": {
+            "name": "Alan Enileev",
+            "channel_id": "UCIKJXqQGc6pCCaVaqhkHLQA"
+        },
+        "UCIKJXqQGc6pCCaVaqhkHLQA": {
+            "name": "Alan Enileev",
+            "channel_id": "UCIKJXqQGc6pCCaVaqhkHLQA"
+        },
+        "И": {
+            "name": "НАШИ ТЭШКИ",
+            "channel_id": "UCsXiz9Dq0_ShcsPTcqmpE0g"
+        },
+        "ФИ": {
+            "name": "Simple Carsharing Driver",
+            "channel_id": "UC0v5fyQhvsEogbAAZNrbDgQ"
+        },
+        "UCk1MFhaGO4Q7q2n5do1Oldg": {
+            "name": "Powerboat Nation",
+            "channel_id": "UCk1MFhaGO4Q7q2n5do1Oldg"
+        },
+        "КА": {
+            "name": "METALL SURGERY",
+            "channel_id": "UCpNlzYM-9Yili9u_cXTJzcw"
+        },
+        "Л": {
+            "name": "Владислав П",
+            "channel_id": "UCDMg6OPuKrmLVh2quzYaF3w"
         }
+    },
+    "request_aliases": {
+        "НГ": "НАГЛЫЙ ВАНЯ"
     }
 }

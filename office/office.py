@@ -235,7 +235,7 @@ class TVanyaOffice(tk.Frame):
             b.place_notes(notes, 1)
             fluidsynth.stop_everything()
             fluidsynth.play_Bar(b)
-            time.sleep(3)
+            time.sleep(2)
         self.text_widget.delete('1.0', tk.END)
         if self.victory_count == self.args.victory_count:
             self.play_file('victory.wav', 50)
@@ -246,6 +246,7 @@ class TVanyaOffice(tk.Frame):
             else:
                 self.victory_count = 0
         self.new_game()
+
 
 
     def check_word(self):
@@ -276,11 +277,16 @@ class TVanyaOffice(tk.Frame):
         if self.last_char == event.char:
             return
         if ord(event.char) <= 32:
-            return
+            if self.args.expect_enter_key:
+                if event.char != '\r':
+                    return
+            else:
+                return
         new_word = self.text_widget.get(1.0, tk.END).strip().upper()
         goal_word = self.get_goal_word()
         if goal_word == new_word:
-            self.victory()
+            if not self.args.expect_enter_key or event.char == '\r':
+                self.victory()
         elif not goal_word.startswith(new_word):
             self.wrong_key(event)
 
@@ -308,6 +314,8 @@ def parse_args():
     parser.add_argument("--read-font-size", dest='read_font_size', default=200, type=int)
     parser.add_argument("--victory-count", default=20, type=int)
     parser.add_argument("--math-prob", default=0.2, type=float)
+    parser.add_argument("--expect-enter-key", default=False, action="store_true")
+
     parser.add_argument("--word-file")
     return parser.parse_args()
 
