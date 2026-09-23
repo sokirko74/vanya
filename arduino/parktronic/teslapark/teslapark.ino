@@ -1,19 +1,32 @@
-#define HC_ECHO1 2
-#define HC_TRIG1 3
+#include <SoftwareSerial.h>
+const int TXD_PIN = 12;
+const int RXD_PIN = 13;
+
+
+const int HC_ECHO1 = 2;
+const int HC_TRIG1 = 3;
 const int BUZZER_PIN = 4;
-#define HC_ECHO2 5
-#define HC_TRIG2 6
+const int HC_ECHO2 = 5;
+const int HC_TRIG2 = 6;
 const int MOTOR_BUZZER_PIN = 7;
 
-#define G3 1480
-#define C4 1975
-#define FAR_DISTANCE 1000
 const int JOYSTICK_PIN_X = A0; // ось X джойстика
 const int JOYSTICK_PIN_Y = A1; //ось Y джойстика
-unsigned long lastParktronicTime = 0;
 unsigned long lastStrokeTime = 0;
+unsigned long lastMotorTime = 0;
 
 
+SoftwareSerial BTSerial(TXD_PIN, RXD_PIN); 
+
+
+void printfSerial(const char *fmt, ...) {
+  char buf[128]; // Размер буфера под вашу строку
+  va_list args;
+  va_start(args, fmt);
+  vsnprintf(buf, sizeof(buf), fmt, args);
+  va_end(args);
+  Serial.print(buf);
+}
 
 // сделаем функцию для удобства
 float getDist(uint8_t trig, uint8_t echo) {
@@ -21,62 +34,35 @@ float getDist(uint8_t trig, uint8_t echo) {
   digitalWrite(trig, HIGH);
   delayMicroseconds(10);
   digitalWrite(trig, LOW);
+ 
 
   // измеряем время ответного импульса
-  uint32_t us = pulseIn(echo, HIGH);
+  int us = pulseIn(echo, HIGH, 15000);
   if (us == 0) {
-    return FAR_DISTANCE;
+    return -1;
   }
   // считаем расстояние и возвращаем
-  return us / 58.2;
+  return (int)(us / 58.2);
 }
 
 void setup() {
-  Serial.begin(115200);     // для связи
+  printfSerial("start setup");
+  Serial.begin(9600);     // для связи
   pinMode(HC_TRIG1, OUTPUT); // trig выход
   pinMode(HC_ECHO1, INPUT);  // echo вход
   pinMode(HC_TRIG2, OUTPUT); // trig выход
   pinMode(HC_ECHO2, INPUT);  // echo вход
   pinMode(BUZZER_PIN, OUTPUT);
-}
-
-
-
-void parktronic() {
-  unsigned long tim = millis();
-  if (tim - lastParktronicTime < 50) {
-    return;
-  }
-  lastParktronicTime = tim;
-  
-  float dist1 = getDist(HC_TRIG1, HC_ECHO1);
-  float dist2 = getDist(HC_TRIG2, HC_ECHO2);
-  float dist = min(dist1, dist2);
-  float long_buze = 5;
-  if (dist < 50 && dist > long_buze) { // Если препятствие ближе 50 см
-    Serial.println("close");
-    tone(BUZZER_PIN, G3, 50);        // Издаем писк
-    //noTone(BUZZER);
-    
-    // Динамическая пауза: чем меньше расстояние, тем меньше задержка
-    int pause = dist * 10;     
-    delay(pause);
-  } else if (dist <= long_buze) {// Слишком близко!
-    Serial.println("too_close1");
-    tone(BUZZER_PIN, C4);        // Непрерывный сигнал
-  } else {
-    Serial.println("no_buze");
-    noTone(BUZZER_PIN);            // Тишина, если далеко
-  }
-
-  Serial.print("  dist 1 = ");
-  Serial.print(dist1);
-  Serial.print("  dist 2  = ");
-  Serial.println(dist2);                     // выводим
+  BTSerial.begin(38400); // Связь с Bluetooth-модулем
 }
 
 int getAxisSpeed(int pin) {
-  int val = analogRead(pin);
+  int r1 = analogRead(pin);
+  int r2 = analogRead(pin);
+  int r3 = analogRead(pin);
+  int val = (r1 + r2 + r3) / 3;
+  //printfSerial("r1=%i r2=%i r3=%i", r1, r2, r3);
+  
   // 2. Находим отклонение от центра (нейтраль ~ 512)
   // dev = 0 (покой), dev = 512 (максимальный газ)
   int dev = abs(val - 512); 
@@ -88,35 +74,18 @@ int getAxisSpeed(int pin) {
   return dev;
 }
 
-void playMotorSound() {
-  // 1. Считываем значение с потенциометра (0..1023)
-  int val1 = getAxisSpeed(JOYSTICK_PIN_X);
-  int val2 = getAxisSpeed(JOYSTICK_PIN_Y);
-  int dev = max(val1, val2);
-  
-  // 3. Рассчитываем параметры звука ДВС на основе "газа" (dev):
-  // Пауза между «взрывами»: от 130 мс (медленный холостой ход) до 20 мс (высокие обороты)
-  int strokeInterval = map(dev, 0, 512, 130, 20);
-  
-  // Высота тона «взрыва»: от 60 Гц (бас) до 160 Гц (рычание)
-  int strokeTone = map(dev, 0, 512, 40, 120);
-  
-  // Длительность одного «взрыва»
-  int strokeDuration = map(dev, 0, 512, 12, 6);
-
-  // 4. Неблокирующая генерация тактов ДВС через millis()
-  unsigned long currentTime = millis();
-  if (currentTime - lastStrokeTime >= strokeInterval) {
-    lastStrokeTime = currentTime;
-    
-    // Издаем один «взрыв»
-    tone(MOTOR_BUZZER_PIN, strokeTone, strokeDuration);
-  }
-}
-
-
 
 void loop() {
-  playMotorSound();
-  parktronic();
+  //playMotorSound();
+  int distance1 = getDist(HC_TRIG1, HC_ECHO1);
+  int distance2 = getDist(HC_TRIG2, HC_ECHO2);
+  int speed1  = getAxisSpeed(JOYSTICK_PIN_X);
+  int speed2 = getAxisSpeed(JOYSTICK_PIN_Y);
+  
+  char mess[1024];
+  sprintf(mess, "{\"dist1\": %i, \"dist2\": %i, \"speed1\": %i, \"speed2\": %i}",
+   distance1, distance2, speed1, speed2);
+  BTSerial.println(mess);
+  Serial.println(mess);
+  delay(500);
 }

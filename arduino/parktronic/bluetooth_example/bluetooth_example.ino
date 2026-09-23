@@ -1,25 +1,17 @@
 #include <SoftwareSerial.h>
+const int TXD_PIN = 12;
+const int RXD_PIN = 13;
 
-// Создаем программный последовательный порт
-// RX Arduino = 10 (сюда идет TX модуля)
-// TX Arduino = 11 (отсюда идет на RX модуля)
-SoftwareSerial BTSerial(10, 11); 
+SoftwareSerial BTSerial(TXD_PIN, RXD_PIN); 
 
 void setup() {
-  Serial.begin(9600);   // Связь Arduino с компьютером
-  BTSerial.begin(9600); // Связь Arduino с Bluetooth (9600 - стандартная скорость)
+  BTSerial.begin(38400); // Связь с Bluetooth-модулем
+  Serial.begin(9600);
   
-  Serial.println("Bluetooth готов к работе!");
 }
 
 void loop() {
-  // Если пришли данные от Bluetooth -> отправляем в компьютер
-  if (BTSerial.available()) {
-    Serial.write(BTSerial.read());
-  }
-  
-  // Если мы пишем что-то в компьютере -> отправляем по Bluetooth
-  if (Serial.available()) {
-    BTSerial.write(Serial.read());
-  }
+  BTSerial.println("sent via Bluetooth  from arduino");
+  Serial.println("test message");
+  delay(1000); // Задержка 1000 мс (1 секунда)
 }
