@@ -61,7 +61,7 @@ int getAxisSpeed(int pin) {
   int r2 = analogRead(pin);
   int r3 = analogRead(pin);
   int val = (r1 + r2 + r3) / 3;
-  //printfSerial("r1=%i r2=%i r3=%i", r1, r2, r3);
+  printfSerial("r1=%i r2=%i r3=%i", r1, r2, r3);
   
   // 2. Находим отклонение от центра (нейтраль ~ 512)
   // dev = 0 (покой), dev = 512 (максимальный газ)
@@ -80,7 +80,8 @@ void loop() {
   int distance1 = getDist(HC_TRIG1, HC_ECHO1);
   int distance2 = getDist(HC_TRIG2, HC_ECHO2);
   int speed1  = getAxisSpeed(JOYSTICK_PIN_X);
-  int speed2 = getAxisSpeed(JOYSTICK_PIN_Y);
+  //int speed2 = getAxisSpeed(JOYSTICK_PIN_Y);
+  int speed2 = 0;
   
   char mess[1024];
   sprintf(mess, "{\"dist1\": %i, \"dist2\": %i, \"speed1\": %i, \"speed2\": %i}",

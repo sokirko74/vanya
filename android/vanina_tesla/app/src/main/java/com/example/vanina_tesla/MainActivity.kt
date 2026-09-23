@@ -17,6 +17,7 @@ import org.json.JSONObject
 import java.io.InputStream
 import java.util.UUID
 import kotlin.concurrent.thread
+import kotlin.math.max
 
 data class WheelchairData(
     val distance1: Int,
@@ -35,6 +36,9 @@ class MainActivity : AppCompatActivity() {
     private var bluetoothSocket: BluetoothSocket? = null
     private val beeper = Beeper()
 
+    private lateinit var enginePlayer: EngineSoundPlayer
+
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -42,6 +46,7 @@ class MainActivity : AppCompatActivity() {
         tvLogs = findViewById(R.id.tvLogs)
         btnConnect = findViewById(R.id.btnConnect)
         scrollView = findViewById(R.id.scrollView)
+        enginePlayer = EngineSoundPlayer(this, R.raw.stable)
 
         btnConnect.setOnClickListener {
             if (checkPermissions()) {
@@ -162,14 +167,15 @@ class MainActivity : AppCompatActivity() {
                 distance1 = json.optInt("dist1", -1),
                 distance2 = json.optInt("dist2", -1),
                 speed1 = json.optInt("speed1", 0),
-                speed2 = json.optInt("speed2", 0)
-            )
+                speed2 = json.optInt("speed2", 0))
 
 
             // Выводим успешно распарсенные данные в лог
             log("P1=${wd.distance1}см, P2=${wd.distance2}см | S1=${wd.speed1}, S2=${wd.speed2}")
 
             parktronic(wd)
+            val currentSpeed = max(wd.speed1, wd.speed2).toFloat() / 512.0F
+            enginePlayer.updateSpeed(currentSpeed)
 
         } catch (e: JSONException) {
             log("⚠️ Ошибка парсинга JSON: ${e.localizedMessage} | Исходная строка: \"$jsonString\"")
