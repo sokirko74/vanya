@@ -18,12 +18,18 @@ import java.io.InputStream
 import java.util.UUID
 import kotlin.concurrent.thread
 import kotlin.math.max
+import android.content.SharedPreferences
+import androidx.preference.PreferenceManager
+import android.view.Menu
+import android.view.MenuItem
+import android.content.Intent
+
 
 data class WheelchairData(
-    val distance1: Int,
-    val distance2: Int,
-    val speed1: Int,
-    val speed2: Int
+    var distance1: Int,
+    var distance2: Int,
+    var speed1: Int,
+    var speed2: Int
 )
 class MainActivity : AppCompatActivity() {
 
@@ -37,7 +43,7 @@ class MainActivity : AppCompatActivity() {
     private val beeper = Beeper()
 
     private lateinit var enginePlayer: EngineSoundPlayer
-
+    private lateinit var prefs: SharedPreferences
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -47,7 +53,12 @@ class MainActivity : AppCompatActivity() {
         btnConnect = findViewById(R.id.btnConnect)
         scrollView = findViewById(R.id.scrollView)
         enginePlayer = EngineSoundPlayer(this, R.raw.stable)
+        enginePlayer.setMuted(true)
 
+        prefs = PreferenceManager.getDefaultSharedPreferences(this)
+        val v1 = prefs.getBoolean("ignore_distance_2", false)
+        val v2 = prefs.getBoolean("ignore_speed_2", false)
+        log("$v1 $v2")
         btnConnect.setOnClickListener {
             if (checkPermissions()) {
                 startBluetoothConnection()
@@ -169,6 +180,30 @@ class MainActivity : AppCompatActivity() {
                 speed1 = json.optInt("speed1", 0),
                 speed2 = json.optInt("speed2", 0))
 
+            if (prefs.getBoolean("disable_engine_sound", false)) {
+                wd.speed1 = -1;
+                wd.speed2 = -1;
+            }
+            if (prefs.getBoolean("ignore_speed_1", false)) {
+                wd.speed1 = -1;
+            }
+            if (prefs.getBoolean("ignore_speed_2", false)) {
+                wd.speed2 = -1;
+            }
+            if (prefs.getBoolean("ignore_distance_1", false)) {
+
+                wd.distance1 = -1;
+            }
+            if (prefs.getBoolean("ignore_distance_2", false)) {
+                log("ignore_distance_2");
+                wd.distance2 = -1;
+            }
+
+            if (wd.speed1 == -1 && wd.speed2 == -1) {
+                enginePlayer.setMuted(true)
+            } else {
+                enginePlayer.setMuted(false)
+            }
 
             // Выводим успешно распарсенные данные в лог
             log("P1=${wd.distance1}см, P2=${wd.distance2}см | S1=${wd.speed1}, S2=${wd.speed2}")
@@ -199,6 +234,21 @@ class MainActivity : AppCompatActivity() {
     private fun requestPermissions() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.BLUETOOTH_CONNECT, Manifest.permission.BLUETOOTH_SCAN), 1)
+        }
+    }
+    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+        menuInflater.inflate(R.menu.main_menu, menu)
+        return true
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        return when (item.itemId) {
+            R.id.action_settings -> {
+                val intent = Intent(this, SettingsActivity::class.java)
+                startActivity(intent)
+                true
+            }
+            else -> super.onOptionsItemSelected(item)
         }
     }
 }

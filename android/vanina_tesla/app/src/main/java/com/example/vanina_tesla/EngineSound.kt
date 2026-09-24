@@ -18,7 +18,7 @@ class EngineSoundPlayer(context: Context, rawResId: Int) {
     private var currentVol = 0.5f
     private var animator: ValueAnimator? = null
     private val mainHandler = Handler(Looper.getMainLooper())
-
+    private var isMuted = true
     init {
         val audioAttributes = AudioAttributes.Builder()
             .setUsage(AudioAttributes.USAGE_GAME)
@@ -41,11 +41,16 @@ class EngineSoundPlayer(context: Context, rawResId: Int) {
         }
     }
 
+    private fun adjustVolume() {
+        val vol = if (isMuted) 0f else currentVol
+        soundPool.setVolume(streamId, vol, vol)
+    }
     private fun startEngine() {
         if (!isLoaded) return
         // Запускаем зацикленное воспроизведение (-1 = бесконечный цикл)
         // rate = 0.8f (базовая частота холостого хода)
         streamId = soundPool.play(soundId, currentVol, currentVol, 1, -1, currentPitch)
+        adjustVolume()
     }
 
     /**
@@ -88,13 +93,21 @@ class EngineSoundPlayer(context: Context, rawResId: Int) {
                     currentVol = startVol + fraction * (targetVol - startVol)
 
                     soundPool.setRate(streamId, currentPitch)
-                    soundPool.setVolume(streamId, currentVol, currentVol)
+                    adjustVolume()
                 }
                 start()
             }
         }
     }
-
+    fun setMuted(muted: Boolean) {
+        mainHandler.post {
+            isMuted = muted
+            if (streamId != 0) {
+                val vol = if (isMuted) 0f else currentVol
+                soundPool.setVolume(streamId, vol, vol)
+            }
+        }
+    }
     fun stop() {
         mainHandler.post {
             animator?.cancel()

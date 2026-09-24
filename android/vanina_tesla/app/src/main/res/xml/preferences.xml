@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <SwitchPreferenceCompat
+        app:key="disable_engine_sound"
+        app:title="Отключить звук мотора"
+        app:defaultValue="false" />
+
+    <SwitchPreferenceCompat
+        app:key="ignore_speed_1"
+        app:title="Игнорировать speed 1"
+        app:defaultValue="false" />
+
+    <SwitchPreferenceCompat
+        app:key="ignore_speed_2"
+        app:title="Игнорировать speed 2"
+        app:defaultValue="false" />
+
+    <SwitchPreferenceCompat
+        app:key="ignore_distance_1"
+        app:title="Игнорировать distance 1"
+        app:defaultValue="false" />
+
+    <SwitchPreferenceCompat
+        app:key="ignore_distance_2"
+        app:title="Игнорировать distance 2"
+        app:defaultValue="false" />
+
+</PreferenceScreen>
