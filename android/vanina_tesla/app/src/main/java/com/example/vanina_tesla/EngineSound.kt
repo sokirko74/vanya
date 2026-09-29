@@ -8,17 +8,32 @@ import android.os.Handler
 import android.os.Looper
 import android.view.animation.LinearInterpolator
 
-class EngineSoundPlayer(context: Context, rawResId: Int) {
+class EngineSoundPlayer(
+    context: Context,
+    rawResId: Int,          // R.raw.stable
+    startRawResId: Int      // R.raw.start
+) {
 
     private val soundPool: SoundPool
     private val soundId: Int
+    private val startSoundId: Int
+
     private var streamId: Int = 0
-    private var isLoaded = false
+    @Volatile
+    var isLoaded = false
+        private set
+    @Volatile
+    var isStartLoaded = false
+        private set
+
     private var currentPitch = 0.8f
     private var currentVol = 0.5f
     private var animator: ValueAnimator? = null
     private val mainHandler = Handler(Looper.getMainLooper())
-    private var isMuted = true
+    @Volatile
+    var isMuted = true
+        private set
+
     init {
         val audioAttributes = AudioAttributes.Builder()
             .setUsage(AudioAttributes.USAGE_GAME)
@@ -26,60 +41,75 @@ class EngineSoundPlayer(context: Context, rawResId: Int) {
             .build()
 
         soundPool = SoundPool.Builder()
-            .setMaxStreams(1)
+            .setMaxStreams(2) // Минимум 2 потока для одновременной/последовательной игры
             .setAudioAttributes(audioAttributes)
             .build()
 
-        // Загружаем stable.wav из папки res/raw/
-        soundId = soundPool.load(context, rawResId, 1)
+        soundPool.setOnLoadCompleteListener(::onSoundLoaded)
 
-        soundPool.setOnLoadCompleteListener { _, sampleId, status ->
-            if (status == 0 && sampleId == soundId) {
-                isLoaded = true
-                startEngine()
-            }
+        // Загружаем оба звуковых файла
+        soundId = soundPool.load(context, rawResId, 1)
+        startSoundId = soundPool.load(context, startRawResId, 1)
+    }
+
+    private fun onSoundLoaded(soundPool: SoundPool, sampleId: Int, status: Int) {
+        if (status != 0) return
+
+        if (sampleId == soundId) {
+            isLoaded = true
+            // Запускаем бесконечный цикл холостого хода с нулевой или текущей громкостью
+            streamId = soundPool.play(soundId, currentVol, currentVol, 1, -1, currentPitch)
+            adjustVolume()
+        } else if (sampleId == startSoundId) {
+            isStartLoaded = true
         }
     }
 
     private fun adjustVolume() {
-        val vol = if (isMuted) 0f else currentVol
-        soundPool.setVolume(streamId, vol, vol)
-    }
-    private fun startEngine() {
-        if (!isLoaded) return
-        // Запускаем зацикленное воспроизведение (-1 = бесконечный цикл)
-        // rate = 0.8f (базовая частота холостого хода)
-        streamId = soundPool.play(soundId, currentVol, currentVol, 1, -1, currentPitch)
-        adjustVolume()
+        if (streamId != 0) {
+            val vol = if (isMuted) 0f else currentVol
+            soundPool.setVolume(streamId, vol, vol)
+        }
     }
 
     /**
-     * Вызывать при изменении положения джойстика/скорости.
-     * @param speed Значение от 0.0f (нейтраль) до 1.0f (полный газ)
+     * Включение / выключение звука.
+     * При переходе из Muted (true) -> Unmuted (false) сначала играет звук старта.
      */
+    fun setMuted(muted: Boolean) {
+        mainHandler.post {
+            val wasMuted = isMuted
+            isMuted = muted
+
+            if (wasMuted && !isMuted) {
+                // Произошел переход из Muted -> Unmuted (Завод двигателя)
+                if (isStartLoaded) {
+                    // Проигрываем звук запуска 1 раз (loop = 0)
+                    soundPool.play(startSoundId, currentVol, currentVol, 2, 0, 1.0f)
+                }
+                // Включаем основной звук мотора
+                adjustVolume()
+            } else if (isMuted) {
+                // При заглушении мотора мгновенно сбрасываем громкость
+                adjustVolume()
+            }
+        }
+    }
+
     fun updateSpeed(speed: Float, durationMs: Long = 1000L) {
         if (!isLoaded || streamId == 0) return
 
         mainHandler.post {
             val clampedSpeed = speed.coerceIn(0f, 1f)
 
-            // 1. Изменяем Pitch (высоту тона / скорость проигрывания):
-            // 0.0 -> 0.8x (басовитый холостой ход)
-            // 1.0 -> 2.2x (высокие обороты)
             val minPitch = 0.8f
             val maxPitch = 2.2f
-            //val currentPitch = minPitch + (clampedSpeed * (maxPitch - minPitch))
             val targetPitch = minPitch + (clampedSpeed * (maxPitch - minPitch))
 
-            // 2. Изменяем Громкость (под нагрузкой мотор звучит громче):
             val minVol = 0.5f
             val maxVol = 1.0f
-            //val currentVol = minVol + (clampedSpeed * (maxVol - minVol))
             val targetVol = minVol + (clampedSpeed * (maxVol - minVol))
 
-            // Применяем настройки к играющему потоку в реальном времени
-            //soundPool.setRate(streamId, currentPitch)
-            //soundPool.setVolume(streamId, currentVol, currentVol)
             val startPitch = currentPitch
             val startVol = currentVol
 
@@ -99,15 +129,7 @@ class EngineSoundPlayer(context: Context, rawResId: Int) {
             }
         }
     }
-    fun setMuted(muted: Boolean) {
-        mainHandler.post {
-            isMuted = muted
-            if (streamId != 0) {
-                val vol = if (isMuted) 0f else currentVol
-                soundPool.setVolume(streamId, vol, vol)
-            }
-        }
-    }
+
     fun stop() {
         mainHandler.post {
             animator?.cancel()
@@ -118,5 +140,3 @@ class EngineSoundPlayer(context: Context, rawResId: Int) {
         }
     }
 }
-
-
