@@ -6,7 +6,28 @@ import android.media.AudioAttributes
 import android.media.SoundPool
 import android.os.Handler
 import android.os.Looper
+import android.util.Log
 import android.view.animation.LinearInterpolator
+
+import android.media.MediaMetadataRetriever
+import android.net.Uri
+
+private fun getRawResourceDurationMs(context: Context, rawResId: Int): Long {
+    val retriever = MediaMetadataRetriever()
+    return try {
+        // Формируем URI ресурса res/raw/engine_start.wav
+        val uri = Uri.parse("android.resource://${context.packageName}/$rawResId")
+        retriever.setDataSource(context, uri)
+
+        // Получаем длительность в миллисекундах
+        val durationStr = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)
+        durationStr?.toLongOrNull() ?: 1000L // 1000L как дефолтное значение, если не удалось распарсить
+    } catch (e: Exception) {
+        1000L
+    } finally {
+        retriever.release()
+    }
+}
 
 class EngineSoundPlayer(
     context: Context,
@@ -31,8 +52,12 @@ class EngineSoundPlayer(
     private var animator: ValueAnimator? = null
     private val mainHandler = Handler(Looper.getMainLooper())
     @Volatile
+    private var isStarting = false
+    @Volatile
     var isMuted = true
         private set
+
+    private val startSoundDurationMs: Long = getRawResourceDurationMs(context, startRawResId)
 
     init {
         val audioAttributes = AudioAttributes.Builder()
@@ -64,10 +89,14 @@ class EngineSoundPlayer(
             isStartLoaded = true
         }
     }
-
+    private fun log(message: String) {
+        Log.d("WheelchairTest", message)
+    }
     private fun adjustVolume() {
         if (streamId != 0) {
-            val vol = if (isMuted) 0f else currentVol
+            // Если звук замучен ИЛИ прямо сейчас идет запуск двигателя — громкость stable должна быть 0
+            val vol = if (isMuted || isStarting) 0f else currentVol
+            log("adjustVolume isMuted=$isMuted isStarting=$isStarting currentVol=$currentVol -> setVol=$vol")
             soundPool.setVolume(streamId, vol, vol)
         }
     }
@@ -82,15 +111,25 @@ class EngineSoundPlayer(
             isMuted = muted
 
             if (wasMuted && !isMuted) {
-                // Произошел переход из Muted -> Unmuted (Завод двигателя)
                 if (isStartLoaded) {
-                    // Проигрываем звук запуска 1 раз (loop = 0)
-                    soundPool.play(startSoundId, currentVol, currentVol, 2, 0, 1.0f)
+                    log("soundPool.play(startSoundId)")
+                    isStarting = true // Включаем режим старта
+                    soundPool.play(startSoundId, 1.0F, 1.0F, 2, 0, 1.0f)
                 }
-                // Включаем основной звук мотора
-                adjustVolume()
+
+                // Убираем старые отложенные вызовы, если они были
+                mainHandler.removeCallbacksAndMessages(null)
+
+                mainHandler.postDelayed({
+                    isStarting = false // Старт завершен
+                    if (!isMuted) {
+                        adjustVolume() // Вот теперь включаем stable!
+                    }
+                }, startSoundDurationMs)
+
             } else if (isMuted) {
-                // При заглушении мотора мгновенно сбрасываем громкость
+                isStarting = false
+                mainHandler.removeCallbacksAndMessages(null)
                 adjustVolume()
             }
         }
