@@ -17,7 +17,11 @@ import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.preference.PreferenceManager
+import java.io.File
 import kotlin.math.max
+
+
+val LogFileName = "app_logs.txt"
 
 data class WheelchairData(
     var distance1: Int,
@@ -37,6 +41,19 @@ class MainActivity : AppCompatActivity() {
     internal lateinit var bluetoothDataSource: BluetoothDataSource
     private lateinit var prefs: SharedPreferences
 
+    private val fileLogExecutor = java.util.concurrent.Executors.newSingleThreadExecutor()
+
+    private fun rotateLogFile(){
+        val logFile = File(filesDir, LogFileName)
+        val maxSizeBytes = 10 * 1024 * 1024 // 10 МБ
+
+        // Если файл превысил 1 МБ, делаем ротацию
+        if (logFile.exists() && logFile.length() > maxSizeBytes) {
+            val oldFile = File(filesDir, "$LogFileName.old")
+            if (oldFile.exists()) oldFile.delete() // Удаляем совсем старый бэкап
+            logFile.renameTo(oldFile)               // Текущий лог становится старым
+        }
+    }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -46,14 +63,13 @@ class MainActivity : AppCompatActivity() {
         scrollView = findViewById(R.id.scrollView)
         enginePlayer = EngineSoundPlayer(
             this,
-            R.raw.stable, R.raw.engine_start
+            R.raw.stable,
+            R.raw.engine_start,
+            ::log
         )
-        enginePlayer.setMuted(true)
+        rotateLogFile();
 
         prefs = PreferenceManager.getDefaultSharedPreferences(this)
-        val v1 = prefs.getBoolean("ignore_distance_2", false)
-        val v2 = prefs.getBoolean("ignore_speed_2", false)
-        log("$v1 $v2")
 
         bluetoothDataSource = dataSourceProvider(this)
         bluetoothDataSource.startListening(
@@ -71,6 +87,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onDestroy() {
+        fileLogExecutor.shutdown() // Не забываем закрыть экзекутор при уничтожении Activity
         bluetoothDataSource.stopListening()
         enginePlayer.stop()
         beeper.release()
@@ -79,6 +96,20 @@ class MainActivity : AppCompatActivity() {
 
     private fun log(message: String) {
         Log.d("WheelchairTest", message)
+
+        // 1. Дописываем лог в файл (в фоновом потоке, чтобы не тормозить UI)
+        // Дописываем лог в файл через единый фоновый поток
+        fileLogExecutor.execute {
+            try {
+                val logFile = File(filesDir, LogFileName)
+                val timestamp = java.text.SimpleDateFormat("HH:mm:ss.SSS", java.util.Locale.getDefault()).format(java.util.Date())
+                logFile.appendText("[$timestamp] $message\n")
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+
+        // 2. Вывод в UI
         runOnUiThread {
             tvLogs.append("$message\n")
 
@@ -88,21 +119,29 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun parktronic(wd: WheelchairData) {
+    private fun one_parktonic(name: String, distance: Int, pitch: Int) {
+        if (distance <= 8.0) {
+            log("parktronic $name continuous")
+            beeper.setContinuous(frequencyHz = pitch)
+        } else if (distance < 50) {
+            log("parktronic $name pulsed: distance $distance cm")
+            beeper.setPulsed(intervalMs = distance.toLong() * 8, frequencyHz = pitch)
+        }
+    }
+
+    private fun process_parktronics(wd: WheelchairData) {
         val validDistances = listOf(wd.distance1, wd.distance2).filter { it != -1 }
         val distCentiMeter = (validDistances.minOrNull() ?: 1000.0).toDouble()
-
-        val G3 = 1480
-        val C4 = 1975
-
-        if (distCentiMeter <= 8.0) {
-            log("parktronic continuous")
-            beeper.setContinuous(frequencyHz = C4)
-        } else if (distCentiMeter < 50) {
-            log("parktronic pulsed: distance ${distCentiMeter} cm")
-            beeper.setPulsed(intervalMs = distCentiMeter.toLong() * 8, frequencyHz = G3)
-        } else {
+        if (distCentiMeter >= 50) {
+            log("all parktronic are silent")
             beeper.setSilent()
+        }
+        else {
+            val G3 = 1480
+            val C4 = 1975
+
+            one_parktonic("left", wd.distance1, G3)
+            one_parktonic("right", wd.distance2, C4)
         }
     }
 
@@ -134,7 +173,7 @@ class MainActivity : AppCompatActivity() {
 
         log("P1=${wd.distance1}см, P2=${wd.distance2}см | S1=${wd.speed1}, S2=${wd.speed2}")
 
-        parktronic(wd)
+        process_parktronics(wd)
         val currentSpeed = max(effectiveSpeed, 0).toFloat() / 512.0F
         enginePlayer.updateSpeed(currentSpeed)
     }

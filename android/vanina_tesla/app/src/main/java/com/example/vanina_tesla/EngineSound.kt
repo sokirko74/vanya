@@ -6,7 +6,6 @@ import android.media.AudioAttributes
 import android.media.SoundPool
 import android.os.Handler
 import android.os.Looper
-import android.util.Log
 import android.view.animation.LinearInterpolator
 
 import android.media.MediaMetadataRetriever
@@ -32,7 +31,8 @@ private fun getRawResourceDurationMs(context: Context, rawResId: Int): Long {
 class EngineSoundPlayer(
     context: Context,
     rawResId: Int,          // R.raw.stable
-    startRawResId: Int      // R.raw.start
+    startRawResId: Int,     // R.raw.start
+    private val onLog: (String) -> Unit = {} // Колбэк для логирования
 ) {
 
     private val soundPool: SoundPool
@@ -57,6 +57,7 @@ class EngineSoundPlayer(
     var isMuted = true
         private set
 
+    private var startAudioRunnable: Runnable? = null
     private val startSoundDurationMs: Long = getRawResourceDurationMs(context, startRawResId)
 
     init {
@@ -90,7 +91,7 @@ class EngineSoundPlayer(
         }
     }
     private fun log(message: String) {
-        Log.d("WheelchairTest", message)
+        onLog(message)
     }
     private fun adjustVolume() {
         if (streamId != 0) {
@@ -98,6 +99,8 @@ class EngineSoundPlayer(
             val vol = if (isMuted || isStarting) 0f else currentVol
             log("adjustVolume isMuted=$isMuted isStarting=$isStarting currentVol=$currentVol -> setVol=$vol")
             soundPool.setVolume(streamId, vol, vol)
+        } else {
+            log("adjustVolume SKIPPED: streamId is 0!")
         }
     }
 
@@ -109,37 +112,49 @@ class EngineSoundPlayer(
         mainHandler.post {
             val wasMuted = isMuted
             isMuted = muted
+            log("setMuted: wasMuted=$wasMuted -> isMuted=$isMuted | isStarting=$isStarting | streamId=$streamId")
 
             if (wasMuted && !isMuted) {
                 if (isStartLoaded) {
                     log("soundPool.play(startSoundId)")
                     isStarting = true // Включаем режим старта
-                    soundPool.play(startSoundId, 1.0F, 1.0F, 2, 0, 1.0f)
+                    val startStream = soundPool.play(startSoundId, 1.0F, 1.0F, 2, 0, 1.0f)
+                    log("startSound play returned streamId=$startStream")
                 }
 
-                // Убираем старые отложенные вызовы, если они были
-                mainHandler.removeCallbacksAndMessages(null)
+                startAudioRunnable?.let { mainHandler.removeCallbacks(it) }
 
-                mainHandler.postDelayed({
+
+                startAudioRunnable = Runnable {
+                    log("postDelayed triggered: resetting isStarting to false")
                     isStarting = false // Старт завершен
                     if (!isMuted) {
                         adjustVolume() // Вот теперь включаем stable!
+                    } else {
+                        log("postDelayed: condition (!isMuted) failed, sound stays muted")
                     }
-                }, startSoundDurationMs)
+                }
+                // Запускаем отложенно без блокировки UI[cite: 3]
+                mainHandler.postDelayed(startAudioRunnable!!, startSoundDurationMs)
 
             } else if (isMuted) {
+                log("Muting sound: resetting isStarting=false, removing callbacks")
                 isStarting = false
-                mainHandler.removeCallbacksAndMessages(null)
+                startAudioRunnable?.let { mainHandler.removeCallbacks(it) }
                 adjustVolume()
             }
         }
     }
 
     fun updateSpeed(speed: Float, durationMs: Long = 1000L) {
-        if (!isLoaded || streamId == 0) return
+        if (!isLoaded || streamId == 0) {
+            log("updateSpeed ignored: isLoaded=$isLoaded, streamId=$streamId")
+            return
+        }
 
         mainHandler.post {
             val clampedSpeed = speed.coerceIn(0f, 1f)
+            log("updateSpeed called: rawSpeed=$speed, clamped=$clampedSpeed, isMuted=$isMuted, isStarting=$isStarting")
 
             val minPitch = 0.8f
             val maxPitch = 2.2f
