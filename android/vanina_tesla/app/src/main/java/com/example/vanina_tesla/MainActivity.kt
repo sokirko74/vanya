@@ -87,6 +87,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onDestroy() {
+        log("exit main activity")
         fileLogExecutor.shutdown() // Не забываем закрыть экзекутор при уничтожении Activity
         bluetoothDataSource.stopListening()
         enginePlayer.stop()
