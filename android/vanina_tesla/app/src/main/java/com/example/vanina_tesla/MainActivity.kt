@@ -144,7 +144,7 @@ class MainActivity : AppCompatActivity() {
     internal fun handleWheelchairData(wd: WheelchairData) {
         // Сбрасываем таймер watchdog при каждом приходе данных
         watchdogHandler.removeCallbacks(watchdogRunnable)
-        watchdogHandler.postDelayed(watchdogRunnable, 1500) // 1.5 секунды таймаут
+        watchdogHandler.postDelayed(watchdogRunnable, 15000) // 15 секунды таймаут
         if (prefs.getBoolean("disable_engine_sound", false)) {
             wd.speed1 = -1
             wd.speed2 = -1

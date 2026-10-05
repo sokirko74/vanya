@@ -108,8 +108,14 @@ class EngineSoundPlayer(
      * Включение / выключение звука.
      * При переходе из Muted (true) -> Unmuted (false) сначала играет звук старта.
      */
+    /**
+     * Включение / выключение звука.
+     * При переходе из Muted (true) -> Unmuted (false) сначала играет звук старта.
+     */
     fun setMuted(muted: Boolean) {
         mainHandler.post {
+            if (isMuted == muted) return@post
+
             val wasMuted = isMuted
             isMuted = muted
             log("setMuted: wasMuted=$wasMuted -> isMuted=$isMuted | isStarting=$isStarting | streamId=$streamId")
@@ -124,7 +130,6 @@ class EngineSoundPlayer(
 
                 startAudioRunnable?.let { mainHandler.removeCallbacks(it) }
 
-
                 startAudioRunnable = Runnable {
                     log("postDelayed triggered: resetting isStarting to false")
                     isStarting = false // Старт завершен
@@ -134,18 +139,23 @@ class EngineSoundPlayer(
                         log("postDelayed: condition (!isMuted) failed, sound stays muted")
                     }
                 }
-                // Запускаем отложенно без блокировки UI[cite: 3]
                 mainHandler.postDelayed(startAudioRunnable!!, startSoundDurationMs)
 
             } else if (isMuted) {
-                log("Muting sound: resetting isStarting=false, removing callbacks")
+                log("Muting sound: resetting isStarting=false, removing callbacks and canceling animators")
                 isStarting = false
+
+                // 1. Отменяем отложенный колбэк старта
                 startAudioRunnable?.let { mainHandler.removeCallbacks(it) }
+
+                // 2. КРИТИЧЕСКИ ВАЖНО: останавливаем текущий аниматор изменения скорости/громкости
+                animator?.cancel()
+
+                // 3. Принудительно глушим поток
                 adjustVolume()
             }
         }
     }
-
     fun updateSpeed(speed: Float, durationMs: Long = 1000L) {
         if (!isLoaded || streamId == 0) {
             log("updateSpeed ignored: isLoaded=$isLoaded, streamId=$streamId")
