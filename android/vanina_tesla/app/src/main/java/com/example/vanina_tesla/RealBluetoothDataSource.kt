@@ -9,6 +9,7 @@ import android.os.Build
 import androidx.core.app.ActivityCompat
 import org.json.JSONException
 import org.json.JSONObject
+import java.io.IOException
 import java.io.InputStream
 import java.util.UUID
 import kotlin.concurrent.thread
@@ -23,6 +24,7 @@ class RealBluetoothDataSource(
     private var bluetoothSocket: BluetoothSocket? = null
     private var onData: ((WheelchairData) -> Unit)? = null
     private var onLog: ((String) -> Unit)? = null
+
 
     override fun startListening(onData: (WheelchairData) -> Unit, onLog: (String) -> Unit) {
         this.onData = onData

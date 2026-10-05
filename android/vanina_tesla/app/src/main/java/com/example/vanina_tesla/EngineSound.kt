@@ -97,7 +97,7 @@ class EngineSoundPlayer(
         if (streamId != 0) {
             // Если звук замучен ИЛИ прямо сейчас идет запуск двигателя — громкость stable должна быть 0
             val vol = if (isMuted || isStarting) 0f else currentVol
-            log("adjustVolume isMuted=$isMuted isStarting=$isStarting currentVol=$currentVol -> setVol=$vol")
+            //log("adjustVolume isMuted=$isMuted isStarting=$isStarting currentVol=$currentVol -> setVol=$vol")
             soundPool.setVolume(streamId, vol, vol)
         } else {
             log("adjustVolume SKIPPED: streamId is 0!")

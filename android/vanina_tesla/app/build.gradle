@@ -41,5 +41,6 @@ dependencies {
     androidTestImplementation libs.androidx.espresso.core
     androidTestImplementation libs.androidx.junit
     implementation libs.androidx.preference.ktx
+    implementation("com.jakewharton.timber:timber:5.0.1")
 
 }

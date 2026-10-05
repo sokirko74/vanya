@@ -7,7 +7,6 @@ import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
-import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
@@ -17,11 +16,10 @@ import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.preference.PreferenceManager
-import java.io.File
 import kotlin.math.max
-
-
-val LogFileName = "app_logs.txt"
+import timber.log.Timber
+import android.os.Handler
+import android.os.Looper
 
 data class WheelchairData(
     var distance1: Int,
@@ -41,19 +39,13 @@ class MainActivity : AppCompatActivity() {
     internal lateinit var bluetoothDataSource: BluetoothDataSource
     private lateinit var prefs: SharedPreferences
 
-    private val fileLogExecutor = java.util.concurrent.Executors.newSingleThreadExecutor()
-
-    private fun rotateLogFile(){
-        val logFile = File(filesDir, LogFileName)
-        val maxSizeBytes = 10 * 1024 * 1024 // 10 МБ
-
-        // Если файл превысил 1 МБ, делаем ротацию
-        if (logFile.exists() && logFile.length() > maxSizeBytes) {
-            val oldFile = File(filesDir, "$LogFileName.old")
-            if (oldFile.exists()) oldFile.delete() // Удаляем совсем старый бэкап
-            logFile.renameTo(oldFile)               // Текущий лог становится старым
-        }
+    private val watchdogHandler = Handler(Looper.getMainLooper())
+    private val watchdogRunnable = Runnable {
+        Timber.d("Watchdog: No data received for 1.5s! Muting sounds.")
+        enginePlayer.setMuted(true)
+        beeper.setSilent()
     }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -65,16 +57,18 @@ class MainActivity : AppCompatActivity() {
             this,
             R.raw.stable,
             R.raw.engine_start,
-            ::log
+            { Timber.d(it)}
         )
-        rotateLogFile();
 
         prefs = PreferenceManager.getDefaultSharedPreferences(this)
 
         bluetoothDataSource = dataSourceProvider(this)
+
+        Timber.plant(BufferedLog(applicationContext, ::log_ui))
+
         bluetoothDataSource.startListening(
             onData = { handleWheelchairData(it) },
-            onLog = { log(it) }
+            onLog = { Timber.d(it) }
         )
 
         btnConnect.setOnClickListener {
@@ -86,30 +80,25 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+//    private fun handleDisconnect() {
+//        // 1. Глушим мотор и парктроник
+//        enginePlayer.setMuted(true)
+//        beeper.setSilent()
+//
+//        // 2. Логируем событие
+//        Timber.d("Bluetooth connection lost!")
+//    }
+
     override fun onDestroy() {
-        log("exit main activity")
-        fileLogExecutor.shutdown() // Не забываем закрыть экзекутор при уничтожении Activity
+        Timber.d("exit main activity")
+        watchdogHandler.removeCallbacks(watchdogRunnable)
         bluetoothDataSource.stopListening()
         enginePlayer.stop()
         beeper.release()
         super.onDestroy()
     }
 
-    private fun log(message: String) {
-        Log.d("WheelchairTest", message)
-
-        // 1. Дописываем лог в файл (в фоновом потоке, чтобы не тормозить UI)
-        // Дописываем лог в файл через единый фоновый поток
-        fileLogExecutor.execute {
-            try {
-                val logFile = File(filesDir, LogFileName)
-                val timestamp = java.text.SimpleDateFormat("HH:mm:ss.SSS", java.util.Locale.getDefault()).format(java.util.Date())
-                logFile.appendText("[$timestamp] $message\n")
-            } catch (e: Exception) {
-                e.printStackTrace()
-            }
-        }
-
+    private fun log_ui(message: String) {
         // 2. Вывод в UI
         runOnUiThread {
             tvLogs.append("$message\n")
@@ -121,32 +110,41 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun one_parktonic(name: String, distance: Int, pitch: Int) {
-        if (distance <= 8.0) {
-            log("parktronic $name continuous")
+        if ((distance in 0..8)) {
+            Timber.d("parktronic $name continuous")
             beeper.setContinuous(frequencyHz = pitch)
         } else if (distance < 50) {
-            log("parktronic $name pulsed: distance $distance cm")
+            Timber.d("parktronic $name pulsed: distance $distance cm")
             beeper.setPulsed(intervalMs = distance.toLong() * 8, frequencyHz = pitch)
         }
     }
 
     private fun process_parktronics(wd: WheelchairData) {
         val validDistances = listOf(wd.distance1, wd.distance2).filter { it != -1 }
-        val distCentiMeter = (validDistances.minOrNull() ?: 1000.0).toDouble()
+        val distCentiMeter = validDistances.minOrNull() ?: 1000
         if (distCentiMeter >= 50) {
-            log("all parktronic are silent")
+            Timber.d("all parktronic are silent")
             beeper.setSilent()
         }
         else {
             val G3 = 1480
             val C4 = 1975
 
-            one_parktonic("left", wd.distance1, G3)
-            one_parktonic("right", wd.distance2, C4)
+            // Приоритет отдаем ближнему датчику
+            if (wd.distance1 in 0 until wd.distance2 || wd.distance2 == -1) {
+                one_parktonic("left", wd.distance1, G3)
+            } else if (wd.distance2 in 0 until wd.distance1 || wd.distance1 == -1) {
+                one_parktonic("right", wd.distance2, C4)
+            } else {
+                one_parktonic("left", wd.distance1, G3)
+            }
         }
     }
 
     internal fun handleWheelchairData(wd: WheelchairData) {
+        // Сбрасываем таймер watchdog при каждом приходе данных
+        watchdogHandler.removeCallbacks(watchdogRunnable)
+        watchdogHandler.postDelayed(watchdogRunnable, 1500) // 1.5 секунды таймаут
         if (prefs.getBoolean("disable_engine_sound", false)) {
             wd.speed1 = -1
             wd.speed2 = -1
@@ -161,9 +159,10 @@ class MainActivity : AppCompatActivity() {
             wd.distance1 = -1
         }
         if (prefs.getBoolean("ignore_distance_2", false)) {
-            log("ignore_distance_2")
+            Timber.d("ignore_distance_2")
             wd.distance2 = -1
         }
+        val debugSpeed = prefs.getString("debug_speed", "");
 
         val effectiveSpeed = listOf(wd.speed1, wd.speed2).filter { it >= 0 }.maxOrNull() ?: 0
         if (effectiveSpeed <= 0) {
@@ -172,7 +171,7 @@ class MainActivity : AppCompatActivity() {
             enginePlayer.setMuted(false)
         }
 
-        log("P1=${wd.distance1}см, P2=${wd.distance2}см | S1=${wd.speed1}, S2=${wd.speed2}")
+        Timber.d("P1=${wd.distance1}см, P2=${wd.distance2}см | S1=${wd.speed1}, S2=${wd.speed2}, ds=$debugSpeed ")
 
         process_parktronics(wd)
         val currentSpeed = max(effectiveSpeed, 0).toFloat() / 512.0F
@@ -181,10 +180,13 @@ class MainActivity : AppCompatActivity() {
 
     private fun checkPermissions(): Boolean {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            return ActivityCompat.checkSelfPermission(
-                this,
-                Manifest.permission.BLUETOOTH_CONNECT
+            val connect = ActivityCompat.checkSelfPermission(
+                this, Manifest.permission.BLUETOOTH_CONNECT
             ) == PackageManager.PERMISSION_GRANTED
+            val scan = ActivityCompat.checkSelfPermission(
+                this, Manifest.permission.BLUETOOTH_SCAN
+            ) == PackageManager.PERMISSION_GRANTED
+            return connect && scan
         }
         return true
     }
