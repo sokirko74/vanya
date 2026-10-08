@@ -47,6 +47,7 @@ class MainActivity : AppCompatActivity() {
         enginePlayer.setMuted(true)
         beeper.setSilent()
     }
+    private var isUserMuted = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -89,17 +90,18 @@ class MainActivity : AppCompatActivity() {
 
         // 2. Обработка ручного клика по кнопке
         btnEngineMute.setOnClickListener {
-            val newMutedState = !enginePlayer.isMuted
+            // Переключаем пользовательский флаг при клике
+            isUserMuted = !isUserMuted
 
-            // Если человек включается вручную, а данных давно не было — сбрасываем watchdog,
-            // чтобы он тут же снова не замутил звук
-            if (!newMutedState) {
-                resetWatchdogTimer() // Вызовите вашу функцию сброса watchdog
+            if (!isUserMuted) {
+                resetWatchdogTimer()
             }
 
-            enginePlayer.setMuted(newMutedState)
+            // Сразу обновляем плеер: если пользователь замутил — выключаем,
+            // если размутил — включаем (если машина в этот момент едет)
+            enginePlayer.setMuted(isUserMuted)
         }
-
+        
         // Инициализируем начальное состояние кнопки
         updateMuteButtonUi(enginePlayer.isMuted)
         Timber.d("start vanina_tesla application: MainActivity.OnCreate")
@@ -187,10 +189,12 @@ class MainActivity : AppCompatActivity() {
 
         val effectiveSpeed = listOf(wd.speed1, wd.speed2).filter { it >= 0 }.maxOrNull() ?: 0
 
-        // Переключаем звук автоматикой только при нулевой скорости,
-        // но если скорость > 0, не включаем принудительно, если пользователь сам выключил кнопку
-        if (effectiveSpeed <= 0) {
+        // Звук глушится, если машина стоит ИЛИ если пользователь выключил звук вручную.
+        // Если машина едет И пользователь не заглушил звук с кнопки — включаем его.
+        if (effectiveSpeed <= 0 || isUserMuted) {
             enginePlayer.setMuted(true)
+        } else {
+            enginePlayer.setMuted(false)
         }
 
         Timber.d("P1=${wd.distance1}см, P2=${wd.distance2}см | S1=${wd.speed1}, S2=${wd.speed2}, ds=$debugSpeed ")
