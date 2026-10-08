@@ -32,7 +32,8 @@ class EngineSoundPlayer(
     context: Context,
     rawResId: Int,          // R.raw.stable
     startRawResId: Int,     // R.raw.start
-    private val onLog: (String) -> Unit = {} // Колбэк для логирования
+    private val onLog: (String) -> Unit = {}, // Колбэк для логирования
+    var onMuteStateChanged: ((Boolean) -> Unit)? = null
 ) {
 
     private val soundPool: SoundPool
@@ -59,6 +60,7 @@ class EngineSoundPlayer(
 
     private var startAudioRunnable: Runnable? = null
     private val startSoundDurationMs: Long = getRawResourceDurationMs(context, startRawResId)
+
 
     init {
         val audioAttributes = AudioAttributes.Builder()
@@ -119,6 +121,8 @@ class EngineSoundPlayer(
             val wasMuted = isMuted
             isMuted = muted
             log("setMuted: wasMuted=$wasMuted -> isMuted=$isMuted | isStarting=$isStarting | streamId=$streamId")
+            // Уведомляем UI (гарантированно на главный поток через mainHandler)
+            onMuteStateChanged?.invoke(isMuted)
 
             if (wasMuted && !isMuted) {
                 if (isStartLoaded) {

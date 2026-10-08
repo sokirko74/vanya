@@ -21,6 +21,7 @@ import timber.log.Timber
 import android.os.Handler
 import android.os.Looper
 
+
 data class WheelchairData(
     var distance1: Int,
     var distance2: Int,
@@ -39,6 +40,7 @@ class MainActivity : AppCompatActivity() {
     internal lateinit var bluetoothDataSource: BluetoothDataSource
     private lateinit var prefs: SharedPreferences
 
+    private lateinit var btnEngineMute: Button
     private val watchdogHandler = Handler(Looper.getMainLooper())
     private val watchdogRunnable = Runnable {
         Timber.d("Watchdog: No data received for 1.5s! Muting sounds.")
@@ -78,16 +80,35 @@ class MainActivity : AppCompatActivity() {
                 requestPermissions()
             }
         }
+        btnEngineMute = findViewById(R.id.btnEngineMute)
+
+        // 1. Подписываем UI на изменения из EngineSoundPlayer
+        enginePlayer.onMuteStateChanged = { isMuted ->
+            updateMuteButtonUi(isMuted)
+        }
+
+        // 2. Обработка ручного клика по кнопке
+        btnEngineMute.setOnClickListener {
+            val newMutedState = !enginePlayer.isMuted
+
+            // Если человек включается вручную, а данных давно не было — сбрасываем watchdog,
+            // чтобы он тут же снова не замутил звук
+            if (!newMutedState) {
+                resetWatchdogTimer() // Вызовите вашу функцию сброса watchdog
+            }
+
+            enginePlayer.setMuted(newMutedState)
+        }
+
+        // Инициализируем начальное состояние кнопки
+        updateMuteButtonUi(enginePlayer.isMuted)
+        Timber.d("start vanina_tesla application: MainActivity.OnCreate")
     }
 
-//    private fun handleDisconnect() {
-//        // 1. Глушим мотор и парктроник
-//        enginePlayer.setMuted(true)
-//        beeper.setSilent()
-//
-//        // 2. Логируем событие
-//        Timber.d("Bluetooth connection lost!")
-//    }
+    private fun resetWatchdogTimer() {
+        watchdogHandler.removeCallbacks(watchdogRunnable)
+        watchdogHandler.postDelayed(watchdogRunnable, 15000) // 15 секунд таймаут
+    }
 
     override fun onDestroy() {
         Timber.d("exit main activity")
@@ -143,8 +164,8 @@ class MainActivity : AppCompatActivity() {
 
     internal fun handleWheelchairData(wd: WheelchairData) {
         // Сбрасываем таймер watchdog при каждом приходе данных
-        watchdogHandler.removeCallbacks(watchdogRunnable)
-        watchdogHandler.postDelayed(watchdogRunnable, 15000) // 15 секунды таймаут
+        resetWatchdogTimer()
+
         if (prefs.getBoolean("disable_engine_sound", false)) {
             wd.speed1 = -1
             wd.speed2 = -1
@@ -162,13 +183,14 @@ class MainActivity : AppCompatActivity() {
             Timber.d("ignore_distance_2")
             wd.distance2 = -1
         }
-        val debugSpeed = prefs.getString("debug_speed", "");
+        val debugSpeed = prefs.getString("debug_speed", "")
 
         val effectiveSpeed = listOf(wd.speed1, wd.speed2).filter { it >= 0 }.maxOrNull() ?: 0
+
+        // Переключаем звук автоматикой только при нулевой скорости,
+        // но если скорость > 0, не включаем принудительно, если пользователь сам выключил кнопку
         if (effectiveSpeed <= 0) {
             enginePlayer.setMuted(true)
-        } else {
-            enginePlayer.setMuted(false)
         }
 
         Timber.d("P1=${wd.distance1}см, P2=${wd.distance2}см | S1=${wd.speed1}, S2=${wd.speed2}, ds=$debugSpeed ")
@@ -201,6 +223,15 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun updateMuteButtonUi(isMuted: Boolean) {
+        if (isMuted) {
+            btnEngineMute.text = "Звук мотора: ВЫКЛ"
+        } else {
+            btnEngineMute.text = "Звук мотора: ВКЛ"
+        }
+    }
+
+
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
         menuInflater.inflate(R.menu.main_menu, menu)
         return true
@@ -215,6 +246,7 @@ class MainActivity : AppCompatActivity() {
             }
             else -> super.onOptionsItemSelected(item)
         }
+
     }
 
     companion object {
