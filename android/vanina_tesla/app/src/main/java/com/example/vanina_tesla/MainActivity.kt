@@ -20,6 +20,7 @@ import kotlin.math.max
 import timber.log.Timber
 import android.os.Handler
 import android.os.Looper
+import kotlin.system.exitProcess
 
 
 data class WheelchairData(
@@ -48,6 +49,8 @@ class MainActivity : AppCompatActivity() {
         beeper.setSilent()
     }
     private var isUserMuted = false
+
+    private lateinit var btnExit: Button
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -104,7 +107,28 @@ class MainActivity : AppCompatActivity() {
         
         // Инициализируем начальное состояние кнопки
         updateMuteButtonUi(enginePlayer.isMuted)
+
+        btnExit = findViewById(R.id.btnExit)
+        btnExit.setOnClickListener {
+            exitAppGracefully()
+        }
+
         Timber.d("start vanina_tesla application: MainActivity.OnCreate")
+    }
+
+    private fun exitAppGracefully() {
+        Timber.d("User clicked Exit button")
+
+        // 1. Принудительно сбрасываем буфер логов на диск,
+        // раз уж мы контролируем момент выхода.
+        (Timber.forest().firstOrNull { it is BufferedLog } as? BufferedLog)?.flushNow()
+
+        // 2. Закрываем текущую активность (вызовется onDestroy)
+        finishAffinity() // Закрывает эту и все связанные активности в стеке
+
+        // 3. Убиваем системный процесс приложения, чтобы оно гарантированно
+        // выгрузилось из памяти и не висело в фоне.
+        exitProcess(0)
     }
 
     private fun resetWatchdogTimer() {
@@ -114,6 +138,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onDestroy() {
         Timber.d("exit main activity")
+        (Timber.forest().firstOrNull { it is BufferedLog } as? BufferedLog)?.flushNow()
         watchdogHandler.removeCallbacks(watchdogRunnable)
         bluetoothDataSource.stopListening()
         enginePlayer.stop()
@@ -187,7 +212,9 @@ class MainActivity : AppCompatActivity() {
         }
         val debugSpeed = prefs.getString("debug_speed", "")
 
-        val effectiveSpeed = listOf(wd.speed1, wd.speed2).filter { it >= 0 }.maxOrNull() ?: 0
+        val coefString = prefs.getString("speed_coef", "1.0") ?: "1.0"
+        val effectiveSpeed_pre = (listOf(wd.speed1, wd.speed2).filter { it >= 0 }.maxOrNull() ?: 0).toInt()
+        val effectiveSpeed = ((coefString.toFloatOrNull() ?: 1.0f) * effectiveSpeed_pre.toFloat()).toInt()
 
         // Звук глушится, если машина стоит ИЛИ если пользователь выключил звук вручную.
         // Если машина едет И пользователь не заглушил звук с кнопки — включаем его.

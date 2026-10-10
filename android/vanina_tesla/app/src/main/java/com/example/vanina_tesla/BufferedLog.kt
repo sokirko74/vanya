@@ -89,4 +89,8 @@ class BufferedLog(
             Log.e("BufferedLog", "Error flushing logs to file", e)
         }
     }
+
+    fun flushNow() {
+        flushLogs()
+    }
 }

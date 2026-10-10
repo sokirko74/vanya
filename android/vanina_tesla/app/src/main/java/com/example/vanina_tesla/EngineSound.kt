@@ -125,6 +125,12 @@ class EngineSoundPlayer(
             onMuteStateChanged?.invoke(isMuted)
 
             if (wasMuted && !isMuted) {
+                // 1. На всякий случай останавливаем старый мертвый поток, если он остался
+                if (streamId != 0) {
+                    soundPool.stop(streamId)
+                    streamId = 0
+                }
+
                 if (isStartLoaded) {
                     log("soundPool.play(startSoundId)")
                     isStarting = true // Включаем режим старта
@@ -138,6 +144,10 @@ class EngineSoundPlayer(
                     log("postDelayed triggered: resetting isStarting to false")
                     isStarting = false // Старт завершен
                     if (!isMuted) {
+                        if (isLoaded) {
+                            streamId = soundPool.play(soundId, 0f, 0f, 1, -1, currentPitch) // или soundId вместо idForSoundPool
+                            log("Loop sound re-triggered, new streamId=$streamId")
+                        }
                         adjustVolume() // Вот теперь включаем stable!
                     } else {
                         log("postDelayed: condition (!isMuted) failed, sound stays muted")

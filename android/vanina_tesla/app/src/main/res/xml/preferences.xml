@@ -1,29 +1,38 @@
 <?xml version="1.0" encoding="utf-8"?>
-<PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto">
+<PreferenceScreen
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"> <!-- Добавили пространство имен app -->
 
     <SwitchPreferenceCompat
-        app:key="disable_engine_sound"
-        app:title="Отключить звук мотора"
-        app:defaultValue="false" />
+        android:key="disable_engine_sound"
+        android:title="Отключить звук мотора"
+        android:defaultValue="false" />
 
     <SwitchPreferenceCompat
-        app:key="ignore_speed_1"
-        app:title="Игнорировать speed 1"
-        app:defaultValue="false" />
+        android:key="ignore_speed_1"
+        android:title="Игнорировать speed 1"
+        android:defaultValue="false" />
 
     <SwitchPreferenceCompat
-        app:key="ignore_speed_2"
-        app:title="Игнорировать speed 2"
-        app:defaultValue="false" />
+        android:key="ignore_speed_2"
+        android:title="Игнорировать speed 2"
+        android:defaultValue="false" />
 
     <SwitchPreferenceCompat
-        app:key="ignore_distance_1"
-        app:title="Игнорировать distance 1"
-        app:defaultValue="false" />
+        android:key="ignore_distance_1"
+        android:title="Игнорировать distance 1"
+        android:defaultValue="false" />
 
     <SwitchPreferenceCompat
-        app:key="ignore_distance_2"
-        app:title="Игнорировать distance 2"
-        app:defaultValue="false" />
+        android:key="ignore_distance_2"
+        android:title="Игнорировать distance 2"
+        android:defaultValue="false" />
+
+    <androidx.preference.EditTextPreference
+        android:key="speed_coef"
+        android:title="Коэффициент скорости"
+        android:defaultValue="1.0"
+        android:inputType="numberDecimal|numberSigned"
+        app:useSimpleSummaryProvider="true" /> <!-- Эта строка включает автоотображение значения -->
 
 </PreferenceScreen>

@@ -18,6 +18,14 @@
         android:layout_height="wrap_content"
         android:text="Подключиться к Bluetooth" />
 
+    <Button
+        android:id="@+id/btnExit"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:text="Выход"
+        android:backgroundTint="#D32F2F" />
+
     <ScrollView
         android:id="@+id/scrollView"
         android:layout_width="match_parent"
