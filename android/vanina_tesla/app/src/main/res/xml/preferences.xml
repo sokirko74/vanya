@@ -29,8 +29,15 @@
         android:defaultValue="false" />
 
     <androidx.preference.EditTextPreference
-        android:key="speed_coef"
-        android:title="Коэффициент скорости"
+        android:key="speed_slope_coef"
+        android:title="Угловой коэффициент скорости в y=kx+b"
+        android:defaultValue="1.0"
+        android:inputType="numberDecimal|numberSigned"
+        app:useSimpleSummaryProvider="true" /> <!-- Эта строка включает автоотображение значения -->
+
+    <androidx.preference.EditTextPreference
+        android:key="speed_intercept_coef"
+        android:title="Свободный коэф. в y=kx+b"
         android:defaultValue="1.0"
         android:inputType="numberDecimal|numberSigned"
         app:useSimpleSummaryProvider="true" /> <!-- Эта строка включает автоотображение значения -->

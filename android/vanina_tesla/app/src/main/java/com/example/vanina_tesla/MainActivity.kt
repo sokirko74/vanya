@@ -30,6 +30,11 @@ data class WheelchairData(
     var speed2: Int
 )
 
+fun readCoef(prefs: SharedPreferences, coefName: String): Float {
+    val s = prefs.getString(coefName, "1.0") ?: "1.0"
+    return s.toFloatOrNull() ?: 1.0f
+}
+
 class MainActivity : AppCompatActivity() {
 
     private lateinit var tvLogs: TextView
@@ -52,11 +57,18 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var btnExit: Button
 
+    private lateinit var tvDistance1: TextView
+    private lateinit var tvDistance2: TextView
+    private lateinit var tvSpeed: TextView
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
         tvLogs = findViewById(R.id.tvLogs)
+        tvDistance1 = findViewById(R.id.tvParktronic1)
+        tvDistance2 = findViewById(R.id.tvParktronic2)
+        tvSpeed = findViewById(R.id.tvSpeed)
         btnConnect = findViewById(R.id.btnConnect)
         scrollView = findViewById(R.id.scrollView)
         enginePlayer = EngineSoundPlayer(
@@ -169,6 +181,9 @@ class MainActivity : AppCompatActivity() {
 
     private fun process_parktronics(wd: WheelchairData) {
         val validDistances = listOf(wd.distance1, wd.distance2).filter { it != -1 }
+        tvDistance1.text = "${wd.distance1}"
+        tvDistance2.text = "${wd.distance2}"
+
         val distCentiMeter = validDistances.minOrNull() ?: 1000
         if (distCentiMeter >= 50) {
             Timber.d("all parktronic are silent")
@@ -212,9 +227,15 @@ class MainActivity : AppCompatActivity() {
         }
         val debugSpeed = prefs.getString("debug_speed", "")
 
-        val coefString = prefs.getString("speed_coef", "1.0") ?: "1.0"
+
         val effectiveSpeed_pre = (listOf(wd.speed1, wd.speed2).filter { it >= 0 }.maxOrNull() ?: 0).toInt()
-        val effectiveSpeed = ((coefString.toFloatOrNull() ?: 1.0f) * effectiveSpeed_pre.toFloat()).toInt()
+        val effectiveSpeed = if (effectiveSpeed_pre <= 0) {
+            0
+        } else {
+            val speedSlope = readCoef(prefs, "speed_slope_coef")
+            val speedIntercept = readCoef(prefs, "speed_intercept_coef")
+            (speedSlope * effectiveSpeed_pre.toFloat() + speedIntercept).toInt()
+        }
 
         // Звук глушится, если машина стоит ИЛИ если пользователь выключил звук вручную.
         // Если машина едет И пользователь не заглушил звук с кнопки — включаем его.
@@ -228,6 +249,7 @@ class MainActivity : AppCompatActivity() {
 
         process_parktronics(wd)
         val currentSpeed = max(effectiveSpeed, 0).toFloat() / 512.0F
+        tvSpeed.text = "$effectiveSpeed"
         enginePlayer.updateSpeed(currentSpeed)
     }
 
