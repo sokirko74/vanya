@@ -6,7 +6,7 @@
     "volume": 0.8
   },
   "alarm": {
-    "path": "alarm.wav",
+    "path": "../alarms/starline1.wav",
     "volume": 0.2
   }
 

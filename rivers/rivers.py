@@ -30,7 +30,8 @@ class TRiverGame:
         self.finish_top = 300
         self.road_width = 30
         self.sounds = TSounds(SOUNDS_DIR, not args.silent, self.logger)
-        self.racing_wheel = TRacingWheel(self.logger, args.wheel_center, angle_level_ratio=args.angle_level_ratio)
+        self.racing_wheel = TRacingWheel(self.logger, args.wheel_center,
+                                         left_level=args.left_pedal_level, angle_level_ratio=args.angle_level_ratio)
         self.game_over = False
         self.game_paused = False
         self.exit_game = False
@@ -721,6 +722,7 @@ def parse_args():
     parser.add_argument("--bank-prob", default=0.05, type=float)
     parser.add_argument("--forest-prob", default=0.03, type=float)
     parser.add_argument("--gates-prob", default=0.03, type=float)
+    parser.add_argument("--left-pedal-level", default=140, type=int)
 
     return parser.parse_args()
 

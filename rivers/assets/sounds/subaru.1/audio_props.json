@@ -1,7 +1,7 @@
 {
   "stable": {
     "path": "stable.wav",
-    "volume": 0.01
+    "volume": 0.1
   },
   "engine_start": {
     "path": "start.wav"
@@ -18,7 +18,7 @@
     "volume": 1.2
   },
   "alarm": {
-    "path": "alarm.wav",
+    "path": "../alarms/pandect1.wav",
     "volume": 1.8
   }
 }
