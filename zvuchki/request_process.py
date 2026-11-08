@@ -85,8 +85,8 @@ class TReqProcessor:
                 add_to_query.append("МАШИНА")
             elif token == 'Э':
                 add_to_query.append( "эксплуатация")
-            elif token == 'Р':
-                add_to_query.append("реставрация")
+            elif token == 'АВТОС':
+                add_to_query.append("автосигнализация")
             elif token == 'НОВ':
                 self.use_cache = False
             elif token == 'П':

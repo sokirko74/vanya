@@ -1,7 +1,7 @@
 {
   "stable": {
     "path": "stable.wav",
-    "volume": 0.01
+    "volume": 0.1
   },
   "engine_start": {
     "path": "start.wav"
@@ -11,11 +11,11 @@
   },
   "set_on_alarm": {
     "path": "set_on_alarm.wav",
-    "volume": 1.2
+    "volume": 1.7
   },
   "set_off_alarm": {
     "path": "set_off_alarm.wav",
-    "volume": 1.2
+    "volume": 1.7
   },
   "alarm": {
     "path": "../alarms/pandect2.wav",
