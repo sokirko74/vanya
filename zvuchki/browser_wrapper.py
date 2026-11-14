@@ -16,6 +16,43 @@ import urllib.parse
 import re
 import datetime
 
+from urllib.parse import parse_qs, urlencode, urlparse, urlunparse
+
+
+def set_url_param(url: str, param_name: str, param_value: str) -> str:
+  # 1. Разбираем URL на составные части
+  parsed = urlparse(url)
+
+  # 2. Извлекаем текущие GET-параметры в виде словаря
+  query_params = parse_qs(parsed.query)
+
+  # 3. Заменяем или добавляем нужный параметр (если был — он перезапишется)
+  query_params[param_name] = [param_value]
+
+  # 4. Собираем строку параметров обратно (doseq=True нужен для корректной работы со списками)
+  new_query = urlencode(query_params, doseq=True)
+
+  # 5. Склеиваем URL заново
+  return urlunparse(parsed._replace(query=new_query))
+
+
+def del_url_param(url: str, param_name: str) -> str:
+  # 1. Разбираем URL на составные части
+  parsed = urlparse(url)
+
+  # 2. Извлекаем текущие GET-параметры в виде словаря
+  query_params = parse_qs(parsed.query)
+
+  # 3. Заменяем или добавляем нужный параметр (если был — он перезапишется)
+  query_params.pop(param_name, None)
+
+  # 4. Собираем строку параметров обратно (doseq=True нужен для корректной работы со списками)
+  new_query = urlencode(query_params, doseq=True)
+
+  # 5. Склеиваем URL заново
+  return urlunparse(parsed._replace(query=new_query))
+
+
 
 class TBrowser:
     def __init__(self, logger, use_cache=True):
@@ -68,6 +105,7 @@ class TBrowser:
         self.driver.set_window_position(0, 0)
 
     def save_play_history(self, url):
+        url = del_url_param(url, "t")
         duration_in_sec = self.get_current_duration()
         if self.last_clip_length is None:
             self.logger.error('self.last_clip_length is None, skip saving')
@@ -305,7 +343,8 @@ class TBrowser:
             if already == 0:
                 self.navigate(url)
             else:
-                self.navigate(url + "&t={}s".format(already))
+                url1 = set_url_param(url, "t", "{}s".format(already))
+                self.navigate(url1)
 
             self.logger.info("sleep 3 sec")
             time.sleep(3)
@@ -428,6 +467,7 @@ class TBrowser:
                 continue
             self.logger.debug("url={}".format(url))
             if url not in search_results:
+                url = del_url_param(url, "t")
                 search_results.append(url)
 
         if not search_results:
