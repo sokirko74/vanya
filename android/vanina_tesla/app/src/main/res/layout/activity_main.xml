@@ -40,6 +40,33 @@
             android:backgroundTint="#D32F2F" />
     </LinearLayout>
 
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginTop="6dp">
+
+        <Button
+            android:id="@+id/btnCalibrate"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginStart="4dp"
+            android:layout_marginEnd="4dp"
+            android:text="Балансировка"
+            android:backgroundTint="#1976D2" />
+
+        <Button
+            android:id="@+id/btnQuickZero"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginStart="4dp"
+            android:layout_marginEnd="4dp"
+            android:text="Сброс нуля"
+            android:backgroundTint="#388E3C" />
+    </LinearLayout>
+
     <!-- 2-я строка: Крупные показания (П1, П2, Скорость) -->
     <LinearLayout
         android:layout_width="match_parent"

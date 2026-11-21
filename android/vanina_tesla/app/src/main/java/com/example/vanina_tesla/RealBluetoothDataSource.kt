@@ -124,7 +124,9 @@ class RealBluetoothDataSource(
                     distance1 = json.optInt("dist1", -1),
                     distance2 = json.optInt("dist2", -1),
                     speed1 = json.optInt("speed1", 0),
-                    speed2 = json.optInt("speed2", 0)
+                    speed2 = json.optInt("speed2", 0),
+                    rawX = json.optInt("raw_x", -1),
+                    rawY = json.optInt("raw_y", -1)
                 )
             )
         } catch (e: JSONException) {

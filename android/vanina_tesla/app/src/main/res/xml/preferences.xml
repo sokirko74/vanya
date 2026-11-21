@@ -42,4 +42,16 @@
         android:inputType="numberDecimal|numberSigned"
         app:useSimpleSummaryProvider="true" /> <!-- Эта строка включает автоотображение значения -->
 
+    <PreferenceCategory
+        android:title="Калибровка джойстика">
+        <Preference
+            android:key="pref_open_calibration"
+            android:title="Мастер балансировки джойстика"
+            android:summary="Пошаговая настройка нейтрали и 4 направлений" />
+        <Preference
+            android:key="pref_calibration_status"
+            android:title="Текущая калибровка"
+            android:summary="Не откалиброван" />
+    </PreferenceCategory>
+
 </PreferenceScreen>

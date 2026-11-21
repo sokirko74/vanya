@@ -12,13 +12,6 @@ const int RXD_PIN = 13; // bluetooth rx
 const int JOYSTICK_PIN_X = A0; // ось X джойстика
 const int JOYSTICK_PIN_Y = A1; // ось Y джойстика
 
-struct SpeedStruct {
-    int r1;
-    int r2;
-    int r3;
-    int dev;
-};
-
 SoftwareSerial BTSerial(TXD_PIN, RXD_PIN);
 
 void printfSerial(const char *fmt, ...) {
@@ -52,50 +45,26 @@ void setup() {
   printfSerial("start setup\n");
 }
 
-int readAnalogWithThreshold(int pin) {
-  int r = analogRead(pin);
-  if (r < 200) {
-    return 0;
-  }
-  return r;
-}
-
-void getAxisSpeed(int pin, SpeedStruct &s) {
-  s.r1 = readAnalogWithThreshold(pin);
-  s.r2 = readAnalogWithThreshold(pin);
-  s.r3 = readAnalogWithThreshold(pin);
-  int val = (s.r1 + s.r2 + s.r3) / 3;
-
-  if (val == 0) {
-    s.dev = -1;
-    return;
-  }
-
-  s.dev = abs(val - 512);
-
-  if (s.dev < 30) {
-    s.dev = 0;
-  }
+int readRawAvg(int pin) {
+  int r1 = analogRead(pin);
+  int r2 = analogRead(pin);
+  int r3 = analogRead(pin);
+  return (r1 + r2 + r3) / 3;
 }
 
 void loop() {
   int distance1 = getDist(HC_TRIG1, HC_ECHO1);
   int distance2 = getDist(HC_TRIG2, HC_ECHO2);
 
-  SpeedStruct s1;
-  getAxisSpeed(JOYSTICK_PIN_X, s1);
-
-  SpeedStruct s2;
-  getAxisSpeed(JOYSTICK_PIN_Y, s2);
+  int rawX = readRawAvg(JOYSTICK_PIN_X);
+  int rawY = readRawAvg(JOYSTICK_PIN_Y);
 
   char mess[256];
   sprintf(
           mess,
-          "{\"dist1\": %d, \"dist2\": %d, \"speed1\": %d, \"speed2\": %d, \"debug_speed\": \"%d %d %d; %d %d %d\"}",
+          "{\"dist1\": %d, \"dist2\": %d, \"raw_x\": %d, \"raw_y\": %d}",
           distance1, distance2,
-          s1.dev, s2.dev,
-          s1.r1, s1.r2, s1.r3,
-          s2.r1, s2.r2, s2.r3
+          rawX, rawY
   );
 
   BTSerial.println(mess);
