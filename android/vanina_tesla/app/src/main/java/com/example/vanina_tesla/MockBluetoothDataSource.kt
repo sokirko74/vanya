@@ -8,8 +8,8 @@ class MockBluetoothDataSource : BluetoothDataSource {
     var lastData: WheelchairData = WheelchairData(
         distance1 = 1000,
         distance2 = 1000,
-        speed1 = 0,
-        speed2 = 0
+        rawX = 512,
+        rawY = 512
     )
         private set
 
@@ -34,16 +34,10 @@ class MockBluetoothDataSource : BluetoothDataSource {
             WheelchairData(
                 distance1 = data.distance1,
                 distance2 = data.distance2,
-                speed1 = data.speed1,
-                speed2 = data.speed2,
                 rawX = data.rawX,
                 rawY = data.rawY
             )
         )
-    }
-
-    fun setSpeed1(value: Int) {
-        emit(lastData.copy(speed1 = value))
     }
 
     fun setRaw(rawX: Int, rawY: Int) {

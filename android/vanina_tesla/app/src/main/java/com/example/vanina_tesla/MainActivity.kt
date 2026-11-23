@@ -27,8 +27,6 @@ import kotlin.system.exitProcess
 data class WheelchairData(
     var distance1: Int = -1,
     var distance2: Int = -1,
-    var speed1: Int = 0,
-    var speed2: Int = 0,
     var rawX: Int = -1,
     var rawY: Int = -1
 )
@@ -246,16 +244,6 @@ class MainActivity : AppCompatActivity() {
         lastWheelchairData = wd
         onWheelchairDataReceived?.invoke(wd)
 
-        if (prefs.getBoolean("disable_engine_sound", false)) {
-            wd.speed1 = -1
-            wd.speed2 = -1
-        }
-        if (prefs.getBoolean("ignore_speed_1", false)) {
-            wd.speed1 = -1
-        }
-        if (prefs.getBoolean("ignore_speed_2", false)) {
-            wd.speed2 = -1
-        }
         if (prefs.getBoolean("ignore_distance_1", false)) {
             wd.distance1 = -1
         }
@@ -263,33 +251,38 @@ class MainActivity : AppCompatActivity() {
             Timber.d("ignore_distance_2")
             wd.distance2 = -1
         }
-        val debugSpeed = prefs.getString("debug_speed", "")
 
-        val effectiveSpeed: Int = if (prefs.getBoolean("disable_engine_sound", false)) {
+        // Если коляска выключена, питание джойстика пропадает и оба входа АЦП падают к 0 (< 100).
+        val isWheelchairPoweredOff = wd.rawX in 0..100 && wd.rawY in 0..100
+
+        val effectiveSpeed_pre = if (isWheelchairPoweredOff || wd.rawX < 0 || wd.rawY < 0) {
             0
-        } else if (wd.rawX >= 0 && wd.rawY >= 0) {
+        } else {
             val normSpeed = joystickCalibration.calculateSpeed(wd.rawX, wd.rawY)
             (normSpeed * 512f).toInt()
-        } else {
-            val effectiveSpeed_pre = (listOf(wd.speed1, wd.speed2).filter { it >= 0 }.maxOrNull() ?: 0).toInt()
-            if (effectiveSpeed_pre <= 0) {
-                0
-            } else {
-                val speedSlope = readCoef(prefs, "speed_slope_coef")
-                val speedIntercept = readCoef(prefs, "speed_intercept_coef")
-                (speedSlope * effectiveSpeed_pre.toFloat() + speedIntercept).toInt()
-            }
         }
 
-        // Звук глушится, если машина стоит ИЛИ если пользователь выключил звук вручную.
-        // Если машина едет И пользователь не заглушил звук с кнопки — включаем его.
+        val speedSlope = readCoef(prefs, "speed_slope_coef")
+        val speedIntercept = readCoef(prefs, "speed_intercept_coef")
+
+        val effectiveSpeed: Int = if (prefs.getBoolean("disable_engine_sound", false) || isWheelchairPoweredOff) {
+            0
+        } else {
+            (speedSlope * effectiveSpeed_pre.toFloat() + speedIntercept).toInt()
+        }
+
+        // Звук глушится:
+        // 1) если коляска выключена (isWheelchairPoweredOff)
+        // 2) если звук отключен в настройках (disable_engine_sound)
+        // 3) если пользователь выключил звук вручную кнопкой (isUserMuted)
+        // В нейтрали при включенной коляске effectiveSpeed = speedIntercept, мотор работает на холостом ходу.
         if (effectiveSpeed <= 0 || isUserMuted) {
             enginePlayer.setMuted(true)
         } else {
             enginePlayer.setMuted(false)
         }
 
-        Timber.d("P1=${wd.distance1}см, P2=${wd.distance2}см | RawX=${wd.rawX}, RawY=${wd.rawY} | S1=${wd.speed1}, S2=${wd.speed2}, speed=$effectiveSpeed")
+        Timber.d("P1=${wd.distance1}см, P2=${wd.distance2}см | RawX=${wd.rawX}, RawY=${wd.rawY} | speed=$effectiveSpeed")
 
         process_parktronics(wd)
         val currentSpeed = max(effectiveSpeed, 0).toFloat() / 512.0F
