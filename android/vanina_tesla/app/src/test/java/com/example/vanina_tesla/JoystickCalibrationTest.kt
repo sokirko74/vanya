@@ -96,4 +96,29 @@ class JoystickCalibrationTest {
         // At the new neutral, speed must be 0
         assertEquals(0f, calib.calculateSpeed(520, 490), 0.001f)
     }
+
+    @Test
+    fun testIgnoreAxes() {
+        val calib = JoystickCalibration(
+            isCalibrated = true,
+            neutralX = 500,
+            neutralY = 500,
+            forward = DirectionConfig('Y', neutralEdge = 550, maxEdge = 850),
+            backward = DirectionConfig('Y', neutralEdge = 450, maxEdge = 150),
+            right = DirectionConfig('X', neutralEdge = 550, maxEdge = 850),
+            left = DirectionConfig('X', neutralEdge = 450, maxEdge = 150)
+        )
+
+        // Diagonal movement (both X and Y moved): forward=0.5, right=0.5
+        assertEquals(0.7071f, calib.calculateSpeed(700, 700), 0.01f)
+
+        // If ignoreX is true: X displacement is ignored (only forward 0.5 counts)
+        assertEquals(0.5f, calib.calculateSpeed(700, 700, ignoreX = true), 0.001f)
+
+        // If ignoreY is true: Y displacement is ignored (only right 0.5 counts)
+        assertEquals(0.5f, calib.calculateSpeed(700, 700, ignoreY = true), 0.001f)
+
+        // If both are ignored: speed must be 0
+        assertEquals(0f, calib.calculateSpeed(700, 700, ignoreX = true, ignoreY = true), 0.001f)
+    }
 }

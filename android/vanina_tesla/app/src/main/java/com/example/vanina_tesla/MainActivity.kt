@@ -255,10 +255,13 @@ class MainActivity : AppCompatActivity() {
         // Если коляска выключена, питание джойстика пропадает и оба входа АЦП падают к 0 (< 100).
         val isWheelchairPoweredOff = wd.rawX in 0..100 && wd.rawY in 0..100
 
+        val ignoreX = prefs.getBoolean("ignore_axis_x", false)
+        val ignoreY = prefs.getBoolean("ignore_axis_y", false)
+
         val effectiveSpeed_pre = if (isWheelchairPoweredOff || wd.rawX < 0 || wd.rawY < 0) {
             0
         } else {
-            val normSpeed = joystickCalibration.calculateSpeed(wd.rawX, wd.rawY)
+            val normSpeed = joystickCalibration.calculateSpeed(wd.rawX, wd.rawY, ignoreX, ignoreY)
             (normSpeed * 512f).toInt()
         }
 

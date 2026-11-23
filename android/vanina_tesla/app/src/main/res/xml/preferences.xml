@@ -9,6 +9,16 @@
         android:defaultValue="false" />
 
     <SwitchPreferenceCompat
+        android:key="ignore_axis_x"
+        android:title="Игнорировать ось X (влево / вправо)"
+        android:defaultValue="false" />
+
+    <SwitchPreferenceCompat
+        android:key="ignore_axis_y"
+        android:title="Игнорировать ось Y (вперед / назад)"
+        android:defaultValue="false" />
+
+    <SwitchPreferenceCompat
         android:key="ignore_distance_1"
         android:title="Игнорировать distance 1"
         android:defaultValue="false" />

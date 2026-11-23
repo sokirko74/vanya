@@ -55,14 +55,19 @@ data class JoystickCalibration(
 ) {
     /**
      * Вычисляет результирующую скорость коляски от 0.0 до 1.0 на основе (rawX, rawY).
+     * @param ignoreX игнорировать смещение по оси X (приравнивается к neutralX)
+     * @param ignoreY игнорировать смещение по оси Y (приравнивается к neutralY)
      */
-    fun calculateSpeed(rawX: Int, rawY: Int): Float {
+    fun calculateSpeed(rawX: Int, rawY: Int, ignoreX: Boolean = false, ignoreY: Boolean = false): Float {
         if (rawX < 0 || rawY < 0) return 0f
 
-        val sFwd = forward.calculateSpeed(rawX, rawY)
-        val sBwd = backward.calculateSpeed(rawX, rawY)
-        val sRight = right.calculateSpeed(rawX, rawY)
-        val sLeft = left.calculateSpeed(rawX, rawY)
+        val effX = if (ignoreX) neutralX else rawX
+        val effY = if (ignoreY) neutralY else rawY
+
+        val sFwd = forward.calculateSpeed(effX, effY)
+        val sBwd = backward.calculateSpeed(effX, effY)
+        val sRight = right.calculateSpeed(effX, effY)
+        val sLeft = left.calculateSpeed(effX, effY)
 
         val sLongitudinal = maxOf(sFwd, sBwd)
         val sLateral = maxOf(sRight, sLeft)
